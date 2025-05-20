@@ -1,0 +1,183 @@
+\section{Efficient Voting Logic Evaluation using Bit Fields}
+
+
+\subsection{Definition of k-of-n Voting Logic}
+\label{sec:kn_voting_logic_definition}
+
+A \emph{k-of-n} gate, denoted \(\mathrm{VOT}(k/n)\), outputs 1 if and only if \emph{at least} \(k\) of its \(n\) inputs equal 1. Such a gate, often referred to as a \emph{threshold} or \emph{majority voting} gate, conveniently models partial redundancy and majority-vote mechanisms. Concretely, let each of the \(n\) input events be represented by a binary variable:
+\[
+X_1, \, X_2, \, \dots, \, X_n \;\in\;\{0,1\}.
+\]
+The gate’s output \(Y\) is then defined by
+\begin{equation}
+\label{eq:kn_gate_boolean}
+Y 
+\;=\;
+\begin{cases}
+1, & \text{if }\, \displaystyle\sum_{i=1}^{n} X_i \;\ge\; k,\\[4pt]
+0, & \text{otherwise}.
+\end{cases}
+\end{equation}
+Equivalently, \(Y=1\) can be expressed as a disjunction of conjunctions:
+\begin{equation}
+\label{eq:k_of_n_or_of_ands}
+Y 
+\;=\;
+\Bigl[\sum_{i=1}^{n} X_i \,\ge\, k\Bigr]
+\;=\;
+\bigvee_{\substack{S\,\subseteq\,\{1,\dots,n\}\\|S|=k}}
+\;\;\biggl(\,\bigwedge_{i\in S} X_i\biggr),
+\end{equation}
+meaning that at least one subset \(S\subseteq \{1,\dots,n\}\) of size \(k\) has all its corresponding \(X_i\) set to 1. Any larger subset \(\lvert S\rvert > k\) naturally satisfies the same condition.
+
+In many PRA tools, the \(\mathrm{VOT}(k/n)\) gate is provided as a built-in element. Internally, these tools may expand Eq.~\eqref{eq:k_of_n_or_of_ands} into an OR-of-ANDs or maintain a more compact representation (e.g., via binary decision diagrams). Under independence assumptions, standard failure-probability calculations proceed by summing over combinations of basic-event failures. However, an explicit expansion incurs the combinatorial factor
+\[
+\binom{n}{k} \;+\; \binom{n}{k+1} \;+\; \dots \;+\; \binom{n}{n},
+\]
+which can grow quickly as \(n\) increases.
+
+\subsection{Probability Computation under Independence}
+When each \(X_i\) is modeled as a Bernoulli random variable taking the value \(1\) with probability
+\[
+p_i \;=\; P(X_i = 1),
+\]
+assumed independent of the other inputs, one can write for each \(k\)-element subset \(S \subseteq \{1,\ldots,n\}\):
+\[
+A_S \;=\;\bigwedge_{i \in S} \{X_i = 1\},
+\quad
+P\bigl(A_S\bigr) 
+\;=\;
+\prod_{i \in S} p_i.
+\]
+The event \(Y=1\) in Eq.~\eqref{eq:k_of_n_or_of_ands} is the union of all such events \(A_S\) for \(\lvert S\rvert = k\). Hence, in principle, to compute
+\[
+P\Bigl(Y = 1\Bigr)
+\;=\;
+P\Bigl(\bigvee_{\lvert S\rvert = k} A_S\Bigr),
+\]
+one may apply the inclusion-exclusion principle. Specifically:
+\begin{equation}
+\label{eq:union_inclusion_exclusion}
+P\Bigl(\bigvee_{\lvert S\rvert = k} A_S\Bigr)
+\;=\;
+\sum_{\lvert S\rvert=k}P(A_S)
+\;-\;\sum_{1\le \alpha_1<\alpha_2\le M}P\Bigl(A_{S_{\alpha_1}}\cap A_{S_{\alpha_2}}\Bigr)
+\;+\;\dots
+\end{equation}
+where \(M=\sum_{j=k}^{n} \binom{n}{j}\) is the total number of events \(A_S\) of interest. Unfortunately, direct enumeration of these intersections can become infeasible for large \(n\).
+
+\subsubsection{Example of 3-of-5 Voting Logic}
+\label{sec:3_of_5_voting_logic_example}
+
+For example, consider the case where $k=3, n=5$. Using the notation from Section~\ref{sec:kn_voting_logic_definition}, the compressed form of the gate output is
+\[
+Y \;=\; \mathrm{VOT}(3/5)\bigl(X_1, X_2, X_3, X_4, X_5\bigr)
+\;=\;
+\bigl[\;X_1 + X_2 + X_3 + X_4 + X_5 \;\ge\; 3\bigr].
+\]
+
+\begin{figure}[h!]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \input{parts/3_refinements/2_hw_opt/1_voter/ft_3_of_5}
+    }
+    \caption{Caption}
+    \label{fig:example-3of5-voter-tree}
+\end{figure}
+
+Since ``at least 3 of 5'' means any subset of size 3, 4, or 5 suffices, an explicit OR-of-ANDs expansion has the following terms:
+\begin{equation}
+\begin{aligned}
+Y \;=\;&
+\underbrace{
+  \resizebox{.90\hsize}{!}{$
+    X_1 X_2 X_3 \;\lor\; X_1 X_2 X_4 \;\lor\; X_1 X_2 X_5 \;\lor\; X_1 X_3 X_4 \;\lor\; X_1 X_3 X_5 \;\lor\; X_1 X_4 X_5 \;\lor\; X_2 X_3 X_4 \;\lor\; X_2 X_3 X_5 \;\lor\; X_2 X_4 X_5 \;\lor\; X_3 X_4 X_5
+  $}
+}_{\text{subsets of size 3}}
+\\
+&\;\;\lor\;\;
+\underbrace{
+  \resizebox{.80\hsize}{!}{$
+    X_1 X_2 X_3 X_4 \;\lor\; X_1 X_2 X_3 X_5 \;\lor\; X_1 X_2 X_4 X_5 \;\lor\; X_1 X_3 X_4 X_5 \;\lor\; X_2 X_3 X_4 X_5
+  $}
+}_{\text{subsets of size 4}}
+\\
+&\;\;\lor\;\;
+\underbrace{X_1 X_2 X_3 X_4 X_5}_{\text{subset of size 5}}.
+\end{aligned}
+\end{equation}
+
+Assume that each \(X_i\) is a Bernoulli random variable taking the value 1 with probability \(p_i\), independently of the others. Then
+\[
+p_i 
+\;=\;
+P\bigl(X_i = 1\bigr),
+\quad
+i = 1,2,3,4,5.
+\]
+We seek 
+\(\displaystyle P(Y=1)\), i.e., the probability that at least three of the \(X_i\) are 1.  A convenient way to write this is to sum, for \(j=3,4,5\), the probabilities that exactly \(j\) of the inputs are 1:
+\[
+P\bigl(Y=1\bigr)
+\;=\;
+\sum_{j=3}^{5}
+\;\sum_{\substack{S\,\subseteq\,\{1,2,3,4,5\}\\|S|=j}}
+\;\Bigl(\prod_{i\in S} p_i\Bigr)\;
+\Bigl(\prod_{i\notin S} (1 - p_i)\Bigr).
+\]
+Exactly three of the five inputs are 1 (there are \(\binom{5}{3} = 10\) such terms):
+\[
+\begin{aligned}
+&\,p_1 p_2 p_3\,(1\!-\!p_4)\,(1\!-\!p_5)\;+\;
+p_1 p_2 p_4\,(1\!-\!p_3)\,(1\!-\!p_5)\;+\;
+p_1 p_2 p_5\,(1\!-\!p_3)\,(1\!-\!p_4)\;+\;
+\\
+&\;p_1 p_3 p_4\,(1\!-\!p_2)\,(1\!-\!p_5)\;+\;
+p_1 p_3 p_5\,(1\!-\!p_2)\,(1\!-\!p_4)\;+\;
+p_1 p_4 p_5\,(1\!-\!p_2)\,(1\!-\!p_3)\;+\;
+\\
+&\;p_2 p_3 p_4\,(1\!-\!p_1)\,(1\!-\!p_5)\;+\;
+p_2 p_3 p_5\,(1\!-\!p_1)\,(1\!-\!p_4)\;+\;
+p_2 p_4 p_5\,(1\!-\!p_1)\,(1\!-\!p_3)\;+\;
+\\
+&\;p_3 p_4 p_5\,(1\!-\!p_1)\,(1\!-\!p_2).
+\end{aligned}
+\]
+Exactly four of the five inputs are 1 (there are \(\binom{5}{4}=5\) such terms):
+\[
+\begin{aligned}
+&p_1 p_2 p_3 p_4\,(1\!-\!p_5)
+\;+\;
+p_1 p_2 p_3 p_5\,(1\!-\!p_4)
+\;+\;
+p_1 p_2 p_4 p_5\,(1\!-\!p_3)
+\\
+&\quad+\;
+p_1 p_3 p_4 p_5\,(1\!-\!p_2)
+\;+\;
+p_2 p_3 p_4 p_5\,(1\!-\!p_1).
+\end{aligned}
+\]
+All five inputs are 1 (there is \(\binom{5}{5}=1\) such term):
+\[
+p_1 p_2 p_3 p_4 p_5.
+\]
+
+Summing all of the above terms yields \(P(Y=1)\), the fully expanded probability of a 3-of-5 vote under independence.
+
+\subsection{Complexity of the Inclusion-Exclusion Approach}
+Observe that the union in Eq.~\eqref{eq:union_inclusion_exclusion} comprises \(M\) events, where
+\[
+M \;=\;\sum_{j=k}^{n} \binom{n}{j}.
+\]
+The inclusion-exclusion principle for a union of \(M\) events involves sums of intersections of size \(r\), for \(r=1,\dots,M\). The total number of terms is
+\[
+\sum_{r=1}^{M} \binom{M}{r}
+\;=\;
+2^{M}-1,
+\]
+which implies a worst-case computational complexity on the order of
+\[
+\mathcal{O}\bigl(2^{M}\bigr).
+\]
+Moreover, for \(k\approx n/2\), the binomial coefficients \(\binom{n}{k}\) become largest, so \(M\) can itself grow exponentially in \(n\). Consequently, the inclusion-exclusion expansion may require up to \(\mathcal{O}\bigl(2^{2^{n}}\bigr)\) operations for moderately large \(n\).

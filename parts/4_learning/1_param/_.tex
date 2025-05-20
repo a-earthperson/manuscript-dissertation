@@ -1,0 +1,49 @@
+\chapter{Towards Parameter Learning}
+\label{sec:parametric_learning_pra_model}
+
+PRAs invariably involve uncertainty. When explicitly modeled, these uncertainties can be updated or inferred from evidence, engineering judgments, or reliability targets. We refer to such systematic updating of probability or frequency distributions across the PRA model as form of parametric learning.
+
+Recall from (Section~\ref{sec:unified_pra_dag}) that we represent a PRA model as a PDAG. Let \(\boldsymbol{\theta}\) be the collection of parameters governing all relevant probabilities/frequencies in this PDAG. For an end-state \(S_j\), the model-based prediction under \(\boldsymbol{\theta}\) is
+\[
+P_{\mathcal{M}}\bigl(S_j \mid \boldsymbol{\theta}\bigr).
+\]
+If one also has observed or target frequencies \(\bigl\{p_{j}^{\mathrm{obs}}\bigr\}\), parametric learning seeks to reconcile this information with the model’s predictions by updating \(\boldsymbol{\theta}\). In a Bayesian setting, one may specify a prior distribution over \(\boldsymbol{\theta}\) and update this prior to a posterior distribution via the likelihood of observed end-state frequencies or other system-level evidence. Alternatively, one may adopt an optimization-based approach: define a loss or cost function that measures the discrepancy between \(\{p_{j}^{\mathrm{obs}}\}\) and \(\{P_{\mathcal{M}}(S_j \mid \boldsymbol{\theta})\}\), then minimize this loss with respect to \(\boldsymbol{\theta}\). Both perspectives aim to systematically adjust the PRA model’s probabilistic parameters so that end-state frequencies (or other risk metrics) remain consistent with available data or requirements. 
+
+In the next section, we show how parametric learning over the PDAG can be setup as a constrained optimization problem.
+
+\section{Parameter Learning as Constrained Optimization}
+\label{sec:opt_formalization}
+
+Each node \(X_i\) in the PDAG has an associated parameter \(\theta_i\), gathered into a vector  
+\[
+\boldsymbol{\theta}
+\;=\;
+(\theta_1,\;\theta_2,\;\dots,\;\theta_n).
+\]
+For a set of end-states \(\{S_j\}_{j=1}^m\), the model’s predicted probability under \(\boldsymbol{\theta}\) is  
+\[
+p_{j}^{\mathrm{pred}}\bigl(\boldsymbol{\theta}\bigr)
+\;=\;
+P_{\mathcal{M}}\bigl(S_j \mid \boldsymbol{\theta}\bigr).
+\]
+Suppose observed or target frequencies \(\bigl\{p_{j}^{\mathrm{obs}}\bigr\}\) are given. A discrepancy measure  
+\[
+d\!\bigl(p_{j}^{\mathrm{obs}},\,p_{j}^{\mathrm{pred}}(\boldsymbol{\theta})\bigr)
+\]
+compares the model’s predictions to these values. One can also add a regularization term \(\Psi(\boldsymbol{\theta})\) to encode additional constraints such as engineering limits or prior information. Let \(\Omega\) denote the feasible set for \(\boldsymbol{\theta}\), enforcing domain-specific requirements (e.g., probability normalization). Parameter learning then becomes the following constrained optimization problem:
+\[
+\min_{\boldsymbol{\theta} \,\in\, \Omega} 
+\quad 
+\sum_{j=1}^m
+d\!\Bigl(
+   p_{j}^{\mathrm{obs}},\,
+   p_{j}^{\mathrm{pred}}(\boldsymbol{\theta})
+\Bigr)
+\;+\;
+\Psi(\boldsymbol{\theta}).
+\]
+A solution \(\boldsymbol{\theta}^{*}\) in \(\Omega\) is sought that minimizes overall discrepancy while respecting any additional constraints. Gradient-based methods (when \(d\) is differentiable) or other solvers can be employed.
+
+\input{parts/4_learning/1_param/1_demo}
+\input{parts/4_learning/1_param/3_case_study}
+\input{parts/4_learning/1_param/4_figs}

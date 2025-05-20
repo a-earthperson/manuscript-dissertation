@@ -1,0 +1,78 @@
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+%\makeglossaries
+
+\newglossaryentry{cutset}
+{
+    name=Cut Set,
+    description={A set of basic events (component failures) whose simultaneous occurrence causes the system to fail. In other words, the failure of all components in the set results in system failure.}
+}
+
+\newglossaryentry{pathset}
+{
+    name=Path Set,
+    description={A set of components whose simultaneous functioning ensures system success. That is, if all components in the set are operational, the entire system functions properly.}
+}
+
+\newacronym{mcs}{MCS}{Minimal Cut Set}
+
+\newglossaryentry{minimalcutset}
+{
+    name=Minimal Cut Set,
+    description={A smallest possible Cut Set where the failure of all components causes system failure, and removing any component from the set would no longer result in system failure.},
+    parent=cutset
+}
+
+\newacronym{mps}{MPS}{Minimal Path Set}
+
+\newglossaryentry{minimalpathset}
+{
+    name=Minimal Path Set,
+    description={A smallest possible Path Set where the functioning of all components ensures system success, and removing any component from the set would no longer ensure system success.},
+    parent=pathset
+}
+
+\newglossaryentry{maximalpathset}
+{
+    name=Maximal Path Set,
+    description={A Path Set that cannot be extended by adding more components; it includes all components that can be in a Path Set without redundancy. Adding any additional component does not create a new Path Set, as it would not change the system's operational status.}
+}
+
+\newacronym{pi}{PI}{Prime Implicant}
+
+\newglossaryentry{primeimplicant}
+{
+    name=Prime Implicant,
+    description={An implicant of a Boolean function that is as large as possible (in terms of combining variables) without containing redundant literals. It represents a minimal product term that cannot be combined further to simplify the function.},
+    sort=Prime Implicant
+}
+
+\newacronym{epi}{EPI}{Essential Prime Implicant}
+
+\newglossaryentry{essentialprimeimplicant}
+{
+    name=Essential Prime Implicant,
+    description={A Prime Implicant that covers one or more minterms (true outputs) of a Boolean function that no other Prime Implicant covers. These are critical for the minimal expression of the function, as omitting them would alter the function's output.},
+    parent=primeimplicant
+}
+
+\newacronym{et}{ET}{Event Tree}
+\newglossaryentry{eventtree}{
+    name=Event Tree,
+    description={A logic diagram that begins with an initiating event or condition and progresses through a series of branches that represent expected system or operator performance that either succeeds or fails and arrives at either a successful or failed end state.},
+}
+
+\newacronym{PRA}{PRA}{Probabilistic Risk Assessment}
+\newglossaryentry{pra}{
+    name=Probabilistic Risk Assessment,
+    description={A qualitative and quantitative assessment of the risk associated with plant operation and maintenance that is measured in terms of frequency of occurrence of risk metrics, such as release category frequency and its effects on the health of the public (also referred to as a PSA)},
+}
+
+% \newdualentry{et} % label
+%   {ET}            % abbreviation
+%   {Event Tree}  % long form
+%   {A logic diagram that begins with an initiating event or condition and progresses through a series of branches that represent expected system or operator performance that either succeeds or fails and arrives at either a successful or failed end state} % description
+  
+% \glsaddall %  to list all entries <<<<<
+% \usepackage[toc]{glossaries}

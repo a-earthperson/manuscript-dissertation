@@ -1,0 +1,153 @@
+\chapter{Probability Estimation using Monte Carlo Sampling}
+\section{Monte Carlo Fundamentals}
+Monte Carlo methods provide a versatile framework for approximating expectations, probabilities, and other quantities of interest by simulating random observations from an underlying distribution. At its core, a Monte Carlo estimator uses repeated random draws to approximate quantities such as
+\begin{equation}
+\label{eq:generic_monte_carlo_estimator}
+\mathbb{E}[f(X)]
+\;=\;
+\int f(x)\,p(x)\,\mathrm{d}x
+\;\;\approx\;\;
+\frac{1}{N}\sum_{i=1}^N f\bigl(x^{(i)}\bigr),
+\end{equation}
+where \(x^{(1)},x^{(2)},\dots,x^{(N)}\) are independent and identically distributed (i.i.d.) samples drawn from \(p\). The function \(f\) is a measurable function of the random variable \(X\). In reliability and PRA contexts, \(f\) might be an indicator of a particular event (e.g., a system failure), in which case \(\mathbb{E}[f(X)]\) becomes the probability of that event.
+\subsection{Convergence and the Law of Large Numbers}
+A central theoretical result underpinning Monte Carlo sampling is the \emph{Law of Large Numbers (LLN)}. In one of its classical forms, the Strong LLN states:
+\begin{theorem}[Strong Law of Large Numbers]
+\label{thm:SLLN}
+Let \(X_1, X_2, \dots\) be a sequence of i.i.d.\ random variables with finite expectation \(\mathbb{E}[X_1]\). Then, with probability 1,
+\[
+\lim_{N\to\infty}
+\frac{1}{N}\sum_{i=1}^N X_i
+\;=\;
+\mathbb{E}[X_1].
+\]
+\end{theorem}
+Applied to the sample estimator in Eq.~\eqref{eq:generic_monte_carlo_estimator}, the LLN implies that as the number of samples \(N\) grows large, the average of the function values \(f\bigl(x^{(i)}\bigr)\) converges to \(\mathbb{E}[f(X)]\). Thus, by simply drawing enough samples, one can approximate probabilities or expectations arbitrarily well (with probability~1).
+
+\subsection{Central Limit Theorem and Error Analysis}
+Another classical result is the \emph{Central Limit Theorem (CLT)}, which indicates that the Monte Carlo estimator’s distribution (around its true mean) approaches a normal distribution for large \(N\). Specifically,
+
+\begin{theorem}[Central Limit Theorem]
+\label{thm:CLT}
+Suppose \(X_1, X_2,\dots\) are i.i.d.\ random variables with mean \(\mu=\mathbb{E}[X_1]\) and variance \(\sigma^2=\mathbb{V}[X_1]<\infty\). Then the sample mean satisfies
+\[
+\sqrt{N}
+\biggl(
+ \frac{1}{N}\sum_{i=1}^N X_i - \mu
+\biggr)
+\;\;\xrightarrow{\mathrm{d}}\;\;
+\mathcal{N}(0,\sigma^2),
+\]
+where \(\xrightarrow{\mathrm{d}}\) denotes convergence in distribution.
+\end{theorem}
+
+In practical terms, the CLT implies that for sufficiently large \(N\), the sampling fluctuations of the Monte Carlo estimator around the true mean are approximately normal. The variance of this normal distribution decreases with \(1/N\). Therefore, one can estimate confidence intervals, standard errors, and convergence rates by tracking empirical variance across the sample.
+
+The above principles remain valid even when \(f\) is an indicator of a Boolean event or a composite system failure embedded in an event/fault tree. One need only be able to draw samples \(\bigl(x^{(i)}\bigr)\) from the system’s joint distribution over basic events (or from any suitable representation of the PRA model) and then evaluate the function \(f\) to determine system success/failure for each sample. Subsequent chapters will expand on how these samples can be generated for event trees, fault trees, or more complex DAG-based representations.
+
+\section{Random Number Generation and Random Variates}
+Monte Carlo estimators rely on the ability to generate random realizations from a given distribution. Computers, however, do not typically provide true randomness; instead, they use \emph{pseudo}-random number generators (PRNGs) to produce sequences of numbers that mimic realizations from a uniform distribution on \([0,1]\). From these \emph{uniform} samples, one can then derive samples from more general distributions using various transformations (e.g., the \emph{inverse transform} method, acceptance-rejection, composition methods, or specialized sampling algorithms).
+
+\subsection{Pseudo-Random Number Generation}
+A PRNG is formally a deterministic function that, given an initial \emph{seed}, generates a long sequence of values in \((0,1)\). Popular choices include:
+\begin{itemize}
+\item \emph{Linear Congruential Generators (LCG)}, which use a recurrence of the form
+\[
+X_{n+1}
+\;=\;
+(a\,X_n + c)
+\;\bmod\; m,
+\]
+then normalize \(\frac{X_{n+1}}{m}\) to produce a pseudo-random variate in \((0,1)\).
+\item \emph{Mersenne Twister}, which generates high-quality pseudo-random numbers with a very long period (e.g., \(2^{19937}-1\)).
+\item \emph{Philox} or other counter-based methods that deliver high performance and reproducible streams across parallel computations.
+\end{itemize}
+
+While these methods provide deterministic sequences, strong design ensures that the resulting outputs pass numerous statistical tests for randomness. If the seed is chosen randomly (or from a secure source), these methods can approximate uniformity closely enough for most Monte Carlo studies.
+
+\subsection*{Random Variates via Transformations}
+Given access to uniform samples \(U\sim \mathrm{Unif}(0,1)\), one can construct samples from many other distributions. Two widely used techniques are:
+
+\begin{enumerate}
+\item \textbf{Inverse Transform Sampling:}  
+   Suppose a continuous variable \(X\) has cumulative distribution function (CDF) \(F_X(x)\). If \(U\sim \mathrm{Unif}(0,1)\), then \(X=F_X^{-1}(U)\) follows the same distribution as \(X\). More precisely,
+   \[
+   P\bigl[X \le x\bigr]
+   \;=\;
+   P\bigl[F_X^{-1}(U)\le x\bigr]
+   \;=\;
+   P\bigl[U \le F_X(x)\bigr]
+   \;=\;
+   F_X(x),
+   \]
+   provided \(F_X\) is continuous and strictly increasing.  
+
+\item \textbf{Acceptance-Rejection:}  
+   For certain distributions where the inverse CDF is not straightforward, one can sample from an easier \emph{proposal distribution} \(q(x)\) that bounds the targeted density \(p(x)\). Specifically, if \(p(x)\le M\,q(x)\) for all \(x\), then:
+   \begin{enumerate}
+   \item Draw \(Y\sim q(\cdot)\) and \(Z\sim \mathrm{Unif}(0,1)\).
+   \item Accept \(Y\) if \(Z\le \frac{p(Y)}{M\,q(Y)}\). Otherwise, reject and repeat.
+   \end{enumerate}
+   The accepted sample \(Y\) follows distribution \(p(x)\).  
+\end{enumerate}
+
+\subsection{Boolean Events as Discrete Random Variables}
+In PRA contexts, many variables are \emph{discrete}, often Bernoulli (success/failure) or categorical (e.g.\ multiple failure modes). Generating \(\{0,1\}\)-valued samples is then straightforward, since for each basic event \(b\),
+\[
+\Pr[b=1] \;=\; p(b),
+\quad
+\Pr[b=0] \;=\; 1-p(b).
+\]
+Given a uniform variate \(U\), one sets
+\[
+b
+\;=\;
+\begin{cases}
+1, & U \le p(b),\\
+0, & \text{otherwise}.
+\end{cases}
+\]
+This approach naturally extends to multi-categorical events. More complex dependencies among events can also be captured by specifying appropriate conditional distributions.
+
+\subsection{Extending Boolean Events to Continuous Random Variables}
+A \emph{continuous} random variable \(Y\) has a probability density function (PDF) \(f_Y(y)\) on a continuous domain \(\mathcal{Y}\subseteq \mathbb{R}\). Common examples in reliability include:
+\begin{itemize}
+\item \textbf{Exponential Distribution}, often used to model times to failure under a constant hazard rate \(\lambda\). Its PDF is
+\[
+f_Y(y) \;=\; \lambda\, e^{-\lambda y},
+\quad
+y \ge 0.
+\]
+\item \textbf{Weibull Distribution}, with flexible shape parameter \(\beta>0\) and scale parameter \(\alpha>0\). Its PDF is
+\[
+f_Y(y)
+\;=\;
+\frac{\beta}{\alpha}
+\Bigl(\frac{y}{\alpha}\Bigr)^{\!\beta -1}
+\exp\!\biggl[-\bigl(y/\alpha\bigr)^{\!\beta}\biggr],
+\quad
+y\ge 0.
+\]
+\item \textbf{Lognormal Distribution}, where \(\log(Y)\) follows a normal distribution. This is sometimes employed for components whose lifetimes span multiple orders of magnitude.
+\end{itemize}
+In a PRA context, continuous random variables typically arise when modeling the \emph{time dimension}: for instance, the time until a valve sticks closed, or the moment when a pipe experiences a critical crack. One can then generate a Bernoulli indicator for whether the failure has occurred by time \(t\) using
+\[
+\Pr[Y \le t]
+\;=\;
+\int_{0}^{t} f_Y(y)\,\mathrm{d}y
+\;=\;
+F_Y(t),
+\]
+where \(F_Y\) is the cumulative distribution function (CDF) of \(Y\). Evaluating this probability at each Monte Carlo trial and comparing against a uniform random variate yields a discrete failure indicator. Hence, continuous distributions can be mapped to discrete states at any chosen time horizon.
+
+
+
+
+\subsubsection*{Ensuring Reliable Sampling in High-Dimensional Boolean Spaces}
+When dealing with large-scale PRA models or deeply nested Boolean structures (multiple fault trees and event trees), a careful approach to random variate generation is needed:
+\begin{itemize}
+\item \textbf{Reusable Streams:} Use a consistent seeding and PRNG strategy to ensure reproducibility of results, especially when comparing multiple system configurations.
+\item \textbf{Parallel and Distributed Simulations:} Avoid overlapping random streams (i.e., ensure different parallel processes use uncorrelated seeds).
+\item \textbf{Validation of Randomness:} Use standard test suites (e.g.\ TestU01, Diehard) if the model’s accuracy depends on fine-scale statistical properties.
+\end{itemize}
+Once random variates for each basic event are generated, higher-level logical structures (e.g.\ gates in a fault tree or branches in an event tree) can be evaluated deterministically.  Subsequent sections will address how to form either a single \emph{global} sample of all events in the system or to \emph{factorize} the sampling process according to the structure of the DAG-based PRA model.

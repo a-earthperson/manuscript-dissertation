@@ -1,0 +1,225 @@
+\usetikzlibrary {circuits.logic.US}
+% \begin{tikzpicture}[circuit logic US,
+%                     tiny circuit symbols,
+%                     ]
+%   \node[or]{\rotatebox{-90}{Y}}
+%   child {
+%     node[and]{}
+%     child {
+%       node[var] {\rotatebox{-90}{$X_3$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_2$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_1$}}
+%     }
+%   }
+%   child {
+%     node[and]{}
+%     child {
+%       node[var] {\rotatebox{-90}{$X_4$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_2$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_1$}}
+%     }
+%   }
+%   child {
+%     node[and]{}
+%     child {
+%       node[var] {\rotatebox{-90}{$X_3$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_2$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_1$}}
+%     }
+%   }
+%   child {
+%     node[and]{}
+%     child {
+%       node[var] {\rotatebox{-90}{$X_3$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_2$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_1$}}
+%     }
+%   }
+%   child {
+%     node[and]{}
+%     child {
+%       node[var] {\rotatebox{-90}{$X_3$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_2$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_1$}}
+%     }
+%   }
+%   child {
+%     node[and]{}
+%     child {
+%       node[var] {\rotatebox{-90}{$X_3$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_2$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_1$}}
+%     }
+%   }
+%   child {
+%     node[and]{}
+%     child {
+%       node[var] {\rotatebox{-90}{$X_3$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_2$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_1$}}
+%     }
+%   }
+%   child {
+%     node[and]{}
+%     child {
+%       node[var] {\rotatebox{-90}{$X_3$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_2$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_1$}}
+%     }
+%   }
+%   child {
+%     node[and]{}
+%     child {
+%       node[var] {\rotatebox{-90}{$X_4$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_3$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_1$}}
+%     }
+%   }
+%   child {
+%     node[and]{}
+%     child {
+%       node[var] {\rotatebox{-90}{$X_3$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_2$}}
+%     }
+%     child {
+%       node[var] {\rotatebox{-90}{$X_1$}}
+%     }
+%   };
+% \end{tikzpicture}
+
+\begin{tikzpicture}[
+    circuit logic US,
+    tiny circuit symbols,
+    level 1/.style={sibling distance=5*18pt},
+    level 2/.style={sibling distance=18pt},
+    ]
+  \node[or]{\rotatebox{-90}{Y}}
+  % Subsets of size 3
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  % Subsets of size 4
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  % Subset of size 5
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  };
+\end{tikzpicture}

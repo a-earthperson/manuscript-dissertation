@@ -1,0 +1,60 @@
+%\input{parts/0_intro/informal_overview}
+
+\chapter{Introduction}
+% The entire risk assessment enterprise can be summarized as the act of integrating/bounding uncertainties within what we know to be true. Putting scaffolding around the unknowns. Using the few knowns to better structure the unknowns. To give form to the unknown.
+\section{Background \& Motivation}
+Probabilistic risk assessment (PRA) aims to quantitatively evaluate the likelihood and severity of adverse events in safety-critical industries. Driven by seminal works such as WASH-1400 and subsequent regulatory guidance, PRA now serves as a cornerstone of risk-informed decision-making in nuclear engineering. A canonical feature of PRA is its reliance on  Boolean logic structures (fault trees and event trees) that characterize sequences of component failures and human actions leading to top-level undesirable outcomes. While such structures ensure thoroughness, the computational complexity of enumerating all failure paths grows exponentially in the number of components. Even moderate-scale reactor models may involve tens of thousands of basic events, rendering naive calculation of end-state probabilities intractable.
+
+Over decades, analysts have adopted a series of approximations and bounding schemes to handle this combinatorial explosion. Strategies include rare-event approximations (which assume minimal overlap between failure sets), min-cut upper bounds (which treat all minimal cut sets as mutually exclusive), and restrictions on gate types to keep expansions manageable. Tools such as CAFTA, FTREX, SAPHIRE, SCRAM, and XFTA implement these methods and remain widely used in industry. Nonetheless, these approximations can lead to conservative estimations.
+
+In recent years, the continued growth of computing power has encouraged reassessment of how PRA calculations can be modernized. Specifically, massively parallel hardware (e.g., GPUs and multi-core CPUs) has prompted the exploration of data-parallel methods. Monte Carlo sampling is a natural fit for parallelization: since each sample is independent, thousands or millions of system-state draws can be processed simultaneously to build empirical estimates of key probabilities. Straightforward sampling from component failures (rather than enumerating complex Boolean expansions) offers flexibility in modeling dependencies and higher-order correlations. The overarching purpose of this dissertation is to develop a data-parallel Monte Carlo framework for large-scale nuclear PRA, grounded in a GPU-friendly integer bit-packing approach and extended to advanced sensitivity analyses using partial derivatives via Shannon decomposition.
+\section{Scope}
+This work reexamines how to efficiently compute the failure probability of a large Boolean system while capturing a wide array of gate structures, potential dependencies, and partial derivatives for sensitivity. We concentrate on the following core questions:
+
+\begin{itemize}
+   \item How can large-scale PRA models be quantified without explicit minimal cut set enumeration or strict reliance on model simplifications?
+   \item Which data structures and numerical techniques allow us to exploit parallel hardware such as GPUs, multi-core CPUs, and field-programmable gate arrays (FPGAs)?
+   \item What are the current limitations of Monte Carlo (e.g., rare-event estimation and common-cause failure sampling), and how might variance reduction or more sophisticated sampling schemes mitigate them?
+\end{itemize}
+While our emphasis centers on nuclear applications, the proposed techniques and software are equally suitable for other industries that manage complex risk scenarios (e.g., aerospace, chemical processing, or automotive safety). The dissertation does not attempt to unify every advanced PRA feature (e.g., dynamic simulations or large correlated uncertainties), but it lays the foundation for an extensible data-parallel approach that can incorporate such features in the future.
+
+\clearpage
+\section{Outline and Contributions}
+The primary technical contributions of this dissertation can be summarized as follows:
+
+\begin{enumerate}
+\item \textbf{Data-Parallel Monte Carlo for Boolean Systems:}  
+We introduce a new framework that estimates probabilities for all \emph{success} and \emph{failure} states in a single run of Monte Carlo sampling. By representing each random system state in a bit-packed data structure, we achieve high-throughput simulations where Boolean operators (AND, OR, \(k/n\), etc.) map naturally to bitwise operations on GPUs or multi-core CPUs.
+
+\item \textbf{Integration with Probabilistic Circuits:}  
+To unify event/fault tree logic with more flexible gate structures, we embed the model in a \emph{probabilistic circuit} representation. This perspective enables node-level factorization and sum mixtures, opening doors to advanced decomposition-based analyses while retaining parallel-friendly evaluation.
+
+\item \textbf{Sampling Techniques for Partial-Derivatives:}  
+We develop a bitwise algorithm to approximate partial derivatives of the system’s failure probability with respect to individual or clustered component reliabilities. By evaluating logical expressions under complementary assignments (as guided by the Shannon expansion), these derivatives can be computed in the same Monte Carlo pass. This capability facilitates advanced sensitivity and importance ranking in large models. It also opens a path towards integrating model evaluation with learning-based tasks.
+
+\item \textbf{Benchmarking Against Industry Tools:}  
+Through a series of case studies—most notably, the generic pressurized water reactor (PWR) reference model—we compare our approach with standard PRA tools (CAFTA, FTREX, SAPHIRE, SCRAM, XFTA). Results indicate that at comparable accuracy, our framework can surpass existing methods by orders of magnitude in runtime performance. We discuss how discrepancies in extremely low-probability events should be carefully monitored via convergence diagnostics.
+
+\item \textbf{Prototype Implementation:}  
+We present an open-source reference implementation named Canopy, built using the SYCL programming model. The code is portable across a variety of parallel architectures, including consumer GPUs and specialized accelerators. We provide usage examples and discuss future directions, such as unifying the approach with importance sampling to better handle rare events and building correlated sampling routines amenable to common-cause failure modeling.
+\end{enumerate}
+
+\section{Software Implementations}
+\section{Related Publications}
+\section{Organization of the Dissertation}
+% The remainder of this dissertation is organized into multiple parts covering theoretical foundations, methodological frameworks, practical results, and future directions:
+
+% \begin{itemize}
+% \item \textbf{Part I: Foundations}  
+%    – Provides an overview of rich Boolean representations (event trees, fault trees) in PRA, introduces probabilistic circuits, and reviews key Monte Carlo sampling principles relevant to reliability estimation.
+
+% \item \textbf{Part II: Proposed Methods}  
+%    – Details the data-parallel Monte Carlo approach, discussing bit-packed state encoding, gate-by-gate evaluation, and Shannon-decomposition-based partial derivatives.
+
+% \item \textbf{Part III: Implementation and Results}  
+%    – Documents the Canopy software design, GPU kernel formulations, and parallel performance optimizations. Presents numerical benchmarks against large PWR fault-tree models and comparisons with standard PRA codes. Highlights areas needing specialized variance reduction for rare events.
+
+% \item \textbf{Part IV: Extensions and Conclusion}  
+%    – Explores potential enhancements, such as correlated sampling for common-cause failures and ways to incorporate Bayesian or machine-learning-based parameter updates. Summarizes major findings and discusses the prospective impact of data-parallel quantification on future PRA methodologies.
+
+% \end{itemize}

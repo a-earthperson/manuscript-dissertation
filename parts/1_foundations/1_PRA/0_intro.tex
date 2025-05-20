@@ -1,0 +1,37 @@
+\chapter{Probabilistic Risk Assessment}
+
+\section{The Triplet Definition of Risk}
+\label{sec:triplet_definition_of_risk}
+A central goal of risk analysis in nuclear engineering is to enable sound decision-making under large uncertainties. To achieve this, risk must be defined in a way that is both rigorous and practically quantifiable. One widely accepted definition, tracing back to seminal work in Refs.~\cite{kaplan_quantitative_1981}, frames risk as a \emph{set of triplets}. Each triplet captures three essential dimensions:
+
+\begin{enumerate}
+  \item \textit{What can go wrong?}
+  \item \textit{How likely is it to happen?}
+  \item \textit{What are the consequences if it does happen?}
+\end{enumerate}
+
+In more formal terms, let
+\begin{equation}
+\label{eq:risk_triplets}
+    R \;=\;
+    \bigl\{\,
+        \langle
+            S_i,\,
+            L_i,\,
+            X_i
+        \rangle
+    \bigr\}_{c}
+\end{equation}
+where \(R\) denotes the overall risk for a given system or activity, and the subscript \(c\) emphasizes \emph{completeness}: ideally, all important scenarios must be included. In this notation:
+\begin{itemize}
+    \item \(S_i\) specifies the \(i\)th \textbf{scenario}, describing something that can go wrong (e.g.\ an initiating event or equipment failure).  Typically, \(S_i \in \mathcal{S}\), where \(\mathcal{S}\) is the set of all possible scenarios.
+    \item \(L_i\) (sometimes denoted \(p_i\) or \(\nu_i\)) is the \textbf{likelihood} (probability or frequency) associated with scenario~\(S_i\).  In other words, \(L_i\in [0,1]\) if modeled as a probability, or \(L_i\in [0,\infty)\) if modeled as a rate/frequency.
+    \item \(X_i\) characterizes the \textbf{consequence}, i.e.\ the severity or nature of the outcome if the scenario occurs. Consequences can range from radiological releases and economic cost to broader societal impacts. In some analyses, \(X_i\) is a single-valued metric in \(\mathcal{X}\); in others, it may be treated as a distribution over possible outcomes in \(\mathcal{X}\).
+\end{itemize}
+
+The notation \(\{\cdot\}_{c}\) in Eq.~\eqref{eq:risk_triplets} stresses that \emph{all} substantial risk scenarios must be included. Omitting a significant scenario might severely underestimate total risk. One might ask, ``What are the uncertainties?'' In this dissertation, uncertainties are embedded in each \(L_i\) (and sometimes \(X_i\)) via probability distributions.
+
+\subsection{Scenario Approach to PRA}
+\label{sec:scenario_approach_to_pra}
+
+A practical way to enumerate each triplet \(\langle S_i, L_i, X_i\rangle\) is through logical decomposition of potential failures or disruptions, a process referred to as \emph{scenario structuring}. Scenario structuring helps answer the question ``\textit{What can go wrong?}'' in greater detail by dividing possible scenarios into commonly recognized classes. Each of these categories corresponds to a distinct family of \emph{initiating events} (IE) that can trigger a chain of subsequent events or failures. At each node in the success scenario, we identify the IEs, which branch off from the initial success path \(S_0\) into new pathways that may lead to undesirable states. Thus, each \emph{scenario} \(S_i\) can be interpreted as a distinct departure from the baseline success path, triggered by some IE that occurs at node \(i\). From that point onward, a sequence of \emph{conditional events} or barriers may succeed or fail, culminating in an end-state \(ES_i\).

@@ -1,0 +1,107 @@
+\subsection{Results on Aralia Fault Trees: Comparative Accuracy and Runtime}
+\sisetup{table-format=1.2e-2,round-mode=places,round-precision=2}
+\begin{longtable}{@{}llS[table-format=1.2e-2]S[table-format=1.2e-2]S[table-format=1.2e-2]ll@{}}
+\caption{Mean Absolute Error vs Log-Probability (Approximate Methods)}
+\label{tab:logp-mae}\\
+\toprule
+            &          & \multicolumn{3}{c}{\textbf{Mean Absolute Error - log(P)}}       &         &       \\* \cmidrule(lr){3-5}
+\multirow{-2}{*}{\textbf{\#}} &
+  \multirow{-2}{*}{\textbf{\begin{tabular}[c]{@{}l@{}}Fault\\ Tree\end{tabular}}} &
+  \textbf{REA} &
+  \textbf{MCUB} &
+  \textbf{Monte Carlo} &
+  \multirow{-2}{*}{\textbf{\begin{tabular}[c]{@{}l@{}}MC\\ Samples\end{tabular}}} &
+  \multirow{-2}{*}{\textbf{\begin{tabular}[c]{@{}l@{}}Runtime\\ {[}sec{]}\end{tabular}}} \\* \midrule
+\endhead
+%
+\bottomrule
+\endfoot
+%
+\endlastfoot
+%
+\textbf{1}  & baobab1  & 1.45156E-04 & 1.45156E-04 & 7.61880E-03                         & 2.5E+08 & 0.262 \\
+\textbf{2}  & baobab2  & 6.48628E-03 & 6.34705E-03 & 1.54436E-03 & 2.5E+08 & 0.209 \\
+\textbf{3}  & baobab3  & 1.21509E-02 & 1.16701E-02 & 2.24843E-04 & 2.4E+08 & 0.259 \\
+\textbf{4}  & cea9601  & 9.36195E-02 & 9.32207E-02 & 2.41802E-03 & 1.2E+08 & 0.262 \\
+\textbf{5}  & chinese  & 1.08742E-02 & 1.06354E-02 & 2.14601E-03 & 9.4E+08 & 0.277 \\
+\textbf{6}  & das9201  & 1.26649E-01 & 1.22765E-01 & 5.49963E-05 & 2.3E+08 & 0.279 \\
+\textbf{7}  & das9202  & 7.72743E-05 & 2.57596E-05 & 1.20232E-04                         & 5.2E+08 & 0.295 \\
+\textbf{8}  & das9203  & 3.59019E-02 & 3.55935E-02 & 2.31768E-04 & 5.2E+08 & 0.292 \\
+\textbf{9}  & das9204  & 1.68086E-01 & 1.68087E-01 & 1.13495E-01 & 6.1E+08 & 0.292 \\
+\textbf{10} & das9205  & 9.63825E-02 & 9.63725E-02 & 2.76190E-02 & 3.3E+09 & 0.958 \\
+\textbf{11} & das9206  & 5.43561E-02 & 8.89660E-04 & 3.51548E-04 & 2.0E+08 & 0.269 \\
+\textbf{12} & das9207  & 1.18486E-01 & 2.45492E-02 & 1.36519E-04 & 9.5E+07 & 0.282 \\
+\textbf{13} & das9208  & 4.12808E-02 & 3.81968E-02 & 9.34017E-05 & 2.5E+08 & 0.307 \\
+\textbf{14} &
+  das9209 &
+  2.11242E-02 &
+  1.70245E+01 &
+   &
+  \multicolumn{1}{c}{-} &
+  \multicolumn{1}{c}{-} \\
+\textbf{15} & das9601  & 5.29285E-02 & 5.19122E-02 & 6.67174E-04 & 1.1E+08 & 0.256 \\
+\textbf{16} & das9701  & 5.02804E-02 & 3.37565E-02 & 6.22978E-04 & 2.3E+07 & 0.273 \\
+\textbf{17} & edf9201  & 1.48012E-01 & 5.36182E-02 & 2.88906E-04 & 1.8E+08 & 0.315 \\
+\textbf{18} & edf9202  & 1.07181E-01 & 6.05976E-03 & 4.53900E-04 & 7.8E+07 & 0.271 \\
+\textbf{19} & edf9203  & 2.22146E-01 & 1.17293E-01 & 3.27993E-04 & 8.0E+07 & 0.302 \\
+\textbf{20} & edf9204  & 2.79531E-01 & 1.05591E-01 & 1.31416E-04 & 8.7E+07 & 0.298 \\
+\textbf{21} & edf9205  & 9.94339E-02 & 4.46260E-02 & 5.60146E-05 & 1.9E+08 & 0.284 \\
+\textbf{22} & edf9206  & 6.98797E-03 & 7.07775E-03 &                                    &        &      \\
+\textbf{23} & edfpa14b & 1.85574E-01 & 9.15983E-02 & 1.04767E-03 & 9.4E+07 & 0.267 \\
+\textbf{24} & edfpa14o & 1.86482E-01 & 9.18665E-02 & 3.39049E-04 & 9.8E+07 & 0.275 \\
+\textbf{25} & edfpa14p & 3.40010E-02 & 1.66283E-02 & 5.35099E-04 & 2.1E+08 & 0.294 \\
+\textbf{26} & edfpa14q & 1.85609E-01 & 9.15366E-02 & 3.33292E-04 & 9.6E+07 & 0.282 \\
+\textbf{27} & edfpa14r & 2.48088E-02 & 2.09729E-02 & 9.33865E-04 & 2.1E+08 & 0.294 \\
+\textbf{28} & edfpa15b & 2.16329E-01 & 9.37065E-02 & 4.67881E-04 & 1.1E+08 & 0.283 \\
+\textbf{29} & edfpa15o & 2.16502E-01 & 9.37627E-02 & 4.06846E-05 & 1.1E+08 & 0.282 \\
+\textbf{30} & edfpa15p & 2.52568E-02 & 1.00382E-02 & 3.54344E-04 & 2.6E+08 & 0.299 \\
+\textbf{31} & edfpa15q & 2.16329E-01 & 9.37065E-02 & 6.74736E-04 & 1.1E+08 & 0.284 \\
+\textbf{32} & edfpa15r & 1.94693E-02 & 1.62668E-02 & 4.04924E-04 & 2.5E+08 & 0.290 \\
+\textbf{33} & elf9601  & 1.98107E-02 & 8.08925E-05 & 7.86600E-05 & 2.3E+08 & 0.274 \\
+\textbf{34} & ftr10    & 1.22076E-01 & 9.27268E-04 & 1.54844E-04 & 2.1E+08 & 0.297 \\
+\textbf{35} & isp9601  & 8.08392E-02 & 6.63074E-02 & 1.13264E-04 & 1.8E+08 & 0.271 \\
+\textbf{36} & isp9602  & 1.74572E-02 & 1.47782E-02 & 1.35280E-03 & 2.3E+08 & 0.281 \\
+\textbf{37} & isp9603  & 3.82337E-02 & 3.74815E-02 & 3.82344E-03 & 2.7E+08 & 0.278 \\
+\textbf{38} & isp9604  & 1.20889E-01 & 8.14313E-02 & 1.88665E-04 & 1.4E+08 & 0.280 \\
+\textbf{39} & isp9605  & 6.57344E-03 & 6.57032E-03 & 2.93472E-02                         & 5.0E+08 & 0.262 \\
+\textbf{40} & isp9606  & 2.27811E-02 & 1.18983E-02 & 1.30307E-04 & 3.4E+08 & 0.289 \\
+\textbf{41} & isp9607  & 2.38880E-02 & 2.38880E-02 & 1.28136E-01                         & 3.8E+08 & 0.282 \\
+\textbf{42} & jbd9601  & 1.22001E-01 & 1.35343E-02 & 1.08116E-04 & 5.7E+07 & 0.279 \\
+\textbf{43} & nus9601  &            &            &                                    & 1.6E+07 & 0.289 \\* \bottomrule
+\end{longtable}
+
+Table~\ref{tab:logp-mae} summarizes the accuracy of three approximate quantification methods—Rare Event Approximation (REA), Min-Cut Upper Bound (MCUB), and our GPU-accelerated Monte Carlo—by listing each approach's mean absolute error in the log-probability (\(\log p\)) domain, alongside the total MC samples and runtime. Although each fault tree exhibits its own complexities, several broad trends emerge:
+
+\begin{enumerate}
+    \item \textbf{Rare Event Approximation (REA) accuracy strongly depends on the \emph{actual} top-event probability.}
+    \begin{itemize}
+        \item For trees with very low-probability failures (e.g., \texttt{baobab1}, \texttt{das9202}, \texttt{isp9605}), where individual component failures rarely coincide, REA's mean error often remains near or below \(10^{-2}\) in log space. This indicates that summing only the first-order minimal cut sets—assuming higher-order intersections contribute negligibly—can be valid when the system is indeed dominated by single-component or few-component events.
+        \item However, for fault trees with moderate or higher top-event probabilities (\(\gtrsim 10^{-2}\)), REA's inaccuracy tends to grow (for instance, up to \(10^{-1}\) in \texttt{edf9203}, \texttt{edf9204}, and \texttt{edfpa15b}). In these cases, ignoring the overlap of multiple cut sets leads to a visible systematic error.
+    \end{itemize}
+
+    \item \textbf{Min-Cut Upper Bound (MCUB) often mirrors REA but with exaggerated errors in certain overlapping-cut configurations.}
+    \begin{itemize}
+        \item In many models (e.g., \texttt{cea9601}, \texttt{baobab3}, \texttt{das9601}), MCUB closely tracks REA, suggesting that higher-order combinations remain negligible in those systems.
+        \item Yet, in a few cases involving heavy cut-set overlap (e.g., \texttt{das9209}, row~14), MCUB soars to a mean log-probability error of \(\sim 17\), dwarfing REA or Monte Carlo. This highlights the well-known pitfall: if multiple cut sets are not genuinely ``rare'' and substantially overlap, the union bound becomes extremely loose.
+    \end{itemize}
+
+    \item \textbf{Monte Carlo yields more consistent and often dramatically lower numerical errors for most moderate- to high-probability top events.}
+    \begin{itemize}
+        \item For example, in \texttt{das9201} (row~6) and \texttt{edf9203} (row~19), the Monte Carlo error is well below \(10^{-3}\), whereas both REA and MCUB can exceed \(10^{-1}\). In these situations, ignoring or bounding higher-order intersections proves inadequate, while direct sampling naturally captures all overlaps.
+        \item However, for fault trees with extremely small top-event probabilities, Monte Carlo's variance can become harder to control. For instance, some rows (\texttt{das9204}, \texttt{das9205}, \texttt{isp9605}, \texttt{isp9607}) show that roughly \(10^{8}\)–\(10^{9}\) samples are required to constrain the error within a few tenths in \(\log p\). Those entries either exhibit a slightly higher Monte Carlo error than REA/MCUB or demonstrate that we needed a disproportionately large sample count (and thus more runtime) to compete with simple rare-event approximations.
+    \end{itemize}
+
+    \item \textbf{Sampling scale and runtime remain surprisingly feasible, even for up to \(10^{9}\) draws.}
+    \begin{itemize}
+        \item Despite some test cases sampling in the hundreds of millions or billions, runtimes remain \(\approx 0.2\)–\(0.3\)~s for most fault trees, rarely exceeding 1~s (see, for instance, row~10 with 3.3~B samples and \(\sim 0.96\)~s). This indicates that the bit-packed, data-parallel Monte Carlo engine is highly optimized, making large-sample simulation a viable alternative to purely analytical approaches for many real-world PRA problems.
+        \item By contrast, the bounding methods (REA and MCUB) typically run in negligible time but deliver inconsistent accuracy depending on each tree's structure. In practice, a hybrid strategy may emerge: apply bounding methods for quick estimates, then selectively invoke large-sample Monte Carlo for trees or subsections where the bounding approximation diverges.
+    \end{itemize}
+
+    \item \textbf{Omitted or Extreme Cases.}
+    \begin{itemize}
+        \item Rows where Monte Carlo entries are missing (e.g., \texttt{das9209} and \texttt{edf9206}) indicate difficulty in converging to a useful estimate within a fixed iteration budget. Conversely, MCUB shows erratic jumps in some of those same cases, underlining the fact that both bounding and sampling approaches can struggle in certain outliers.
+        \item Model \texttt{nus9601} (row~43) lacks all three error columns since no reference solution was available, reflecting a scenario where direct verification remains pending or inapplicable. Nevertheless, the completion time of \(\sim 0.29\)~s for a partial exploration suggests that the structural overhead of large fault trees can still be handled efficiently.
+    \end{itemize}
+\end{enumerate}
+
+These results affirm that Monte Carlo methods, when equipped with high-throughput sampling, often achieve the most robust accuracy across a broader spectrum of top-event probabilities—particularly in configurations where standard cut-set approximations fail to capture significant event dependencies. At the same time, rare-event with exceptionally small probabilities can pose challenges for naive sampling, revealing the potential need for adaptive variance-reduction techniques or partial enumerations. In practice, analysts may combine bounding calculations (REA/MCUB) for quick screening or preparatory checks, then use hardware-accelerated Monte Carlo to refine those domains most susceptible to underestimation or overestimation by simpler approximations. Alternatively, for very large models, where exact solutions may be unavailable, data-parallel Monte Carlo can still estimate event probabilities without building minimal cut sets. 

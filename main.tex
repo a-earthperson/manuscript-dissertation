@@ -1,0 +1,209 @@
+% !TeX TS-program = pdflatex 
+
+\documentclass[11pt,          % font size: 11pt or 12pt
+               phd,           % degree:    ms or phd
+               onehalfspacing % spacing: onehalfspacing or doublespacing
+               ]{ncsuthesis}
+
+%\documentclass[openany,oneside,titlepage,letterpaper]{book}
+
+%%----------------------------------------------------------------------------%%
+%%------------------------------ Import Packages -----------------------------%%
+%%----------------------------------------------------------------------------%%
+\usepackage{xcolor}
+\usepackage{algorithm2e}
+\usepackage{booktabs}  % professionally typeset tables
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb} 
+\usepackage{amsfonts}
+\usepackage{tikz}
+\usepackage{tikz-qtree}
+\usetikzlibrary{calc,positioning}
+\usepackage{textcomp}  % better copyright sign, among other things
+\usepackage{lscape}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{subfig}    % composite figures
+\usepackage{natbib}    % ability to use citet,citep
+% \usepackage{fancyhdr}  % creates headers
+
+\usepackage{siunitx} % For aligning numbers by decimal point
+
+%%% For accessing system, OTF and TTF fonts
+%%% (would have been loaded by polylossia anyway)
+\usepackage{fontspec}
+\usepackage{xunicode} %% loading this first to avoid clash with bidi/arabic
+
+%%% For language switching -- like babel, but for xelatex
+\usepackage{polyglossia}
+
+\setmainlanguage{english}
+\setotherlanguages{hindi,sanskrit} %% or other languages
+\newfontfamily\devanagarifont[Script=Devanagari]{Noto Serif Devanagari}
+
+
+%Citations should be of the form ``author year''  not ``author, year''
+\bibpunct{(}{)}{;}{a}{}{,} % changes apalike bst into AMS format
+ 
+%%----------------------------------------------------------------------------%%
+%%---------------------------- Formatting Options ----------------------------%%
+%%----------------------------------------------------------------------------%%
+%%
+
+%% -------------------------------------------------------------------------- %%
+%% Disposition format -- any titles, headings, section titles
+%%  These formatting commands affect all headings, titles, headings,
+%%  so sizing commands should not be used here.
+%%  Formatting options to consider are
+%%     +  \sffamily - sans serif fonts.  Dispositions are often typeset in
+%%                    sans serif, so this is a good option. 
+%%     +  \rmfamily - serif fonts
+%%     +  \bfseries - bold face
+%\dispositionformat{\sffamily\bfseries}   % bold and sans serif
+\dispositionformat{\bfseries}            % bold and serif
+
+%% -------------------------------------------------------------------------- %%
+%% Formatting for centered headings - Abstract, Dedication, etc. headings
+%%  This is where one might put a sizing command.
+%%  \MakeUppercase can be used to typeset all headings in uppercase.
+\headingformat{\large\MakeUppercase}   % All letters uppercase
+%\headingformat{\large}                % Not all uppercase
+%\headingformat{\Large\scshape}        % Small Caps, used with serif fonts.
+
+%% Typographers recommend using a normal inter-word space after
+%% sentences. TeX's default is to add an wider space, but \frenchspacing
+%% gives a normal spacing. Comment out the following line if you prefer wider spaces between sentences.
+\frenchspacing
+
+%% -------------------------------------------------------------------------- %%
+%%  Optional packages
+%%    A number of compatible packages to improve the look and feel of
+%%    your document are available in the file optional.tex 
+%%    (For example, hyperlinks, fancy chapter headings, and fonts)
+%% To use these options, uncomment the next line and see optional.tex
+\input{optional}
+\input{trees}
+%solve bug from fancyhdr in optional
+%http://nw360.blogspot.com/2006/11/latex-headheight-is-too-small.html
+%\setlength{\headheight}{26.94345pt} % corrected error in Overleaf
+%\fancyhead[L]{\vspace{1mm}} % only puts chapter title in headers
+
+%%----------------------------------------------------------------------------%%
+%%---------------------------- Content Options -------------------------------%%
+%%----------------------------------------------------------------------------%%
+%% Size of committee: 3, 4, 5, or 6 -- this number includes the chair
+\committeesize{4}
+
+%% Members of committee
+%%  Each of the following member commands takes an optional argument
+%%   to specify their role on the committee.
+%%  For co-chairs, use the commands:
+%%      \cochairI{Doug Dodd}
+%%      \cochairII{Chris Cox}
+%%
+\chair{Dr. Mihai A. Diaconeasa}
+\memberII{Dr. Yousry Azmy}
+\memberI{Dr. Aydin Aysu}
+\memberIII{Dr. Nam Dinh}   % unnecessary if committeesize=3
+% \memberIV{Member 4 name}    % unnecessary if committeesize=3, 4
+
+%% Student writing thesis, \student{First Middle}{Last}
+\student{Arjun}{Earthperson} % a full middle name
+
+%% Degree program e.g. Marine, Earth, and Atmospheric Science
+\program{Nuclear Engineering}
+
+%%!!!!!! To Change Year !!!!!!%%
+% If year of graduation is not same as current year (common for December graduates
+% thanks to the Grad Schools odd graduation rules) go into ncsuthesis.cls and change 
+% \the\year in the line:
+% \newcommand{\ncsu@year}{\the\year}
+% to the year of graduation. E.g.:
+% \newcommand{\ncsu@year}{2020}
+
+%% Thesis Title
+%%  Keep in mind, according to ETD guidelines:
+%%    +  Capitalize first letter of important words.
+%%    +  Use inverted pyramid shape if title spans more than one line.
+%%
+%%  Note: To break the title onto multiple lines, use \break instead of \\.
+% \thesistitle{A North Carolina State University Sample \LaTeX{} Thesis \break 
+% with a Title So Long it Needs a Line Break}
+
+% \thesistitle{A Sampling Scheme for Numerical Integration of Boolean Functions with Many Variables}
+
+% \thesistitle{Finding Slopes in Large Boolean Spaces using Probabilistic Circuits}
+
+% \thesistitle{Quantifying Risk by Simulating Probabilistic Circuits}
+
+\thesistitle{A Data-Parallel Monte Carlo Framework for Large-Scale PRA using Probabilistic Circuits}
+%% Degree year. Necessary if your degree year doesn't equal the current year.
+\degreeyear{2025}
+
+%% While your here make sure to change the PDF characteristics in optional.tex!!!
+
+%%----------------------------------------------------------------------------%%
+%%---------------------------- Personal Macros -------------------------------%%
+%%----------------------------------------------------------------------------%%
+
+%% A central location to add your favorite macros.
+
+%% A few examples to get you started.
+\newcommand{\uv}[1]{\ensuremath{\mathbf{\hat{#1}}}}
+\newcommand{\bo}{\ensuremath{\mathbf{\Omega}}}
+\newcommand{\eref}[1]{Eq.~\ref{#1}}
+\newcommand{\fref}[1]{Fig.~\ref{#1}}
+\newcommand{\tref}[1]{Table~\ref{#1}}
+
+\input{definitions}
+%\makeglossaries
+%\glsaddall %  to list all entries <<<<<
+
+
+%%---------------------------------------------------------------------------%%
+\begin{document}
+%%---------------------------------------------------------------------------%%
+\frontmatter
+
+
+\include{front}
+
+\thesistableofcontents
+\thesislistoftables
+\thesislistoffigures
+% \addcontentsline{toc}{chapter}{List of Algorithms}
+% \listofalgorithms
+% \thesisacronyms
+% \thesisdefinitions
+
+%%---------------------------------------------------------------------------%%
+\mainmatter
+% Chapters can remove or add
+\include{parts/_}
+
+%%---------------------------------------------------------------------------%%
+%%  Bibliography 
+%% or use BibTeX
+\bibliography{references}
+\bibliographystyle{apalike}
+
+%%---------------------------------------------------------------------------%%
+% Appendices
+%\ensureoddstart
+\restoregeometry
+
+\appendix
+\input{appendix/_}
+
+%\newgeometry{margin=1in,lmargin=1.25in,footskip=\chapterfootskip, includehead, includefoot}
+
+% Can remove or add
+
+\restoregeometry
+
+%%---------------------------------------------------------------------------%%
+
+%%---------------------------------------------------------------------------%%
+\backmatter
+\end{document}

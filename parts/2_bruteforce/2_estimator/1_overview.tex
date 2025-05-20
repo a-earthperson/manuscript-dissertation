@@ -1,0 +1,90 @@
+To handle massively parallel Monte Carlo evaluations of large-scale Boolean functions, we have developed a preliminary layered architecture that organizes computation in a topological graph. At the lowest level, each Boolean variable/basic event (e.g., a component failure) is associated with a random number generator to sample its truth assignment. We bit-pack these outcomes—storing multiple Monte Carlo samples in each machine word—to maximize computational throughput and reduce memory footprint. Subsequent layers consist of logically higher gates or composite structures that receive the bit-packed results from previous layers and combine them in parallel using coalesced kernels. By traversing the computation graph topologically, dependencies between gates and events are naturally enforced, so kernels for each layer can run concurrently once all prerequisite layers finish, resulting in high kernel occupancy and predictable throughput.
+In practice, each layer is dispatched to an accelerator node using a data-parallel model implement using SYCL. The random number generation pipelines are counter-based, ensuring reproducibility and thread-safety even across millions or billions of samples. Gates that go beyond simple AND/OR logic—such as K-of-N operators—are handled by specialized routines that can exploit native popcount instructions for efficient threshold evaluations. As we progress upwards through the layered topology, each gate or sub-function writes out its bit-packed output, effectively acting as an input stream to the next layer.
+Throughout the simulation, online tallying kernels aggregate how often each node or gate evaluates to True. These tallies can then be turned into estimates of probabilities and sensitivity metrics on the fly. This approach also makes adaptive sampling feasible: if specific gates appear to dominate variance or are tied to particularly rare events, additional sampling can be allocated to their layer to refine estimates.
+
+\section{Layered DAG Topological Organization}
+\label{sec:layered_dag_traversal}
+
+Recall that a DAG \(\mathcal{G} = (\mathcal{V}, \mathcal{E})\) contains no cycles, so there is at least one valid \emph{topological ordering} of its nodes.  A topological ordering assigns each node a numerical \emph{layer index} such that all edges point from a lower-numbered layer to a higher-numbered layer. If a node \(v\) consumes the outputs of nodes \(\{u_1,\dots,u_k\}\), then we require
+\[
+\text{layer}(u_i) \;<\; \text{layer}(v)
+\quad
+\text{for each }i\in\{1,\dots,k\}.
+\]
+In other words, node \(v\) can appear only after all of its inputs in a linear or layered listing.
+
+The essential steps to build and traverse these layers are:
+
+\begin{enumerate}
+    \item \emph{Compute Depths via Recursive Analysis:}  
+      Each node’s depth is found by inspecting its children (or inputs).  If a node is a leaf (e.g., a \texttt{Variable} or \texttt{Constant} that does not depend on any other node), its depth is 0.  Otherwise, its depth is one larger than the maximum depth among its children.  
+
+    \item \emph{Group Nodes by Layer:}  
+      Once each node’s depth is computed, nodes of equal depth form a single \emph{layer}. Thus, all nodes with depth \(0\) are in the first layer, those with depth \(1\) in the second layer, and so on.  
+
+    \item \emph{Sort Nodes within Each Layer:}  
+      Within each layer, enforce an additional consistent ordering: (i)~variables appear before gates, (ii)~gates of different types can be grouped to facilitate specialized processing.  This step is not strictly required for correctness, but it can streamline subsequent stages such as kernel generation or partial evaluations.
+
+    \item \emph{Traverse Layer by Layer:}  
+      A final pass iterates over each layer in ascending order.  Because all inputs of any node in layer \(d\) lie in layers \(< d\), the evaluation (or “kernel build”) for layer \(d\) can proceed after the entire set of layers \(0,\dots,d-1\) is processed.
+\end{enumerate}
+
+This structure ensures a sound evaluation of the DAG: no gate or variable is computed until after all of its inputs are finalized.
+
+\subsection{Depth Computation and Node Collection}
+
+\begin{enumerate}
+    \item \textbf{Clear Previous State.}  
+      Any existing “visit” markers or stored depths in the DAG-based data structures are reset to default values (e.g., zero or -1).
+      
+    \item \textbf{Depth Assignment by Recursion.}  
+      A \texttt{compute\_depth} subroutine inspects each node:
+      \begin{enumerate}
+        \item If the node is a \texttt{Variable} or \texttt{Constant}, it is a leaf in the DAG, so depth \(=0\).  
+        \item If the node is a \texttt{Gate} with multiple inputs, the procedure first recursively computes the depths of its inputs. It then sets its own depth as 
+        \[
+          \text{depth}(\texttt{gate})
+          \;=\;
+          1 \;+\;\max\limits_{\ell \in \text{inputs of gate}} \Bigl[\text{depth}(\ell)\Bigr].
+        \]
+      \end{enumerate}
+    \item \textbf{Order Assignment.}  
+      Each node stores the newly computed depth in an internal field. This numeric value anchors the node to a layer. A consistent pass over the entire graph ensures correctness for all nodes.
+\end{enumerate}
+
+After depths are assigned, gather all nodes, walking the DAG from its root, recording each discovered node and adding it to a global list.
+
+\subsection{Layer Grouping and Local Sorting}
+
+Begin by creating:
+\begin{itemize}
+\item A global list of all nodes, each with a valid depth,  
+\item A mapping from node indices to node pointers,  
+\end{itemize}
+Then, sort the global list by ascending depth.  Let \(\text{order}(n)\) be the depth of node \(n\).  Then
+\[
+\text{order}(n_1)\;\le\;\text{order}(n_2)\;\le\;\dots\,\le\;\text{order}(n_{|\mathcal{V}|}).
+\]
+Finally, partition this list into contiguous \emph{layers}: if the deepest node has a depth \(\delta_{\max}\), then create sub-lists:
+\[
+\{\text{nodes s.t. depth}=0\},
+\quad
+\{\text{nodes s.t. depth}=1\},
+\quad
+\dots,
+\quad
+\{\text{nodes s.t. depth}=\delta_{\max}\}.
+\]
+Within each layer, sort nodes to ensure that \texttt{Variable} nodes precede \texttt{Gate} nodes, and \texttt{Gate} nodes may be further sorted by \texttt{Connective} type (e.g., \texttt{AND}, \texttt{OR}, \texttt{VOT}, etc.).
+
+\subsection{Layer-by-Layer Kernel Construction}
+
+Apply the layer decomposition to drive \emph{kernel building} and \emph{evaluation}:
+
+\begin{enumerate}
+    \item \textbf{Iterate over each layer in ascending depth}.  Because every node’s dependencies lie in a strictly lower layer, one is guaranteed that those dependencies have already been assigned memory buffers, partial results, or other necessary resources.
+    \item \textbf{Partition the layer nodes into subsets by node type}.  Concretely, \texttt{Variable} nodes are batched together for \emph{basic-event sampling} kernels, while \texttt{Gate} nodes are transferred into \emph{gate-evaluation} kernels.  
+    \item \textbf{Generate device kernels}.  For \texttt{Variable} nodes, create Monte Carlo sampling kernels. For \texttt{Gate} nodes, it constructs logical or bitwise operations that merge or transform the sampled states of the inputs.  
+\end{enumerate}
+
+Once kernels for a given layer finish, move on to the next layer. Because of the topological guarantee, no node in layer \(d\) references memory or intermediate states from layer \(d\!+\!1\) or later, preventing cyclical references and ensuring correctness.

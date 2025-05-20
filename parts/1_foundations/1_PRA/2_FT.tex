@@ -1,0 +1,237 @@
+\section{Definition of a Fault Tree}
+\label{sec:fault_tree_definition}
+
+% TODO: citep : Ruijters and Stoelinga - 2015 - Fault tree analysis A survey of the state-of-the-.pdf
+Whereas \emph{event trees} begin with an initiating event and branch forward through possible outcomes, \emph{fault trees} (FT) are a top-down representation of how a specific high-level failure can arise from malfunctions in the components or subsystems of an engineered system. It is typically drawn as a tree or a DAG whose unique root node is the top event and whose leaves/basic events capture individual component failures or other fundamental causes. This hierarchical decomposition proceeds until all relevant failure modes are captured in the leaves or else grouped as undeveloped events.
+
+\subsection{Nodes in a Fault Tree: Events and Gates}
+
+Formally, the nodes of a fault tree can be divided into two main categories:  
+\begin{itemize}
+  \item \textbf{Events}, which denote occurrences at different hierarchical levels.  
+    \begin{itemize}
+      \item \emph{Basic events} (BEs) represent the lowest-level failures, typically single-component malfunctions or individual human errors. They are often depicted as circles or diamonds in diagrams.  
+      \item \emph{Intermediate events} indicate the outcome of one or more lower-level events. Though intermediate events do not change the logical structure of the FT analysis, they can greatly enhance clarity by grouping sub-failures into a meaningful subsystem label (e.g., Cooling subsystem fails). They are typically drawn as rectangles.  
+      \item \emph{Top event} (TE) is a single node, unique in the tree, that represents the high-level failure of interest (e.g., System fails).
+    \end{itemize}
+  \item \textbf{Gates}, which describe how events combine to produce a higher-level event. Each gate outputs a single event (often an intermediate or the top event), based on one or more input events.  
+\end{itemize}
+
+Because a fault tree traces failures up toward the top event, the overall structure becomes a DAG. If a particular event (basic or intermediate) is relevant to multiple subsystems, it can be shared among the inputs of different gates. Consequently, while many small FTs have a pure tree shape, large or intricate systems generally produce shared subtrees, yielding a more general DAG.
+
+\subsection{Common Gate Types in Fault Trees}
+
+FTs often use only a few canonical gate types (Figure~\ref{fig:gates}), each describing a logical relationship among its inputs:
+
+\begin{itemize}
+\item \textbf{AND gate} – The output event occurs only if \emph{all} input events occur.  
+\[
+  \text{Output} \;=\; e_1 \;\land\; e_2 \;\land\;\dots\;\land\; e_k.
+\]
+\item \textbf{OR gate} – The output event occurs if \emph{any} input event occurs.  
+\[
+  \text{Output} \;=\; e_1 \;\lor\; e_2 \;\lor\;\dots\;\lor\; e_k.
+\]
+\item \textbf{\(k\)-out-of-\(n\) gate (Voting gate)} – The output event occurs if \emph{at least} \(k\) of the \(n\) inputs fail. Denoted \(\mathrm{VOT}(k/n)\), it can be expressed by a large OR of all possible subsets of size \(k\), though notationally keeping it as one gate is much more concise.  
+\[
+  \text{Output} \;=\;
+  \Bigl[\!\sum_{i=1}^n e_i \,\ge\, k\Bigr].
+\]
+\item \textbf{INHIBIT gate} – The output event occurs if a specific trigger event happens \emph{and} an additional conditioning event is present (often a privilege or a rarely active subsystem). This gate acts logically like an AND gate on two inputs, but is sometimes drawn differently for clarity.
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=1.5cm,>=stealth,scale=0.85, every node/.style={scale=0.85}]
+
+% AND gate
+\node[draw, thick, minimum width=1cm, minimum height=1cm] (AND) {AND};
+\node[above left=0.3cm and 0.35cm of AND] (ANDin1) {$e_1$};
+\node[below left=0.3cm and 0.35cm of AND] (ANDin2) {$e_2$};
+\draw[->, thick] (ANDin1) -- (AND.west);
+\draw[->, thick] (ANDin2) -- (AND.west);
+\node[right=0.7cm of AND] (ANDout) {Output};
+\draw[->, thick] (AND.east) -- (ANDout);
+
+% OR gate
+\node[draw, thick, minimum width=1cm, minimum height=1cm, right=2.2cm of AND] (OR) {OR};
+\node[above left=0.3cm and 0.35cm of OR] (ORin1) {$e_1$};
+\node[below left=0.3cm and 0.35cm of OR] (ORin2) {$e_2$};
+\draw[->, thick] (ORin1) -- (OR.west);
+\draw[->, thick] (ORin2) -- (OR.west);
+\node[right=0.7cm of OR] (ORout) {Output};
+\draw[->, thick] (OR.east) -- (ORout);
+
+% k of n gate
+\node[draw, thick, minimum width=1.2cm, minimum height=1cm, right=2.2cm of OR] (VOT) {$k/n$};
+\node[above left=0.3cm and 0.4cm of VOT] (VOTin1) {$e_1$};
+\node[left=0.3cm of VOT] (VOTin2) {$\vdots$};
+\node[below left=0.3cm and 0.4cm of VOT] (VOTin3) {$e_n$};
+\draw[->, thick] (VOTin1) -- (VOT.west);
+\draw[->, thick] (VOTin2) -- (VOT.west);
+\draw[->, thick] (VOTin3) -- (VOT.west);
+\node[right=0.7cm of VOT] (VOTout) {Output};
+\draw[->, thick] (VOT.east) -- (VOTout);
+
+\end{tikzpicture}
+\caption{Examples of standard gate types in a fault tree: AND, OR, and \(k/n\) (voting).}
+\label{fig:gates}
+\end{figure}
+
+If a system is large, detailed modeling of every component may not be warranted. In such cases, one may simplify certain subsystems by treating their failures as single \emph{undeveloped events}. An undeveloped event is effectively a basic event for analysis purposes, even though it may internally comprise several components. This method conserves complexity where the subsystem is either of negligible importance or insufficiently characterized to break down further.
+
+A convenient formalization treats an FT as a structure \(F = \langle \mathcal{B}, \mathcal{G}, T, I \rangle\) where the unique top event \(t\) belongs to \(\mathcal{G}\), and:
+
+\begin{itemize}
+\item \(\mathcal{B}\) is the set of basic events. 
+\item \(\mathcal{G}\) is the set of gates or internal nodes.
+\item \(T: \mathcal{G} \to \text{GateTypes}\) assigns a gate type (AND, OR, \(k/n\), etc.) to each gate in \(\mathcal{G}\).  
+\item \(I: \mathcal{G} \to \mathcal{P}(\mathcal{B} \cup \mathcal{G})\) specifies the input set of each gate, i.e.\ which events (basic or intermediate) feed into that gate.  
+\end{itemize}
+
+The graph is \emph{acyclic} and has a unique root (the top event \(t\)) that is reachable from all other nodes. If an element is the input to multiple gates, it may be drawn once and connected multiple times or duplicated visually; either way, the logical semantics remain the same.
+
+\subsection{Fault Tree Semantics}
+
+To interpret a fault tree, we examine which higher-level events fail when a subset \(S\) of basic events have failed. Denote by \(\pi_F(S, e)\) the \emph{failure state} (0 or 1) of element \(e\) given a set \(S\subseteq \mathcal{B}\) of failed basic events. Then:
+
+\begin{itemize}
+\item For each basic event \(b \in \mathcal{B}\):
+  \[
+    \pi_F(S, b) \;=\;
+    \begin{cases}
+      1, & b \in S,\\
+      0, & b \notin S.
+    \end{cases}
+  \]
+\item For each gate \(g \in \mathcal{G}\) with inputs \(\{x_1,\dots,x_k\}\subseteq \mathcal{B}\cup\mathcal{G}\):
+  \[
+  \pi_F(S,g) 
+  \;=\;
+  \begin{cases}
+  \displaystyle
+    \bigwedge_{i=1}^k \pi_F(S, x_i),
+    & \;\text{if }T(g)=\mathrm{AND},\\[1.2em]
+  \displaystyle
+    \bigvee_{i=1}^k \pi_F(S, x_i),
+    & \;\text{if }T(g)=\mathrm{OR},\\[1.2em]
+  \displaystyle
+    1 \;-\; \pi_F(S, x_1),
+    & \;\text{if }T(g)=\mathrm{NOT} \text{ (single input)},\\[1.2em]
+  \displaystyle
+    \sum_{i=1}^k \pi_F(S,x_i)\;\ge\;k,
+    & \;\text{if }T(g)=\mathrm{VOT}(k/n),\\
+  \displaystyle
+    \Bigl(\sum_{i=1}^k \pi_F(S,x_i)\Bigr)\bmod 2,
+    & \;\text{if }T(g)=\mathrm{XOR} ,\\[0.6em]
+  \end{cases}
+  \]
+\end{itemize}
+The top event \(t\) (i.e., \(\mathrm{TE}\)) is a gate in \(\mathcal{G}\); we often write simply \(\pi_F(S)\) to mean whether the top event fails under the set \(S\) of failed BEs.
+
+\subsubsection{Coherent vs. Noncoherent Fault Trees}
+FTs are usually \emph{coherent}, meaning if a certain set of basic events causes a failure, then having more basic events fail cannot fix that failure—no NOT gates or other negations exist to undo the top event. However, some advanced FTs allow thresholds or special conditions that introduce partial noncoherence (e.g., a system that can fail only if a valve is stuck \emph{open} and a pump is \emph{working} to overpressurize a vessel). Such cases add complexity and require extended gates or additional modeling logic.
+
+\subsection{Combining Shared Subtrees and Large Systems}
+
+In standard reliability analysis, certain fault tree computations—such as identifying \emph{minimal cut sets} or calculating the probability of the top event—can be done by enumerating combinations of basic events that ensure system failure. However, if large shared subtrees exist or many gates gather multiple inputs, the expansion can become combinatorially challenging. Nevertheless, the DAG structure remains powerful for:
+
+\begin{itemize}
+\item \textbf{Clarity and Modularity:} Decomposing the system or subsystem failures into smaller, well-defined parts.  
+\item \textbf{Reuse of Subtrees:} Representing components or subsystems that are relevant to multiple parts of the fault logic without arbitrarily duplicating them.  
+\item \textbf{Analytical Efficiency:} Exploiting independence or bounding certain events, thereby limiting the combinatorial explosion.  
+\end{itemize}
+
+\subsection{Quantitative Analysis and Probability Estimation}
+\label{sec:fault_tree_probability_estimation}
+
+Beyond describing which combinations of basic events can fail, most fault tree analyses (FTAs) require a quantitative assessment of the \emph{likelihood} that the top event \(t\) ultimately occurs. This section details how to embed probabilities within the fault tree structure, how to compute the top event’s failure probability (or system \emph{unreliability}), and some common methods for handling large or dependent fault trees.
+
+\subsubsection{Assigning Probabilities to Basic Events}
+
+Let \(\mathcal{B}=\{b_1, \dots, b_n\}\) be the set of basic events in the fault tree \(F\).  Each basic event \(b\) is associated with a \emph{failure probability} \(p(b)\in [0,1]\).  Interpreted as a Boolean random variable \(X_b\), event \(b\) takes value \(1\) (failure) with probability \(p(b)\) and value \(0\) (success) with probability \(1-p(b)\).  Thus, 
+\[
+\Pr\bigl[X_b = 1\bigr] \;=\; p(b), 
+\quad
+\Pr\bigl[X_b = 0\bigr] \;=\; 1-p(b).
+\]
+
+In the simplest \emph{single-time} analysis, each basic event is either failed or functioning for the entire time horizon under study, and no component recovers once it has failed.
+
+\subsubsection{Top Event Probability Under Independence}
+
+If we assume that all basic events fail independently, then for any set \(S \subseteq \mathcal{B}\) of failed basic events,
+\[
+\Pr\bigl[\text{basic events in }S\text{ fail and others succeed}\bigr]
+\;=\;
+\prod_{b \in S} p(b)\,\times\!\!\prod_{b \notin S} [1 - p(b)].
+\]
+Recall from Section~\ref{sec:fault_tree_definition} that the top event \(t\) (also called \(\mathrm{TE}\)) fails given \(S\) precisely if \(\pi_F(S, t)=1\).  Hence, the probability that the top event fails is the sum of these independent configurations \(S\) for which \(\pi_F(S,t)=1\):
+\begin{equation}
+\label{eq:top_event_probability}
+\Pr\bigl[X_t=1\bigr]
+\;=\;
+\sum_{S\,\subseteq\,\mathcal{B}}
+\Bigl[
+    \pi_F(S,t)
+    \prod_{b \in S} p(b)
+    \prod_{b \notin S} \bigl[1 - p(b)\bigr]
+\Bigr].
+\end{equation}
+A direct computation of \eqref{eq:top_event_probability} often becomes unwieldy for large FTs because of the exponential number of subsets \(S\).  However, if the fault tree is \emph{simple} (no shared subtrees) and each gate in \(\mathcal{G}\) has independent inputs, one may propagate probabilities \emph{bottom-up} through the DAG using basic probability rules:
+\[
+\begin{aligned}
+\Pr[g=1] \;=\;& \prod_{x \in I(g)} \Pr[x=1],
+&&\text{if gate \(g\) is AND,}\\[6pt]
+\Pr[g=1] \;=\;& 1 \;-\; \prod_{x \in I(g)}\bigl[1-\Pr[x=1]\bigr],
+&&\text{if gate \(g\) is OR,}\\[6pt]
+\Pr[g=1] \;=\;& 1 \;-\; \Pr[x=1],
+&&\text{if gate \(g\) is NOT (single input \(x\)),}\\[6pt]
+\Pr[g=1] \;=\;& \displaystyle \sum_{j=k}^{\,|I(g)|}
+\;\;\sum_{\substack{A\,\subseteq\,I(g)\\|A|=j}}
+\;\;\prod_{x\in A}\Pr[x=1]\;\prod_{x\in I(g)\setminus A}\bigl[1-\Pr[x=1]\bigr],
+&&\text{if gate \(g\) is \(\mathrm{VOT}(k/n)\),}\\[6pt]
+\Pr[g=1] \;=\;& \displaystyle \sum_{\substack{A\,\subseteq\,I(g)\\\text{\(|A|\) is odd}}}
+\;\;\prod_{x\in A}\Pr[x=1]\;\prod_{x\in I(g)\setminus A}\bigl[1-\Pr[x=1]\bigr],
+&&\text{if gate \(g\) is XOR.}
+\end{aligned}
+\]
+\subsubsection{Dependence and Shared Subtrees}
+In many real-world fault trees, a single basic event \(b\) may feed into multiple gates, thereby making different branches of the tree dependent on one another. This violates the independence assumptions that simple bottom-up probability propagation requires. Below, we list several techniques that address or approximate these dependencies:
+
+\begin{enumerate}
+
+  \item \textbf{Binary Decision Diagrams (BDDs).}  
+  Using BDDs involves encoding the entire Boolean structure of the fault tree into a single, canonical DAG.  Sub-expressions within this diagram are cached, allowing an efficient evaluation of \(\Pr[X_t=1]\) even when basic events are shared across subtrees.  In many cases, BDDs compress large FTs and facilitate fast reliability inference.
+
+  \item \textbf{Minimal Cut Sets (MCSs) and Approximations.}  
+  Many approaches characterize the top event in terms of its minimal cut sets.  Let \(\{\mathrm{MCS}\}\) be the family of all minimal cut sets for the top event \(t\).  Each MCS \(C\subseteq \mathcal{B}\) is a smallest set of basic events whose simultaneous failure brings down the system.  
+
+  \begin{itemize}
+    \item \emph{Rare-Event Approximation.}  
+    When each \(p(b)\) is small, the probability of two or more cut sets overlapping in their failures can be negligible.  A common approximation is to sum the probabilities of each MCS as if they were mutually exclusive:
+    \begin{equation}\label{eq:rare_event_approx}
+      \Pr[X_t=1]
+      \;\approx\;
+      \sum_{C\in \{\mathrm{MCS}\}}
+      \;\prod_{b \in C} p(b).
+    \end{equation}
+    In highly reliable systems, this often yields a reasonable estimate.
+
+    \item \emph{Min-Cut Upper Bound (MCUB).}  
+    A related bounding technique interprets the top event as the union of all MCS failures. By the union bound,
+    \begin{equation}\label{eq:mcub}
+      \Pr[X_t=1]
+      \;\le\;
+      \sum_{C\in \{\mathrm{MCS}\}}
+      \;\prod_{b \in C} p(b).
+    \end{equation}
+    Known as the \emph{min-cut upper bound}, this provides a guaranteed upper estimate for the probability of system failure.  However, if multiple MCSs share common basic events of non-negligible failure probability, one might overestimate \(\Pr[X_t=1]\).  
+  \end{itemize}
+
+  \item \textbf{Simulation-Based Methods.}  
+  Monte Carlo simulation bypasses many analytical complexities by directly sampling the failure state of each basic event from its distribution \(p(b)\).  After sampling, one evaluates the fault tree deterministically (i.e., checks whether \(X_t=1\)).  Repeating over many samples yields an empirical estimate of the top event probability.  This approach is flexible, handles various dependencies, and easily extends to time-dependent or multi-state analyses.  However, for extremely rare failures, simulation can require large sample sizes to achieve low-variance estimates.
+
+\end{enumerate}
+
+Each of these techniques accommodates shared subtrees more effectively than naive bottom-up methods.  In practice, analysts often deploy a combination of them (e.g., using BDDs for certain gates, applying an MCS approximation for others) to balance accuracy, computational cost, and modeling complexity.

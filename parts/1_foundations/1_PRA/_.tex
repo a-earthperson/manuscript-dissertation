@@ -1,0 +1,89 @@
+
+\input{parts/1_foundations/1_PRA/0_intro}
+\input{parts/1_foundations/1_PRA/1_ET}
+\input{parts/1_foundations/1_PRA/2_FT}
+
+
+\usetikzlibrary {intersections}
+\usetikzlibrary {graphs}
+\begin{figure}[ht!]
+\centering
+\begin{tikzpicture}[domain=-4:12]
+  % \draw [help lines] (-4,0) grid (12,12);
+  \draw[->] (-4.0,0) -- (11,0) node[right] {$x$};
+  \draw[->] (-4,0) -- (-4,12.0) node[above] {$f(x)$};
+\begin{scope}[every node/.style={thick}]
+    \node (ss_begin) at (-2.75,1.75) {$\text{S}_0$};
+
+    \node (ss_end) at (9.5,11.0) {$\text{ES}_{0}$} ;
+    % \node (ss_1) at (2.5,0.0) {$S_1$};
+    % \node (ss_i) at (5.0,0.0) {$S_i$};
+    % \node (ss_j) at (10.0,0.0) {$S_j$};
+    % \node (ss_jp1) at (12.5,0.0) {$S_{j+1}$};
+
+\end{scope}
+
+\begin{scope}[>={Circle[black]},
+              every edge/.style={draw=black,very thick}]
+    % \path [->] (ss_0) edge (ss_1);
+    % \path [->] (ss_1) edge (ss_i);
+    % \path [->] (ss_i) edge (ss_j);
+    % \path [->] (ss_j) edge (ss_jp1);
+    % \path [->] (ss_jp1) edge (ss_f);
+    % %\path [->] (B) edge node {$3$} (C);
+    %\path [<->] (ss_begin) edge[out=25,in=220] node {} (ss_ie_i); 
+    \path[<->,save path=\pathA,name path=A] (ss_begin) to [out=45,in=160, edge node={node [near end, above] {$\text{S}_0$}}](ss_end);
+
+    \path[<->,save path=\pathB,name path=B] (1,0) to (1,11);
+
+  \fill[name intersections={of=A and B}] (intersection-1) circle (3pt);
+
+  \node[anchor=south east] (ss_ie_i) at (intersection-1) {$\text{IE}_i$};
+
+  \draw[<->,black,very thick][use path=\pathA];
+  %\draw[red] [use path=\pathB];
+    %\path [<->] (ss_begin) edge[out=25,in=180] node[near end, above] {$\text{S}_0$} (ss_end); 
+    %\path [<->] (ss_ie_i) edge[out=0,in=180] node[sloped] {} (ss_end); 
+\end{scope}
+\begin{scope}
+  [grow'=right,
+   level distance=50pt,
+   every tree node/.append style={anchor=base west},
+   execute at begin node=\strut,
+   level 0/.style={sibling distance=0pt},  % initiating event
+   level 1/.style={sibling distance=55pt}, %
+   level 2/.style={sibling distance=45pt},
+   level 3/.style={sibling distance=25pt, nodes={right=2}},
+   edge from parent/.append style={
+        draw,
+        edge from parent path={
+            (\tikzparentnode.east) -| ($(\tikzparentnode.east)!0.5!(\tikzchildnode.west)$) |- (\tikzchildnode.west)
+        },
+    },
+    every node/.append style={anchor=center,font=\small,text centered},
+    % every level 0 node/.append style={circle, font=\small\bfseries, draw, fill=blue!30, inner sep=0pt},
+    every leaf node/.append style={nodes={right=2}},
+   ]
+   \graph
+{
+  "$I$"[at={(intersection-1)}, right=1.25] -> {
+    b -> c
+  };
+};
+
+  % \node at (intersection-1)[right=1.25]{$I$}
+  %    child {node {$F_{1}^s$}
+  %      child {node {$F_{2}^s$}
+  %        child {node {$\text{ES}_{1}$}}
+  %      }
+  %      child {node {$F_{2}^f$}
+  %        child {node {$\text{ES}_{2}$}}
+  %        child {node {$\text{ES}_{3}$}}
+  %      }
+  %    }
+  %    child {node  {$F_{1}^f$}
+  %      child {node {$\text{ES}_{4}$}}
+
+  \end{scope}   
+\end{tikzpicture}
+\end{figure}

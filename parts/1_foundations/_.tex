@@ -1,0 +1,76 @@
+\part{Foundations}
+
+\input{parts/1_foundations/0_PC/_}
+
+\input{parts/1_foundations/1_PRA/_}
+
+\input{parts/1_foundations/2_MC/_}
+
+\input{parts/1_foundations/3_probstate/_}
+
+% \begin{figure}
+% \begin{tikzpicture}
+%   \graph [nodes={align=center, inner sep=1pt}, grow right=1.5]
+% {
+%   a,
+%   b,
+%   c -> d -> {
+%     e -> f -> g,
+%     h -> i
+%   } -> j,
+%   k -> l
+% }
+% \end{tikzpicture}
+% \caption{An illustrative “success tree,” showing how multiple mitigation paths from the initial condition \(S_0\) can lead to safe or acceptable outcomes.}
+% \label{fig:success_tree_example}
+% \end{figure}
+% Match the style from fig:event_tree_example
+% \tikzset{grow'=right,level distance=48pt}
+% %\tikzset{execute at begin node=\strut}
+% %\tikzset{every tree node/.style={anchor=base west}}
+% \tikzset{
+%     edge from parent/.append style={very thick},
+%     edge from parent/.style={
+%         draw,
+%         edge from parent path={
+%             (\tikzparentnode.east) -| ($(\tikzparentnode.east)!0.5!(\tikzchildnode.west)$) |- (\tikzchildnode.west)
+%         },
+%     },
+%     every node/.style={circle, minimum width=0.2cm, draw, anchor=center,font=\small\bfseries, text centered},
+%     %every level 0 node/.style={circle, font=\small\bfseries, draw, fill=blue!30, inner sep=0pt},
+%     %every internal node/.style={font=\small, inner sep=4pt},
+%     %every leaf node/.style={rectangle, draw, fill=blue!30, minimum width=2.5cm, text centered},
+%     %frontier/.style={distance from root=400pt},
+% }
+% \Tree [.\(1\)
+%     [.\(F_1^{\text{fail}}\)
+%         [.\(X_3\) ]
+%     ]
+% ]
+% \Tree [.\(I\)
+%     [.\(F_1^{\text{succ}}\)
+%         [.\(F_2^{\text{succ}}\)
+%             [.\(X_1\) ]
+%         ]
+%         [.\(F_2^{\text{fail}}\)
+%             [.\(X_2\) ]
+%         ]
+%     ]
+%     [.\(F_1^{\text{fail}}\)
+%         [.\(X_3\) ]
+%     ]
+% ]
+% Example success tree
+% \Tree [.\(S_0\)
+%     [.\(Mitigation \#1\)
+%         [.\(Mitigation \#2\)
+%             [.\(\text{Full Success}\) ]
+%         ]
+%         [.\(Alternate\)
+%             [.\(\text{Partial Success}\) ]
+%         ]
+%     ]
+%     [.\(Backup\)
+%         [.\(\text{Alternate Success}\) ]
+%     ]
+% ]

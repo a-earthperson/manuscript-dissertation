@@ -1,0 +1,179 @@
+\section{PRA Models as Directed Acyclic Graphs}
+\label{sec:unified_pra_dag}
+
+Up to this point, we have introduced ETs to capture the forward evolution of scenarios and FTs to capture the top-down decomposition of system failures. In a full-scale PRA, many ETs and FTs are linked to form a single overarching model. The goal is to represent:
+\begin{enumerate}
+\item The branching structure of multiple event trees, which may feed into one another (ET\(\to\)ET),  
+\item Multiple fault trees that themselves can reference or be referenced by other FTs (FT\(\to\)FT),  
+\item Event trees that invoke fault trees to quantify key failure probabilities (ET\(\to\)FT), and similarly fault trees whose outcome may direct the next branch or state in an event tree.  
+\end{enumerate}
+All of these interconnections can be consolidated into a single DAG.  In broad terms, its nodes stand for either (i)~ET nodes (initiating or functional events), (ii)~FT gates or intermediate events, or (iii)~basic events.
+
+\subsection{Basic Structure and Notation}
+Let us denote:
+\begin{itemize}
+\item \(\{\Gamma_1, \Gamma_2, \dots, \Gamma_{M}\}\) as the \emph{collection of event trees}, where each \(\Gamma_{i}\) may represent a different initiating event or system phase.  Every \(\Gamma_i\) is itself structured as in Section~\ref{sec:event_tree_definition}, with a set of node events and directed edges (success/failure branches).  
+\item \(\{\Phi_{1}, \Phi_{2}, \dots, \Phi_{N}\}\) as the \emph{collection of fault trees}, each built according to Section~\ref{sec:fault_tree_definition}.  Every \(\Phi_j\) has a unique top event, an acyclic arrangement of gates (AND, OR, voting, etc.), and a set of basic events.  
+\end{itemize}
+
+In a large PRA, any ET \(\Gamma_i\) may:
+\begin{itemize}
+\item Lead to another ET \(\Gamma_{k}\) under certain branch outcomes (ET\(\to\)ET).  
+\item Include a branch that requires computing ``System \(X\) fails'' via a fault tree \(\Phi_j\) (ET\(\to\)FT).  
+\end{itemize}
+Similarly, a fault tree \(\Phi_{j}\) may:
+\begin{itemize}
+\item Contain the top event of another fault tree \(\Phi_{k}\) as one of its inputs (FT\(\to\)FT).  
+\item Generate an outcome (e.g.\ subsystem fails) that triggers a branch in some event tree \(\Gamma_i\).  
+\end{itemize}
+These inter-dependencies can be organized into a single DAG, denoted
+\[
+\mathcal{M} \;=\; \bigl(\mathcal{V},\,\mathcal{A}\bigr),
+\]
+where:
+\begin{itemize}
+\item \(\mathcal{V}\) is the set of \emph{all} nodes in the unified model.  Each node \(v\in \mathcal{V}\) has a type indicating whether it belongs to an event tree (ET-node), a fault tree (FT-gate), or is a basic event (BE).  
+\item \(\mathcal{A}\subseteq \mathcal{V}\times \mathcal{V}\) is the set of directed edges.  Each \((u,v)\in \mathcal{A}\) signifies a logical or probabilistic dependency from node \(u\) to node \(v\).  
+\end{itemize}
+By design, \(\mathcal{M}\) is acyclic: no path loops back through the same node.  This condition prevents paradoxical definitions of probabilities or statements (e.g., an event that depends on itself).
+
+\subsection{Nodes and Their Inputs}
+
+We partition \(\mathcal{V}\) into three principal categories:
+\begin{enumerate}
+\item \textbf{Basic Events (BEs).}  Let \(\mathcal{B}\subset \mathcal{V}\) be the set of all basic events across all FTs.  Each \(b\in\mathcal{B}\) is associated with a failure probability \(p(b)\in [0,1]\).  A node \(b\) in the DAG has no incoming edges (i.e., it is a leaf source for the rest of the logic).  
+
+\item \textbf{Fault Tree (FT) Nodes.}  Let \(\mathcal{G}\subset \mathcal{V}\) be the set of \emph{internal FT-gates or intermediate FT-events}\footnote{In some treatments, all FT internal nodes are called gates, even if no actual gate symbol is used.  We adopt the broader term \emph{FT~nodes} for uniformity.}, unified across \(\{\Phi_1,\dots,\Phi_N\}\).  
+    \begin{itemize}
+    \item Each FT node \(g\in \mathcal{G}\) has one output event \(g\) (the node itself in the DAG).  
+    \item The set of inputs to \(g\) may include basic events \(\mathcal{B}\) (e.g., component failures) and/or other FT nodes \(\mathcal{G}\) (subsystem-level events). If \(g\) is the top event of \(\Phi_j\), then it may appear as an input into a \emph{different} FT’s gate or an ET node.  
+    \item As with standard FT logic, each gate has a type in \(\{\mathrm{AND},\,\mathrm{OR},\,\mathrm{VOT}(k/n),\,\ldots\}\).  Its output (failure state) is a Boolean function of its inputs’ failure states.
+    \end{itemize}
+
+\item \textbf{Event Tree (ET) Nodes.}  Let \(\mathcal{E}\subset \mathcal{V}\) be the set of \emph{ET-nodes}, each referring either to an initiating event (IE) or to a functional event within some event tree \(\Gamma_i\).  
+    \begin{itemize}
+    \item An ET node \(e\) in \(\Gamma_i\) can have multiple outgoing edges, each labeled by a particular outcome (e.g., success/failure).  These edges may lead to another ET node (continuing the same event tree), to the root/top event of a fault tree (to evaluate subsystem reliability), or even to the root of a \emph{different} event tree (ET\(\to\)ET).
+    \item As in Section~\ref{sec:event_tree_definition}, each outgoing branch from \(e\) has an associated conditional probability, conditioned on the event \(e\) itself having occurred.  
+    \end{itemize}
+\end{enumerate}
+Hence, 
+\[
+\mathcal{V} \;=\;
+\underbrace{\mathcal{B}}_{\text{basic events}}
+\;\;\cup\;\;
+\underbrace{\mathcal{G}}_{\text{FT nodes}}
+\;\;\cup\;\;
+\underbrace{\mathcal{E}}_{\text{ET nodes}},
+\]
+and every node \(v\) in \(\mathcal{V}\) has an \emph{input set}
+\[
+I(v)
+\;\;\subseteq\;\;
+\mathcal{B}\,\cup\,\mathcal{G}\,\cup\,\mathcal{E}
+\;\;=\;\;\mathcal{V}\setminus\{v\},
+\]
+indicating which nodes feed into \(v\).  By the DAG property, \(v\) cannot be an ancestor of itself.
+
+\subsection{Edge Types and Probability Assignments}
+
+Each directed edge \((u,v)\in \mathcal{A}\) belongs to one of several categories:
+
+\begin{itemize}
+\item \textbf{ET \(\to\) ET edges. [Transfers]}  These edges connect an ET node \(u\in\mathcal{E}\) to another ET node \(v\in\mathcal{E}\) within the same tree \(\Gamma_i\) or leading to a subsequent tree \(\Gamma_{k}\).  In typical diagrams, these edges denote if \(u\) occurs, then with probability \(\theta_{u\to v}\) we transition to \(v\).  Probabilities on all child edges of \(u\) sum to 1, reflecting the partition of possible outcomes.
+
+\item \textbf{ET \(\to\) FT edges. [Functional Events]}  These edges represent the case where an ET node \(u\in\mathcal{E}\) designates Check if subsystem \(\Phi_j\) has failed.  Formally, the next node \(v\in\mathcal{G}\) is the top event (or relevant subsystem event) in fault tree \(\Phi_j\).  The probability of \(v\) failing is not assigned directly on the edge but is computed via the logical structure of \(\Phi_j\).  
+
+\item \textbf{FT \(\to\) FT edges. [Transfer Gates]}  Such edges arise when the top event (or an intermediate gate) \(u\in\mathcal{G}\) of one fault tree is input to a gate \(v\in\mathcal{G}\) in another fault tree.  For instance, if \(\Phi_{1}\) captures the failure mode of a pump and \(\Phi_{2}\) captures the failure of a coolant subsystem that includes that same pump’s top event.  
+
+\item \textbf{FT \(\to\) ET edges. [Initiating Events]}  Less common but still possible are edges that carry an outcome of a fault tree node \(u\in\mathcal{G}\) to an ET node \(v\in\mathcal{E}\).  For instance, an initiating event might depend on whether a certain subsystem fails, as computed by a separate FT \(\Phi_j\). Support system FTs are one such example.
+
+\item \textbf{BEs as sources (no incoming edges).}  Each basic event \(b\in\mathcal{B}\) has probability \(p(b)\) of failing, so \(\Pr[X_b=1]\!=\!p(b)\).  These do not have incoming edges because they represent fundamental failure modes, not dependent on other events within the model.  
+\end{itemize}
+Denote by \(\theta_{u\to v}\) the \emph{conditional probability} weighting an ET-type edge \((u\!\to\!v)\).  If node \(u\) splits into children \(v_1,\dots,v_k\), then
+\[
+\sum_{i=1}^k \theta_{u \to v_i} \;=\; 1,
+\quad
+\theta_{u \to v_i}\;\; \ge\;0.
+\]
+By contrast, FT-type edges do not carry numerical probabilities directly.  Instead, a gate node \(v\in \mathcal{G}\) aggregates its inputs’ \emph{fail/success states} via Boolean logic (AND, OR, \(\mathrm{VOT}(k/n)\), etc.) to yield \(\pi_{\mathcal{M}}(S,v)\in\{0,1\}\), the node \(v\)’s failure state under a set \(S\) of basic-event failures.
+
+\subsection{Semantics of the Unified Model}
+
+A full \emph{scenario} in \(\mathcal{M}\) extends from a designated \textit{initial node} (often an initiating event \(I\in \mathcal{E}\)) forward through whichever ET or FT edges are triggered.  Because no cycles exist, every path eventually terminates in either (a)~an ET leaf (end-state), (b)~a top event that is not expanded further, or (c)~a final subsystem outcome deemed not to propagate further risk.
+
+\subsubsection{Failure States in the Fault Trees.}
+For any subset \(S\subseteq \mathcal{B}\) of basic events that fail:
+\begin{enumerate}
+\item Each \(b\in \mathcal{B}\) fails iff \(b\in S\).  
+\item Each FT node \(g\in \mathcal{G}\) has failure state \(\pi_{F}(S,g)\) determined by the usual fault tree semantics (Section~\ref{sec:fault_tree_definition}).  
+\end{enumerate}
+That is, a node \(g\) in a fault tree \(\Phi_j\) is in failure mode when its logical gate type indicates failure is activated by the failures of its inputs (which might be other gates or basic events).
+
+\subsubsection{Branching in the Event Trees.}
+Whenever an ET node \(e\in \mathcal{E}\) is reached, outgoing edges \(\{(e \to e_1), (e\to e_2),\dots\}\) partially partition the scenario space.  The choice of which child \(e_i\) is realized is probabilistic, with probabilities \(\theta_{e\to e_i}.\)
+
+\subsubsection{Event-Tree to Fault-Tree Links.}
+If an edge \((e\to g)\) connects an ET node \(e\) to a \emph{fault tree top event} \(g\in \mathcal{G}\), the scenario path triggers the question Does \(g\) fail?  The probability that \(g\) is in failure, conditional on having arrived at node \(e\), is determined by the set \(S\subseteq \mathcal{B}\) of basic events that happen to fail in that scenario plus the gate logic of \(\Phi_j\).
+
+Altogether, scenario outcomes in \(\mathcal{M}\) thus combine:
+\begin{itemize}
+\item \(\mathbf{X}_{\mathcal{B}} = \{\,X_b : b\in\mathcal{B}\}\), where \(X_b\in\{0,1\}\) indicates whether basic event \(b\) fails or not, and  
+\item A chain of ET decisions or fault-tree outcomes, traveling through the DAG until reaching a terminal node.  
+\end{itemize}
+If all basic events are assumed independent with probabilities \(\{p(b)\}\), then the \emph{global} likelihood of a specific path \(\omega\) from an initiating event \(I\) to a final outcome (and with a particular pattern of success/failure across \(\mathcal{B}\)) factors into products of:
+\begin{enumerate}
+\item The product of \(\prod_{b\in S}p(b)\,\times\,\prod_{b\notin S}[\,1-p(b)\,]\) for the relevant \(S\subseteq\mathcal{B}\).  
+\item The product of all ET-edge probabilities \(\theta_{u\to v}\) encountered along the path (\(u\in\mathcal{E}\)).  
+\item The logical constraints from each visited fault tree node \(g\in \mathcal{G}\), which impose \(\pi_{F}(S,g)\in\{0,1\}\) in or out of failure.  
+\end{enumerate}
+Summing over all valid paths (or equivalently over all subsets \(S\subseteq \mathcal{B}\) and the result of each ET/FT branching) yields the total system risk measure, such as the probability of a severe radiological release, or the probability that a certain undesired top event emerges.
+
+\subsection{Formal Definition of the Unified Model}
+
+Bringing these elements together, we propose the following definition:
+
+\begin{definition}[Unified PRA Model]
+\label{def:unified_pra_dag}
+A \emph{unified PRA model} is a directed acyclic graph
+\[
+\mathcal{M}
+\;=\;
+\Bigl\langle\,
+  \mathcal{V}\;=\;\mathcal{B}\cup\mathcal{G}\cup\mathcal{E},
+  \;\;\mathcal{A},
+  \;\;p(\cdot),
+  \;\;\pi_{F}
+\Bigr\rangle
+\]
+with the following properties:
+
+\begin{enumerate}
+\item \(\mathcal{B}\) is the set of \textbf{basic events}, each \(b\in \mathcal{B}\) failing with probability \(p(b)\).  These nodes have no incoming edges in \(\mathcal{M}\).  
+\item \(\mathcal{G}\) is the set of \textbf{FT nodes}, each representing a gate or intermediate event in a fault tree.  For \(g\in \mathcal{G}\), the function
+\[
+\pi_{F}(S,g)\;=\;\begin{cases}
+1, & \text{if fault-tree logic declares \(g\) fails under \(S\subseteq\mathcal{B}\)},\\
+0, & \text{otherwise}.
+\end{cases}
+\]
+\item \(\mathcal{E}\) is the set of \textbf{ET nodes}, each having zero or more outgoing edges.  If node \(e\) has children \(\{v_1,\dots,v_k\}\subset \mathcal{V}\), then the edges \(\{(e\to v_i)\}_{i=1}^k\) carry probabilities \(\theta_{e\to v_i}\ge 0\) summing to 1.  
+\item \(\mathcal{A}\subseteq (\mathcal{V}\times \mathcal{V})\) is the set of directed edges.  An edge \((u\to v)\) can be:
+  \begin{itemize}
+  \item \(\mathrm{ET\to ET}\):  event-tree branching,  
+  \item \(\mathrm{ET\to FT}\):  an event tree referencing a fault tree’s top event,  
+  \item \(\mathrm{FT\to FT}\):  linking one fault tree node to another’s input,  
+  \item \(\mathrm{FT\to ET}\):  an FT outcome passed back to an event tree node,  
+  \item \(\mathrm{BE}\to\varnothing\):  no edges emanate from a basic event node.  
+  \end{itemize}
+\item The graph \(\mathcal{M}\) is acyclic: no path in \(\mathcal{A}\) returns to a previously visited node.  
+\end{enumerate}
+\end{definition}
+
+In practice, we anticipate large nuclear PRAs to contain hundreds of event trees and thousands of fault trees, sharing many basic events or subsystem-level fault trees.  By embedding them in \(\mathcal{M}\), one can systematically compute probabilities for any high-level risk measure (e.g., core damage, large release) by enumerating scenario paths or using specialized algorithms (e.g.\ binary decision diagrams, minimal cut set expansions, or simulation-based techniques).  The unified DAG structure codifies both the forward scenario expansions (ET logic) and the top-down sub-component dependencies (FT logic) without creating contradictions or cycles. Definition~\ref{def:unified_pra_dag} makes manifest \emph{which} event tree references \emph{which} fault tree, how fault trees are chained together, and how basic events ultimately feed every higher-level node.  Once built, one may:
+\begin{itemize}
+\item \textbf{Traverse} each path from an initiating event to a final end-state, propelling forward along the ET edges and evaluating any FT nodes via \(\pi_{F}\).
+\item \textbf{Find minimal cut sets and path sets} by traversing the DAG and making cuts along the way.
+\item \textbf{Sum} (or bound, or approximate) scenario probabilities to quantify overall risk.  
+\item \textbf{Perform sensitivity analyses} by biasing subsets of basic-event probabilities \(p(b)\) or gate dependencies.
+\end{itemize}
+All standard PRA methods (minimal cut sets, Monte Carlo simulation, bounding formulas, etc.) remain applicable, but now from within a single unified DAG representation.
