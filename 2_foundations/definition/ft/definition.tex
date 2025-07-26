@@ -1,0 +1,62 @@
+A \acrfull{ft} is a top-down representation of how a specific high-level failure can arise from malfunctions in the components or subsystems of an engineered system. It is typically drawn as a tree or a \acrfull{dag} whose unique root node is the top event and whose leaves/basic events capture individual component failures or other fundamental causes. This hierarchical decomposition proceeds until all relevant failure modes are captured in the leaves or else grouped as undeveloped events.
+
+Formally, the nodes of a fault tree can be divided into two main categories:  
+\begin{itemize}
+  \item \textbf{Events}, which denote occurrences at different hierarchical levels.  
+    \begin{itemize}
+      \item A \acrfull{be} represents the lowest-level failures, typically single-component malfunctions or individual human errors. They are often depicted as circles or diamonds in diagrams.  
+      \item \emph{Intermediate events} indicate the outcome of one or more lower-level events. Though intermediate events do not change the logical structure of the \acrshort{ft} analysis, they can greatly enhance clarity by grouping sub-failures into a meaningful subsystem label (e.g., Cooling subsystem fails). They are typically drawn as rectangles.  
+      \item \emph{Top event} (TE) is a single node, unique in the tree, that represents the high-level failure of interest (e.g., System fails).
+    \end{itemize}
+  \item \textbf{Gates}, which describe how events combine to produce a higher-level event. Each gate outputs a single event (often an intermediate or the top event), based on one or more input events.  
+\end{itemize}
+
+Because a fault tree traces failures up toward the top event, the overall structure becomes a \acrshort{dag}. If a particular event (basic or intermediate) is relevant to multiple subsystems, it can be shared among the inputs of different gates. Consequently, while many small \acrshort{ft}s have a pure tree shape, complex systems generally produce shared subtrees, yielding a more general \acrshort{dag}. If a system is large, detailed modeling of every component may not be warranted. In such cases, one may simplify certain subsystems by treating their failures as single \emph{undeveloped events}. An undeveloped event is effectively a basic event for analysis purposes, even though it may internally comprise several components. This method conserves complexity where the subsystem is either of negligible importance or insufficiently characterized to break down further.
+
+A convenient formalization, explained in detail in \cite{ruijters_fault_2015}, treats an \acrshort{ft} as a structure \(F = \langle \mathcal{B}, \mathcal{G}, T, I \rangle\) where the unique top event \(t\) belongs to \(\mathcal{G}\), and:
+
+\begin{itemize}
+\item \(\mathcal{B}\) is the set of basic events. 
+\item \(\mathcal{G}\) is the set of gates or internal nodes.
+\item \(T \to \text{GateTypes}\): assigns a gate type (AND, OR, \(k/n\), etc.) to each gate in \(\mathcal{G}\).  
+\item \(I \to \mathcal{P}(\mathcal{B} \cup \mathcal{G})\): specifies the input set of each gate, i.e.\ which events (basic or intermediate) feed into that gate.  
+\end{itemize}
+
+The graph is \emph{acyclic} and has a unique root (the top event \(t\)) that is reachable from all other nodes. If an element is the input to multiple gates, it may be drawn once and connected multiple times or duplicated visually; either way, the logical semantics remain the same.
+
+Interpreting a fault tree involves examining which higher-level events fail when a subset $S$ of basic events has failed. Let $\pi_F(S, e)$ denote the failure state (0 or 1) of element $e$ when the set $S \subseteq \mathcal{B}$ of basic events has failed. Then:
+
+\begin{itemize}
+\item For each basic event \(b \in \mathcal{B}\):
+  \[
+    \pi_F(S, b) \;=\;
+    \begin{cases}
+      1, & b \in S,\\
+      0, & b \notin S.
+    \end{cases}
+  \]
+\item For each gate \(g \in \mathcal{G}\) with inputs \(\{x_1,\dots,x_k\}\subseteq \mathcal{B}\cup\mathcal{G}\):
+  \[
+  \pi_F(S,g) 
+  \;=\;
+  \begin{cases}
+  \displaystyle
+    \bigwedge_{i=1}^k \pi_F(S, x_i),
+    & \;\text{if }T(g)=\mathrm{AND},\\[1.2em]
+  \displaystyle
+    \bigvee_{i=1}^k \pi_F(S, x_i),
+    & \;\text{if }T(g)=\mathrm{OR},\\[1.2em]
+  \displaystyle
+    1 \;-\; \pi_F(S, x_i),
+    & \;\text{if }T(g)=\mathrm{NOT} \text{ (single input)},\\[1.2em]
+  \displaystyle
+    \sum_{i=1}^k \pi_F(S,x_i)\;\ge\;k,
+    & \;\text{if }T(g)=\mathrm{VOT}(k/n),\\
+  \displaystyle
+    \Bigl(\sum_{i=1}^k \pi_F(S,x_i)\Bigr)\bmod 2,
+    & \;\text{if }T(g)=\mathrm{XOR} ,\\[0.6em]
+  \end{cases}
+  \]
+\end{itemize}
+
+The top event $t$ (i.e., $\mathrm{TE}$) is a gate in $\mathcal{G}$; it is common to write simply $\pi_F(S)$ to denote whether the top event fails under the set $S$ of failed \acrshort{be}s.

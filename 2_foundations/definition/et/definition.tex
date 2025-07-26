@@ -1,0 +1,33 @@
+\section{Definition of an Event Tree}
+\label{sec:event_tree_definition}
+
+An \acrfull{et} unravels how a single \emph{initiating event} (\(I\)) can branch into multiple possible \emph{end-states} (\(X\)) through a sequence of \emph{functional} (or conditional) events. Each branch captures the success or failure of an important \emph{functional event} (e.g.\ a safety barrier or operator intervention). By following all possible paths, one can systematically account for each final outcome \(X_j\). Figure~\ref{fig:event_tree_example} provides a schematic view of this process for an initiating event \(I\) and two subsequent functional events, \(F_1\) and \(F_2\). Each terminal node (leaf) corresponds to a distinct end-state, denoted \(X_1, X_2, \ldots, X_n\). Though this illustration is intentionally simple, more complex systems may include numerous functional events, each branching into further outcomes.
+
+\input{2_foundations/definition/figs/et_example}
+
+
+At the highest conceptual level, an event tree is a collection of conditional outcomes. Let \(n\) be a positive integer, and let \(j\) range over some index set of end-states~\(J\). Then the scenario pathways can be defined as:
+\begin{equation}
+\label{eq:event_tree_gamma}
+    \Gamma
+    \;=\;
+    \Bigl\{
+        \langle
+            I,\,
+            F_1,\,
+            F_2,\,
+            \dots,\,
+            F_n,\,
+            X_j
+        \rangle
+        :\,
+        j \in J
+    \Bigr\},
+\end{equation}
+where:
+\begin{itemize}
+    \item \(I\) is the \textbf{initiating event}. In a nuclear system, this could be an abnormal occurrence such as a coolant pump trip or an unplanned reactivity insertion.
+    \item \(F_k\) (\(k=1,\ldots,n\)) denotes the \(k\)th \textbf{functional (conditional) event}, which may succeed (\(F_k^{\text{succ}}\)) or fail (\(F_k^{\text{fail}}\)). Typically, each \(F_k\) depends on the outcomes \(F_1,\ldots,F_{k-1}\).
+    \item \(X_j\) is an \textbf{end-state}, describing the final outcome along a particular branch. End-states might indicate safe shutdown, core damage, or a radiological release.
+\end{itemize}
+Each tuple \(\langle I, F_1, \dots, F_n, X_j\rangle\) in \(\Gamma\) encapsulates a distinct scenario pathway. In the broader context of the risk triplet, such a pathway corresponds to \(S_i\), the possibility of something going wrong, while the associated probability and consequences map directly to \(L_i\) and \(X_i\).

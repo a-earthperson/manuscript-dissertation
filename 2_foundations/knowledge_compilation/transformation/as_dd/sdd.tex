@@ -1,0 +1,69 @@
+\subsubsection{Probabilistic Sentential Decision Diagrams (PSDD)}
+\label{sec:psdd}
+
+A \acrfull{psdd} is a tractable representation for a probability distribution over a set of propositional variables subject to logical constraints.  In essence, a \acrshort{psdd} is a parameterized \acrfull{sdd} in which each node is assigned a well-defined local distribution.  By construction, the \acrshort{psdd}'s global distribution respects a given \emph{base theory} (i.e., a propositional formula representing constraints), assigns zero probability to every assignment violating that theory, and factors the remaining assignments according to a hierarchical decomposition.
+
+\begin{definition}[Normalized \acrshort{sdd}]
+Given a \emph{vtree}, $v$, over variables ${X_1, ... , X_n}$, an normalized \acrshort{sdd} over $T$ is defined recursively as follows:
+\begin{enumerate}
+    \item A \emph{terminal} node is a literal $X_i$ or $\neg X_i$
+\item At an \emph{internal vtree node} with left subtree $V_l$ and right subtree $V_r$, a normalized \acrshort{sdd} is a finite disjunction: $$\bigvee_{i=1}^k \left( P_i \land S_i \right)$$ where:
+\begin{enumerate}
+    \item For every $i$,  $P_i$ is a normalized \acrshort{sdd} over the variables in $V_l$, and $S_i$ is a normalized \acrshort{sdd} over the variables in $V_l$.
+    \item The set $\{P_1, \ldots, P_k\}$ forms a partition of the space over $V_l$; that is, $\forall i \neq j: P_i \land P_j = \bot$ (mutually exclusive) and $\bigvee_{i=1}^k P_i = \top$(exhaustive).
+    \item Each $S_i$ is distinct (no two are equivalent).
+    \item Each prime-sub pair $(P_i, S_i)$ is compressed: distinct primes never associate to equivalent subs and vice versa (no redundancy).
+\end{enumerate}
+
+\end{enumerate}
+\end{definition}
+
+Once the normalized \acrshort{sdd} is fixed, one may introduce continuous parameters to obtain a \acrshort{psdd}. These parameters, in effect, turn each decision node into a \emph{local mixture} of its prime components, while terminal nodes over variables become Bernoulli distributions.
+
+\begin{definition}[\acrshort{psdd} Syntax]
+\label{def:psdd-syntax}
+Let $n$ be an \acrshort{sdd} node normalized for a vtree node $v$.
+\begin{itemize}
+\item If $n$ is a terminal node:
+\begin{enumerate}
+\item If it encodes a literal (e.g.\ $X$, $\neg X$) or the constant~$\bot$, then its probability is fixed implicitly (e.g.\ $\neg X$ yields $\Pr(\neg X)=1,$ $\Pr(X)=0$ for that node alone).
+\item If it is the constant~$\top$ and $v$ corresponds to some variable $X$, then we assign a parameter $\theta\in(0,1)$ indicating $\Pr(X)$ at this node.
+\end{enumerate}
+\item If $n$ is a decision node with $k$ elements $[(p_1,s_1), \ldots, (p_k,s_k)]$, we assign nonnegative parameters $\theta_1,\ldots,\theta_k$ such that $\sum_{i=1}^k \theta_i=1$.  Furthermore, if $s_i = \bot$, then $\theta_i$ must be zero (no probability is allotted to a sub whose base is unsatisfiable).
+\end{itemize}
+The resulting parameterized structure is called a \emph{\acrshort{psdd}}.
+\end{definition}
+
+Each node $n$ in a \acrshort{psdd} induces a local distribution $\Pr_n(\cdot)$ on the variables of the vtree node $n$ is normalized for.  At a decision node, the probability of a complete assignment is given by multiplying:
+\begin{enumerate}
+\item The probability that we "choose" a particular prime~$p_i$, labeled by $\theta_i$.
+\item The probability contributed by prime node~$p_i$ on its variables.
+\item The probability contributed by sub node~$s_i$ on its (disjoint) variables.
+\end{enumerate}
+Summing across all primes yields $\Pr_n$ at that node.  By construction, the \emph{root} node's distribution~$\Pr_r$ then covers all variables and zeroes out any assignments that do not satisfy the base theory.
+
+\begin{theorem}[Base Property \cite{darwiche_knowledge_2002}]
+\label{thm:psdd-base}
+If a \acrshort{psdd} node $n$ is normalized for vtree node~$v$, then $\Pr_n(x)=0$ whenever $x$ does not satisfy the \acrshort{sdd} sub-formula~$[n]$.  At the root node $r$, $\Pr_r(x)>0$ only if $x$ satisfies the entire theory.
+\end{theorem}
+
+\paragraph{Parameter Semantics.} A key property of \acrshort{psdd}s is that each parameter $\theta_i$ can be interpreted \emph{locally} as a conditional probability given the \emph{context} of the decision node.  Formally, if node~$n$ has context~$\gamma_n$ (i.e., the partial assignment implied by traversing the \acrshort{sdd} from the root to~$n$), then:
+\[
+\theta_i =\Pr\bigl([p_i] \bigm|[\gamma_n]\bigr)
+\]
+where $[,p_i]$ is the logical content of prime $p_i$.  This ensures that local parameters align with global $\Pr(\cdot)$ in a transparent, compositional way.
+
+\paragraph{Context-Specific Independence.} Due to the vtree-based factorization, \acrshort{psdd}s capture rich \emph{context-specific independences} \cite{boutilier_context-specific_2013}.  At high level, once we know the node's context (which is a partial assignment or formula), certain subsets of variables become conditionally independent of the rest.  These independence statements can be read directly from the \acrshort{psdd} structure, generalizing common conditional-independence ideas in Bayesian or Markov networks.
+
+\paragraph{Inference and Tractability.} A central advantage of \acrshort{psdd}s is that computing $(\Pr_r(e)$ for any evidence~$e$ can be done in time linear in the size of the \acrshort{psdd}.  This incremental algorithm proceeds bottom-up through each node, locally aggregating evidence contributions and summing accordingly.  Moreover, once node-level evidence statistics are available, one can also efficiently compute single-variable or pairwise marginals using a second top-down pass.
+
+\paragraph{Parameter Learning under Complete Data.} Another appealing property is that \emph{maximum-likelihood} parameters can be determined in closed form when every training example is a complete assignment of all variables.  Specifically, if a \acrshort{psdd} node $n$ with context~$\gamma_n$ has elements $(p_i, s_i)$, one sets
+\[
+\theta_i = \frac{\text{number of data points satisfying both } \gamma_n \text{ and } p_i}
+{\text{number of data points satisfying } \gamma_n}.
+\]
+Parallel rules apply for terminal nodes representing $\top$.  Because sub-contexts $\gamma_n \wedge p_i$ are pairwise disjoint, it suffices to tabulate data counts for each feasible sub-context.  The outcome is a simple frequency-based update analogous to parameter estimation in Bayesian networks, yet here it respects the underlying \acrshort{sdd} constraints exactly.
+
+For any propositional distribution (and chosen vtree), there exists a corresponding \acrshort{psdd} whose root distribution matches it exactly.  Furthermore, if the \acrshort{psdd} is kept \emph{compressed} (meaning no redundant substructures), this representation is \emph{unique} up to isomorphic details \cite{darwiche_knowledge_2002}.  Thus, \acrshort{psdd}s can serve as canonical forms for distributions under logical constraints.
+
+In contrast to classical graphical models, \acrshort{psdd}s operate at the confluence of tractable \emph{Boolean} structure (via \acrshort{sdd}s) and probability theory.  They explicitly encode zero-probability assignments (via the \acrshort{sdd} base) while ensuring all positive assignments factor through the decision nodes.  Their parameter semantics aligns each local weight with a well-defined global conditional probability.  In addition, closed-form parameter learning is possible in the complete-data setting.  Hence, \acrshort{psdd}s provide a principled, canonical choice for modeling distributions when the domain is governed by complex logical constraints.

@@ -1,12 +1,4 @@
-%% ------------------------------ Dissertation Abstract ---------------------------------- %%
-%% Dissertation Title: A Data-Parallel Monte-Carlo Framework for Large-Scale PRA using Probabilistic Circuits
-\begin{abstract}
-Probabilistic risk assessment (PRA) for nuclear systems typically requires enumerating minimal cut sets or essential prime implicants to capture all possible sequences of component failures, an approach that grows exponentially more complicated for large models. Existing methods combat this complexity by imposing structural restrictions on logic gates, applying rare-event approximations, or using bounding techniques like the min-cut upper bound. In this dissertation, we propose a data-parallel Monte Carlo framework that directly estimates probability distributions over entire Boolean spaces, circumventing many of the constraints faced by standard cut set analyses. By sampling from component-level input distributions rather than symbolically evaluating each logic configuration, our approach quantifies both success and failure events in one pass. Our open-source framework, Canopy, packs component states into integer bit-vectors and uses vectorized bitwise operations to achieve high throughput across modern GPUs, multi-core CPUs, and FPGAs. As an extension, we introduce a technique for sampling partial-derivatives using bitwise operations, which provides a pathway towards future work on gradient-based updates and other learning-based tasks.
 
-We verify our implementation against the Aralia dataset, comparing convergence and accuracy with the open source SCRAM tool. Preliminary results demonstrate that with the exception of rare-events, data-parallel Monte Carlo, which is primarily memory-bound, can sample a few hundred million events in under 300ms while fully saturating available resources, even on older-generation consumer GPUs. For fault trees with a hundreds of events, sampling achieves error margins comparable to exact solvers. However, specialized variance-reduction or importance-sampling strategies remain essential for capturing extremely rare events with adequate precision.
-
-We anticipate ongoing work on benchmarking the generic pressurized water reactor PRA model, in comparison with industry-standard tools (CAFTA, FTREX, SAPHIRE, XFTA), to provide further insights into solver performance and bottlenecks as the PRA model scales. 
-\end{abstract}
 \section*{An Informal Overview}
 Probabilistic risk assessment (PRA) for nuclear systems requires evaluating complex Boolean functions that represent failure scenarios across thousands of components in two main steps: identifying minimal cut sets (the smallest sets of conditional events leading to end states of interest) and estimating the likelihood of these end states given component reliabilities. Although additional steps exist, PRA quantification primarily revolves around these tasks, which are computationally burdensome because exact solutions involve exhaustive inclusion-exclusion calculations that grow exponentially with the number of components, making large-scale analyses intractable. In response, many approximations have emerged: restricting model logic to a limited set of gate-types, describing only the failure space, applying probability truncation schemes like the rare-event approximation, or employing bounding methods such as the min-cut upper bound. Yet, even with these strategies, PRA quantification remains unwieldy in practice, demanding careful model management and tempered expectations regarding both accuracy and runtime.
 % \vspace{-4mm}
@@ -103,40 +95,4 @@ A related concern is the treatment of common-cause failures (CCFs) and component
 % By transforming PRA tasks—such as quantifying event sequence probabilities and performing sensitivity analyses—into operations over stochastically computed derivatives of Boolean functions, we enable lower-latency, high-throughput, and accurate model quantification as compared to existing approaches. 
  
 % We show how the proposed method is generalizable to a wide array of combinatorial problems across various scientific computing disciplines, including digital circuit design, cryptography, and more. 
-
-
-
-
-%% ---------------------------- Copyright page ------------------------------ %%
-%% Comment the next line if you don't want the copyright page included.
-\makecopyrightpage
-
-%% -------------------------------- Title page ------------------------------ %%
-\pagenumbering{roman}
-\setcounter{page}{1}
-\maketitlepage
-
-%% -------------------------------- Dedication ------------------------------ %%
-% \begin{dedication}
-% %\centering dedication\ldots
-% \end{dedication}
-
-% %% -------------------------------- Biography ------------------------------- %%
-% \begin{biography}
-% %bio \ldots
-% \end{biography}
-
-% %% ----------------------------- Acknowledgements --------------------------- %%
-% \begin{acknowledgements}
-% ack \ldots
-% \end{acknowledgements}
-
-% \addtocontents{toc}{\protect\contentsline{chapter}{List of Tables}{\pageref{tagforlistoftables}}}
-
-% \addtocontents{toc}{\protect\contentsline{chapter}{List of Figures}{\pageref{tagforlistoffigures}}}
-
-
-
-
-
 

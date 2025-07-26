@@ -1,0 +1,75 @@
+\begin{longtable}{llll}
+\caption[Summary of benchmarked datasets, tools, measured metrics, and analysis types.]{Summary of benchmarked datasets, tools, measured metrics, and analysis types \cite{earthperson_dataset_2023}.}
+\label{tab:what_was_benchmarked}\\
+\toprule
+\textbf{Dataset} & \textbf{Tool (Algorithm)} & \textbf{Metrics} & \textbf{Analysis Type} \\
+\midrule
+\endfirsthead
+\multicolumn{4}{c}{\textit{Continued: Summary of benchmarked datasets, tools, measured metrics, and analysis types.}}\\
+\toprule
+\textbf{Dataset} & \textbf{Tool-Algorithm} & \textbf{Metrics} & \textbf{Analysis Type} \\
+\midrule
+\endhead
+%
+\bottomrule
+\endfoot
+%
+\endlastfoot
+
+100\_to\_100k\_voter
+    & SCRAM-MOCUS & Wall clock time & Probability \\
+    & SCRAM-BDD & & \\
+    & SCRAM-ZBDD & & \\
+\midrule
+1\_to\_4k
+    & SCRAM-MOCUS-REA & Wall clock time & Probability \\
+    & SCRAM-MOCUS-MCUB & CPU time  &  \\
+    & SCRAM-BDD &  Memory usage &  \\
+    & XFTA (unknown) &  &  \\
+    & SAPHSOLVE-MOCUS-MCUB &  &  \\
+\midrule
+1\_to\_50k
+    & SAPHSOLVE-MOCUS-MCUB & Wall clock time & Probability ($10^{-14}$) \\
+    & XFTA (unknown) &  CPU time &  Probability ($10^{-20}$) \\
+    &  & Memory Usage & \\
+\midrule
+1\_to\_5k
+    & SCRAM-MOCUS-REA & Wall clock time & Probability \\
+    & SCRAM-MOCUS-MCUB & CPU time &  \\
+    & SCRAM-BDD & Memory usage &  \\
+    & XFTA (unknown) &  &  \\
+    & SAPHSOLVE-MOCUS-MCUB &  &  \\
+\midrule
+2\_to\_100k
+    & SCRAM-MOCUS & Wall clock time & Probability \\
+    & SCRAM-BDD & CPU time &  \\
+    & SCRAM-ZBDD & Memory usage &  \\
+    & XFTA (unknown) &  &  \\
+\midrule
+500\_to\_750
+    & SCRAM-MOCUS & Wall clock time & Probability \\
+    & SCRAM-BDD & CPU time &  \acrshort{ccf} \\
+    & SCRAM-ZBDD & Memory usage &  Importance \\
+    & & & \acrshort{uq} ($10^{3}$ samples) \\
+\midrule
+Non-\acrshort{ccf} models  & SCRAM-MOCUS-REA & Wall clock time & Probability \\
+                & SCRAM-MOCUS-MCUB & CPU time & \\
+                & SCRAM-BDD & Memory usage & \\
+                & SCRAM-ZBDD & & \\
+                & XFTA (unknown) &  &  \\
+                & SAPHSOLVE-MOCUS-MCUB &  &  \\
+                & FTREX-BDD (Name/ID) &  &  \\
+                & FTREX-ZBDD (Name/ID) &  & \\
+\midrule
+\acrshort{ccf} models  & SCRAM-MOCUS-REA & Wall clock time & \acrshort{ccf} \\
+            & SCRAM-MOCUS-MCUB & CPU time & \\
+            & SCRAM-BDD & & \\
+            & SCRAM-ZBDD & & \\
+            & XFTA (unknown) & &  \\
+            & SAPHSOLVE-MOCUS-MCUB &  &  \\
+\midrule
+Modified \acrshort{gpwr} & SAPHSOLVE-GUI & Wall clock time & MCS \\ 
+(EQK-BIN1) \cite{batikh_time-dependent_2023} & SAPHSOLVE-DLL & & Probability \\
+& & & Multi-hazard \\
+\bottomrule
+\end{longtable}

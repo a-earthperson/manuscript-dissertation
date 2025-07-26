@@ -1,0 +1,60 @@
+\section{Generating Cut Sets and Implicants}
+
+% we covered all this in section 2.3 and onward. It would be better to say, "once the PRA model has been built, we can start characterizing risk. In reliability engineering and risk analysis, we care about identifying potential combinations of events of interest (implicants). When these combinations relate strictly to failures (no success events), the implicants are limited to cut sets. Finding unique combinations  is about finding essential prime implicants (for failure and success), or minimal cut sets (for failure only), or maximal path sets (for success only).
+
+Once the fault tree or event tree model has been constructed, the \emph{qualitative} phase of risk characterization begins. The objective is to identify unique combinations of basic events that are of interest because they either \emph{cause} the top event (system failure) or \emph{guarantee} its prevention (system success). These combinations are formalized by the logic concepts defined below.
+
+\emph{Implicants} are general combinations of events (either failure or success) that satisfy the top event. \emph{Cut sets} are specialized implicants containing only failure events that cause system failure. \emph{Path sets} are specialized implicants of the complement function ($\overline{T}$) containing only success events that ensure system operation. \emph{Minimal cut sets} are prime implicants containing only failure events, representing the minimal ways the system can fail. \emph{Maximal path sets} are prime implicants of $\overline{T}$ containing only success events, representing the maximal ways the system can operate successfully. 
+
+\subsection{Implicants}
+Let $T(\mathbf{x})$ be the Boolean top event function of the model and $I \subseteq \{x_1, \dots, x_n\}$ be a set of basic events. A set $I$ is an \emph{implicant} of $T$ if
+\[
+T(\mathbf{1}_I) = 1
+\]
+where $\mathbf{1}_I$ is the truth vector that sets the basic events in $I$ to \textsc{true}. Implicants can contain both failure and success events depending on the analysis context.
+
+\begin{itemize}
+  \item \emph{Cut set}: An implicant containing only failure events.
+  \item \emph{Path set}: The complement of an implicant containing only success events.
+\end{itemize}
+
+\subsubsection{Prime Implicants}
+A \emph{prime} implicant $P$ is an implicant that is not a subset of any other implicant. Formally, $P$ is a prime implicant if:
+\begin{enumerate}
+  \item $T(\mathbf{1}_P) = 1$
+  \item $\forall P' \subset P, T(\mathbf{1}_{P'}) = 0$
+\end{enumerate}
+
+\subsubsection{Essential Prime Implicants}
+An \emph{essential} prime implicant $\pi$ is a prime implicant that contains at least one minterm that is not covered by any other prime implicant, i.e., there exists at least one basic event $\mathbf{a}$ such that $T(\mathbf{a}) = 1$ and $\mathbf{a}$ satisfies $\pi$ but does not satisfy any other prime implicant of $T$. This property guarantees that $\pi$ must appear in every irredundant disjunctive normal form representation of $T$.
+
+\subsection{Path Sets}
+A \emph{path set} $P$ is a set of success events such that when all events in $P$ occur, the system operates successfully. If $\overline{T}$ represents the complement of the top event function (system success), then:
+\[
+\overline{T}(\mathbf{1}_P) = 1 \text{ where } P \text{ contains only success events}
+\]
+
+\subsubsection{Maximal Path Sets}
+A \emph{maximal path set} is a path set to which no basic event can be added while still ensuring system success. A path set $X$ is maximal if:
+\begin{enumerate}
+  \item $\overline{T}(\mathbf{1}_X) = 1$
+  \item $\forall x \notin X, \overline{T}(\mathbf{1}_{X \cup \{x\}}) = 0$
+\end{enumerate}
+Maximal path sets represent the largest combinations of component successes that guarantee system operation.
+
+
+\subsection{Cut Sets}
+A \emph{cut set} $C$ is an implicant containing only failure events such that when all events in $C$ occur, the system fails. Formally, for a Boolean function $T$ representing the top event:
+\[
+T(\mathbf{1}_C) = 1 \text{ where } C \text{ contains only failure events}
+\]
+
+\subsubsection{Minimal Cut Sets}
+A \emph{minimal cut set} is a cut set which causes the failure of the system, but when a basic event is removed from the cut set, it does not cause system failure anymore \cite{amicucci_reliability_2023}. A cut set $M$ is minimal if:
+\begin{enumerate}
+  \item $T(\mathbf{1}_M) = 1$
+  \item $\forall M' \subset M, T(\mathbf{1}_{M'}) = 0$
+\end{enumerate}
+Minimal cut sets represent the smallest combinations of component failures that can cause system failure.
+
+\input{2_foundations/quantification/qualitative/mcs}

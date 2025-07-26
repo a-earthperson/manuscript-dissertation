@@ -1,0 +1,15 @@
+\paragraph{Recursive expansion}
+Starting with $\Delta_{1,1}=w_{\text{TOP}}$, every occurrence of a gate identifier is eliminated via the following transformation rules:
+\begin{align}
+  \Delta_{x,y}     &= \rho_{w,1}, \label{eq:mocus_seed} \\
+  \Delta_{x,y_{\max}+1} &=
+    \begin{cases}
+      \rho_{w,\pi}, & \text{if } w \text{ is an AND gate},\\[4pt]
+      \begin{cases}
+        \Delta_{x,n}, & n=1,\dots,y_{\max},\; n\neq y,\\
+        \rho_{w,\pi}, & n = y,
+      \end{cases} & \text{if } w \text{ is an OR gate}.
+    \end{cases}\label{eq:mocus_expand}
+\end{align}
+with $\pi=2,3,\dots,\lambda_w$.  
+Equation~\eqref{eq:mocus_seed} seeds the matrix, while Equation~\eqref{eq:mocus_expand} generates new columns (AND) or rows (OR) until all $w$ symbols have been replaced by $\varphi$ symbols, thereby producing the complete set of BICS.

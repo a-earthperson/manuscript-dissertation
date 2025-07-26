@@ -1,0 +1,59 @@
+\subsection{Decomposable Negation Normal Form (DNNF)}
+
+\acrfull{dnnf} is a central target language in knowledge compilation, representing a significant refinement of Negation Normal Form (NNF). In NNF, every propositional sentence is represented as a directed acyclic graph (DAG): leaves are labeled by literals (variables or their negations) or by the constants \texttt{true}/\texttt{false}, while internal nodes are labeled by conjunction ($\wedge$) or disjunction ($\vee$) operations. NNF allows unrestricted subformula structure as long as negations only appear at the literal level, but on its own does not provide tractability for key reasoning tasks unless $\text{P} = \text{NP}$.
+
+\subsubsection{Definition of DNNF and Related Forms}
+A formula is in \textbf{DNNF} if it is in NNF and satisfies the \emph{decomposability} property: at every conjunction ($\wedge$-node), the conjuncts mention disjoint sets of variables. Formally, if a conjunction node has children $\varphi_1, \ldots, \varphi_m$, then $\mathrm{Var}(\varphi_i) \cap \mathrm{Var}(\varphi_j) = \emptyset$ for all $i \neq j$. This property enables efficient independent evaluation of circuit branches.
+
+\begin{itemize}
+    \item \textbf{Deterministic DNNF (d-DNNF):} Adds the \emph{determinism} property. At every disjunction ($\vee$-node), disjuncts are mutually contradictory (i.e., the conjunction of any two child subcircuits is inconsistent). Determinism enables additional tractable queries, such as model counting.
+    \item \textbf{Structured DNNF / Structured d-DNNF:} These subclasses further restrict DNNF/d-DNNF by requiring that decompositions reflect a hierarchical structure (typically enforced by a vtree specifying the variable partitioning at each conjunction or disjunction). This \emph{structured decomposability} allows additional tractability (notably, certain transformations), and forms the basis for languages like Sentential Decision Diagrams (SDDs), which are strict subsets of structured d-DNNF.
+\end{itemize}
+
+\subsubsection{Construction and Compilation}
+Compiling an arbitrary propositional formula, often given in CNF or DNF, into DNNF or d-DNNF is a central algorithmic task. For CNF inputs, one algorithm uses a decomposition tree (related to variable treewidth). Given $n$ clauses and treewidth $w$, d-DNNF can be compiled in time and space $O(n w 2^w)$; thus, for bounded treewidth, linear-sized d-DNNF representations can be obtained in linear time. Practical compilers include \texttt{C2D}, \texttt{DSHARP}, and \texttt{d4}. \texttt{DSHARP}, leveraging \#SAT technology, frequently exceeds the speed of \texttt{C2D} while producing similarly sized d-DNNF. OBDD representations for propositional theories can be converted into equivalent DNNF in linear time relative to OBDD size.
+
+\subsubsection{Succinctness}
+Succinctness compares the minimum size of representations of the same function across languages. The succinctness ordering (strict, unless the polynomial hierarchy collapses) is:
+\[
+\text{DNNF} ~<~ \text{d-DNNF} ~<~ \text{FBDD} ~<~ \text{OBDD} ~<~ \text{CNF}/\text{DNF}
+\]
+That is:
+\begin{itemize}
+    \item DNNF (and its subclasses) are strictly more succinct than OBDDs.
+    \item SDDs sit as a strict subset of structured d-DNNF.
+    \item DNNF is generally more succinct than FBDDs, which are more succinct than OBDDs.
+    \item CNF and DNF generally remain exponentially sized compared to DNNF for many functions.
+\end{itemize}
+Smooth deterministic DNNF (sd-DNNF) is as succinct as d-DNNF.
+
+\subsubsection{Supported Queries and Complexities}
+A principal utility of DNNF is to enable several queries in time polynomial to circuit size. The main queries and their tractability status for DNNF and derivatives:
+
+\begin{itemize}
+    \item \textbf{DNNF:}
+    \begin{itemize}
+        \item \textbf{Consistency (CO):} Polynomial time
+        \item \textbf{Clausal Entailment (CE):} Polynomial time
+        \item \textbf{Model Enumeration (ME):} Polynomial time; for sd-DNNF, output-linear time
+    \end{itemize}
+    \item \textbf{d-DNNF/structured d-DNNF:}
+    \begin{itemize}
+        \item All above, plus:
+        \item \textbf{Validity (VA):} Polynomial time
+        \item \textbf{Model Counting (CT):} Polynomial time (linear for sd-DNNF)
+        \item \textbf{Model-based Diagnosis:} Minimum-cardinality diagnosis, etc., in polynomial time
+        \item \textbf{Implicant Checking (IM)}, \textbf{Model Minimization:} Polynomial time
+        \item \textbf{Equivalence Testing (EQ):} Not known to be polynomial time for d-DNNF, unlike OBDD
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Empirical Benchmarks}
+Empirical results show a clear advantage for DNNF and d-DNNF in both size and compilation efficiency versus OBDD on relevant AI tasks:
+\begin{itemize}
+    \item Diagnoses compiled into DNNF are often orders of magnitude smaller than those into OBDD.
+    \item Compilation time is generally faster with DNNF compilers (\texttt{DSHARP} is up to 27 times faster on average than \texttt{C2D}, and both outperform OBDD compilation for relevant model-based diagnosis inputs).
+    \item Diagnostic and enumeration queries are more efficient on DNNF than OBDD, due to reduced circuit size and higher tractability.
+\end{itemize}
+
+\acrshort{dnnf} and its subclasses, notably \acrshort{d-dnnf} and \acrshort{sd-dnnf}, provide a foundational set of tractable languages in knowledge compilation, balancing high succinctness with strong support for key inference queries. Their compilation is practical for many instances, and empirical results show clear advantages over OBDDs. SDDs and structured d-DNNFs offer further tractable transformations at some cost in succinctness.

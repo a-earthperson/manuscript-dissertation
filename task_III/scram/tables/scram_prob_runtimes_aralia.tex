@@ -1,0 +1,58 @@
+\begin{longtable}{@{}llllllllll@{}}
+\caption{SCRAM probability calculation runtimes using three most time-consuming Aralia models.}
+\label{tab:scram_prob_runtimes_aralia}\\
+\toprule
+\multirow{3}{*}{\textbf{\#}} &
+  \multirow{3}{*}{\textbf{Input}} &
+  \multicolumn{6}{c}{\textbf{Wall Time {[}ms{]}}} &
+  \multicolumn{2}{c}{\multirow{2}{*}{\textbf{Speedup}}} \\* \cmidrule(lr){3-8}
+ &
+   &
+  \multicolumn{3}{c|}{\textbf{Serial - 1x CPU}} &
+  \multicolumn{3}{c}{\textbf{OpenMP - 8x CPU}} &
+  \multicolumn{2}{c}{} \\* \cmidrule(l){3-10} 
+ &
+   &
+  \multicolumn{1}{c}{\textbf{Convert}} &
+  \multicolumn{1}{c}{\textbf{P(x)}} &
+  \multicolumn{1}{c|}{\textbf{Total}} &
+  \multicolumn{1}{c}{\textbf{Convert}} &
+  \multicolumn{1}{c}{\textbf{P(x)}} &
+  \multicolumn{1}{c}{\textbf{Total}} &
+  \multicolumn{1}{c}{\textbf{P(x)}} &
+  \multicolumn{1}{c}{\textbf{Total}} \\* \midrule
+\endfirsthead
+%
+\endhead
+%
+  \textbf{23} &
+  edfpa14b &
+  1.26E+04 &
+  7.05E+02 &
+  \multicolumn{1}{l|}{1.33E+04} &
+  1.26E+04 &
+  2.30E+02 &
+  1.28E+04 &
+  3.07 &
+  1.04 \\
+  \textbf{24} &
+  edfpa14o &
+  1.20E+04 &
+  7.28E+02 &
+  \multicolumn{1}{l|}{1.27E+04} &
+  1.20E+04 &
+  2.29E+02 &
+  1.22E+04 &
+  3.19 &
+  1.04 \\
+  \textbf{26} &
+  edfpa14q &
+  1.18E+04 &
+  6.97E+02 &
+  \multicolumn{1}{l|}{1.25E+04} &
+  1.20E+04 &
+  2.30E+02 &
+  1.22E+04 &
+  3.03 &
+  1.03 \\* \bottomrule
+\end{longtable}

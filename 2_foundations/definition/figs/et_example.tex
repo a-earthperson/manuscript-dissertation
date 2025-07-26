@@ -1,0 +1,39 @@
+\begin{figure}[ht!]
+\centering
+\begin{tikzpicture}
+\tikzset{
+    grow'=right,
+    level distance=48pt,
+    sibling distance=6pt,
+    execute at begin node=\strut,
+    every tree node/.style={anchor=base west},
+    edge from parent/.append style={very thick},
+    edge from parent/.style={
+        draw,
+        edge from parent path={
+            (\tikzparentnode.east) -| ($(\tikzparentnode.east)!0.5!(\tikzchildnode.west)$) |- (\tikzchildnode.west)
+        },
+    },
+    every node/.style={anchor=center,font=\small\bfseries, text centered, inner sep=0pt},
+    every level 0 node/.style={circle, font=\small\bfseries, draw, fill=blue!30, inner sep=0pt},
+    every internal node/.style={font=\small, inner sep=4pt},
+    every leaf node/.style={rectangle, draw, fill=blue!30, minimum width=2.5cm, text centered},
+    frontier/.style={distance from root=\textwidth-20pt-100pt},
+}
+\Tree [.\(I\)
+    [.\(F_1^{\text{succ}}\)
+        [.\(F_2^{\text{succ}}\)
+            [.\(X_1\) ]
+        ]
+        [.\(F_2^{\text{fail}}\)
+            [.\(X_2\) ]
+        ]
+    ]
+    [.\(F_1^{\text{fail}}\)
+        [.\(X_3\) ]
+    ]
+]
+\end{tikzpicture}
+\caption{Illustrative event tree with an initiating event \(I\), two functional events \(F_1\) and \(F_2\), and three end-states \(X_1, X_2, X_3\).}
+\label{fig:event_tree_example}
+\end{figure}

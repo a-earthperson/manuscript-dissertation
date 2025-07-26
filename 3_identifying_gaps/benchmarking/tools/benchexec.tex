@@ -1,0 +1,7 @@
+\section{Automated Benchmarks using BenchExec}
+\label{sec:benchexec}
+% description for what benchexec does.
+
+To ensure reproducibility and precise measurement of computational resources, all benchmarking runs are managed using the BenchExec framework \cite{2024sosy}. BenchExec is a benchmarking tool that provides fine-grained control and monitoring of execution time, memory usage, and CPU allocation, and ensures isolation from other system processes. BenchExec is only compatible with Linux operating systems.
+
+For this study, all PRA tools and their dependencies are installed within a Docker container, which is configured to run BenchExec. The benchmarking environment is configured as follows: each run is limited to a single CPU core, a maximum of 16 GB RAM, and a wall-clock time limit of 900 seconds (15 minutes) \cite{Farag2024Evaluating}. For FTREX, which is a Windows executable, the Wine compatibility layer is used within the Linux container; the overhead introduced by Wine is not included in the reported results. XFTA and SCRAM run natively on Linux, whereas SAPHSOLVE provides both Windows and Linux builds; the Linux build was used for this benchmark. BenchExec collects detailed logs of execution time (in seconds) and peak memory usage (in megabytes) for each run, enabling direct comparison of tool performance across a standardized set of synthetic PRA models.

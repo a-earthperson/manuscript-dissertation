@@ -1,0 +1,100 @@
+\subsection{The Generic Modular High Temperature Gas Cooled Reactor Model}
+
+\acrshort{pra} models for the MHTGR have been developed with both SAPHIRE and CAFTA \cite{hamza_openpra-orggeneric-mhtgr-model_2025}. The MHTGR PRA models encompass a broad set of event trees and fault trees, representing the plant's response to a range of initiating events and the reliability of key safety systems and components. The models are constructed to capture both the functional dependencies and failure modes relevant to the design features of the MHTGR.
+
+Table~\ref{tab:mhtgr-event-trees} lists the event trees included in the model.
+
+\begin{table}[H]
+    \centering
+    \caption{Event trees in the MHTGR PRA model}
+    \label{tab:mhtgr-event-trees}
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Event Tree ID} & \textbf{Description} \\
+        \midrule
+        ET1 & Primary coolant leaks \\
+        ET2 & Small steam generator leaks \\
+        ET3 & Moderate steam generator leaks \\
+        ET4 & Loss of HTS cooling (HTS) \\
+        ET5 & Loss of offsite power (LOOP) \\
+        ET6 & Control rod withdrawal (CRW) \\
+        ET7 & Anticipated transients requiring SCRAM (ATRS) \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The fault trees provide detailed logical models of system and component failures that can lead to top-level events in the event trees. Table~\ref{tab:mhtgr-fault-trees} summarizes the fault trees included in the model.
+
+\begin{table}[H]
+    \centering
+    \caption{Fault trees in the MHTGR PRA model}
+    \label{tab:mhtgr-fault-trees}
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Fault Tree ID} & \textbf{Description} \\
+        \midrule
+        FT1 & Shutdown cooling system (SCS) \\
+        FT2 & Automatic steam generator dump \\
+        FT3 & Reactor cavity cooling system (RCCS) \\
+        FT4 & HPS pumpdown \\
+        FT5 & Moisture monitor detection \\
+        FT6 & Steam generator relief train response \\
+        FT7 & Automatic steam generator isolation \\
+        FT8 & Reaccor trip \\
+        FT9 & Power supply and electrical distribution \\
+        FT10 & Reactor plant cooling water \\
+        FT11 & Turbine building closed cooling water \\
+        FT12 & Feedwater and condensate subsystem \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The PRA models explicitly represent the main systems and their associated subsystems as shown in Table~\ref{tab:mhtgr-sscs}.
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}[H]
+    \centering
+    \caption{Main systems and subsystems in the MHTGR PRA model}
+    \label{tab:mhtgr-sscs}
+    \begin{tabular}{p{0.4\textwidth} p{0.55\textwidth}}
+        \toprule
+        \textbf{Main system} & \textbf{Subsystems} \\
+        \midrule
+        Heat transport system & Reactor core, Reactor internals, Vessels \& ducts, Helium purification, Helium storage \& transfer \\
+        Shutdown cooling system & Steam \& water dump, Pressure relief, Main \& bypass steam, Feedwater \& condensate \\
+        Reactor cavity cooling system & Service water, Reactor plant cooling water, Turbine building closed cooling water, Circulating water \\
+        Plant protection \& instrumentation system & Plant control, Data, \& instrumentation, Radiation monitoring \\
+        Electrical power supply & Class 1E uninterruptible power supply, Non-Class 1E ac distribution, Class 1E dc power \\
+        Other & Instrument \& service air, Heater drains \& condensate returns, Condensate polishing, Vessel support \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The model includes 170 basic events, each representing a distinct failure mode, and approximately 100 repair events to account for system recovery and restoration processes. These events are parameterized by either mean failure frequency or mean probability, as appropriate for the component type and operational context. Table~\ref{tab:mhtgr-basic-event-types} provides representative categories of basic events. Each fault tree is typically decomposed into 5 to 15 subsystems depending on the complexity of the system under consideration.
+
+\begin{table}
+    \centering
+    \caption{Representative categories of basic events}
+    \label{tab:mhtgr-basic-event-types}
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Component/subsystem} & \textbf{Failure modes} \\
+        \midrule
+        Helium circulators & Fail to operate, Loss of power, Control system failure \\
+        Blowers/fans & Fail to operate \\
+        Steam generators, Heat exchangers & Tube leak, Flow restriction, General failure \\
+        Pumps & Fail to operate, Mechanical failure, Loss of drive, Operator error \\
+        Tanks, Welds, Flanges, Gaskets & Leak, Rupture, Disruptive failure \\
+        Valves & Fail to change state, External leak, Rupture, Spurious operation \\
+        Diesel generators & Fail to start, Standby failure, Fail to run \\
+        Instrumentation & Fail to operate, Calibration shift, Sensor out of limits \\
+        Control systems & Fail to operate, Drift, Spurious signal \\
+        Electrical power & Loss of supply, Transformer trip, Battery failure \\
+        Circuit breakers & Fail to change state, Premature transfer \\
+        Turbine & Inadvertent trip, Valve failure \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\renewcommand{\arraystretch}{1.0}
+The models are structured to support both qualitative and quantitative risk analyses, enabling the identification of dominant risk contributors, evaluation of system reliability, and assessment of the effectiveness of design features and operational strategies. The extensive coverage of SSCs, basic events, and repair events ensures that the models are suitable for both regulatory and design optimization purposes.

@@ -1,0 +1,112 @@
+\subsection{Common-Cause Failures}
+
+A \acrfull{ccf} is defined as the failure of multiple components due to a shared cause within a specified time interval. Unlike independent failures, \acrshort{ccf}s can defeat redundancy-based safety systems, potentially leading to severe consequences in critical applications.
+
+Common cause failures stem from three main categories of coupling factors \cite{NUREG5485}:
+
+\paragraph{Hardware-based factors}
+\begin{itemize}
+    \item Hardware design (system layout, component internal parts)
+    \item Manufacturing attributes
+    \item Construction/installation characteristics
+\end{itemize}
+
+\paragraph{Operation-based factors}
+\begin{itemize}
+    \item Same operating staff
+    \item Same operating procedures
+    \item Same maintenance/test/calibration schedule or staff
+\end{itemize}
+
+\paragraph{Environment-based factors}
+\begin{itemize}
+    \item Same plant location exposing components to identical environmental stresses
+    \item Same component location
+    \item Same internal environment/working medium
+\end{itemize}
+
+Several parametric models have been developed to quantify \acrshort{ccf} probabilities:
+
+\subsubsection{Basic Parameter Model (BPM)}
+\acrfull{cccg} are sets of components susceptible to the same \acrshort{ccf} mechanisms. Basic parameter model decomposes the failure probability of a component in a \acrshort{cccg} into terms involving independent failure of the component and combinations of \acrshort{ccf}s with the other components in the \acrshort{cccg} \cite{rasmuson_kelly_2008}. For a group of $m$ components, the parameter $Q_k$ represents the probability of a specific $k$-component failure combination. The total failure probability is then calculated as:
+\[
+Q_T = \sum_{k=1}^{m} \binom{m-1}{k-1} Q_k^m
+\]
+While conceptually straightforward, this model becomes impractical for large component groups due to the number of parameters required.
+
+\subsubsection{Alpha Factor Model (AFM)}
+The Alpha Factor Model develops \acrshort{ccf} probabilities from set of failure ratios and the total component failure probability \cite{rasmuson_kelly_2008}. For a system with $m$ components, the alpha factors are defined as:
+\[
+\alpha_k = \frac{n_k}{\sum_{i=1}^{m} i \cdot n_i}
+\]
+where $n_k$ is the number of events with $k$ failed components. The probability of a specific failure combination is then:
+\[
+Q_k = \frac{\alpha_k}{\binom{m-1}{k-1}} \cdot Q_T
+\]
+The Alpha Factor Model is particularly useful because its parameters have direct statistical meaning and can be estimated from operational data.
+
+\subsubsection{Multiple-Greek Letter (MGL) Model}
+Multiple Greek Letter model is used for systems with higher level of redundancy or k-out of-n logic. The multiple Greek letter model includes parameters for the conditional probabilities that the N+1-th subsystem fails given that N identical subsystems have already failed \cite{jones_2012}. The key parameters are:
+\begin{itemize}
+  \item $\beta$: Conditional probability that a component fails due to a common cause, given that another component has failed
+  \item $\gamma$: Conditional probability that a third component fails, given that two components have failed due to a common cause
+  \item $\delta, \epsilon, ... $: Additional parameters for larger component groups
+\end{itemize}
+
+For a three-component system, the common cause failure probabilities are:
+\[
+\begin{aligned}
+Q_1 &= Q_T(1-\beta) \\
+Q_2 &= Q_T\beta(1-\gamma) \\
+Q_3 &= Q_T\beta\gamma
+\end{aligned}
+\]
+
+\subsubsection{Binomial Failure Rate (BFR) Model}
+
+The Binomial Failure Rate (BFR) model is based on the concept of two distinct types of shock events affecting components in a \acrshort{cccg}:
+
+\begin{enumerate}
+  \item \textbf{Lethal shocks} occur at constant rate $\lambda^{(i)}$ and cause simultaneous failure of all components in the \acrshort{cccg}.
+  
+  \item \textbf{Non-lethal shocks} occur at constant rate $\nu$ and cause each component to fail independently with probability $p$.
+\end{enumerate}
+
+Each component in an \acrshort{cccg} has a total dependent failure rate of:
+\begin{equation}
+\lambda_c = \lambda^{(i)} + p\nu
+\end{equation}
+
+The model uses binomial probability distribution to calculate the rate of failures with different multiplicities. When a non-lethal shock occurs, the probability of exactly $k$ components failing follows the binomial distribution:
+\begin{equation}
+\text{P}(k) = \binom{n}{k}p^k(1-p)^{n-k}
+\end{equation}
+
+Therefore, the rate of \acrshort{ccf} events with exactly $k$ components failing is:
+\begin{equation}
+\lambda_{G,k} = \nu\binom{n}{k}p^k(1-p)^{n-k}
+\end{equation}
+
+The BFR model has the advantage of using physically interpretable parameters ($\nu$ and $p$) while requiring fewer parameters than the Basic Parameter Model.
+
+\subsubsection{Beta Factor Model}
+A simplified single-parameter model where all common cause failures are assumed to fail all components in the group. The model uses a single parameter $\beta$, representing the fraction of total failure probability attributed to common causes:
+\[
+\begin{aligned}
+Q_I &= Q_T(1-\beta) \quad \text{(independent failures)} \\
+Q_m &= Q_T\beta \quad \text{(complete common cause failure)} \\
+\end{aligned}
+\]
+This model is useful for initial screening and when data is limited.
+
+\subsubsection{Mapping Between Models}
+Relationships exist between the parameters of different \acrshort{ccf} models, allowing conversion of parameters from one model to another. For example, the Alpha factors can be derived from MGL parameters as:
+\[
+\begin{aligned}
+\alpha_1 &= \frac{1-\beta}{1+\beta(\gamma-1)} \\
+\alpha_2 &= \frac{2\beta(1-\gamma)}{1+\beta(\gamma-1)} \\
+\alpha_3 &= \frac{3\beta\gamma}{1+\beta(\gamma-1)}
+\end{aligned}
+\]
+
+Industry databases such as the International Common Cause Failure Data Exchange (ICDE) \cite{ICDE} and the NRC's \acrshort{ccf} database \cite{ma_ccf_2022} provide valuable sources for parameter estimation.

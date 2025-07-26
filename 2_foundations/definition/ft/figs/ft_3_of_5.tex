@@ -1,0 +1,145 @@
+\begin{figure}[h!]
+    \tikzset{
+    grow'=down,
+    level distance=42pt,
+    % sibling distance=24pt,
+    % sibling distance=8mm/#1,
+    level/.style={sibling distance=3pt+44pt/(#1*#1*0.75)},
+    edge from parent/.append style={
+        draw,
+        %thick,
+        edge from parent path={
+        (\tikzparentnode.west) |- ($(\tikzparentnode.west)!0.5!(\tikzchildnode.east)$) -| (\tikzchildnode.east)
+        },
+    },
+    every node/.append style={
+        anchor=center,
+        rotate=90,
+        draw=black,
+        fill=white,
+        thick,
+        font=\footnotesize\bfseries,
+        text centered,
+        inner sep=0pt
+    },
+    var/.style={
+        shape=circle,
+        minimum height=16pt,
+    },
+    and/.style={
+    and gate US,
+    },
+  not/.style={
+    not gate US,
+  },  
+  or/.style={
+    or gate US,
+  },
+  vot/.style={
+    or gate US,
+  }
+}
+    \centering
+    \resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    circuit logic US,
+    tiny circuit symbols,
+    level 1/.style={sibling distance=5*18pt},
+    level 2/.style={sibling distance=18pt},
+    ]
+  \node[or]{\rotatebox{-90}{Y}}
+  % Subsets of size 3
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  % Subsets of size 4
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  }
+  % Subset of size 5
+  child { node[and] {} 
+    child { node[var] {\rotatebox{-90}{$X_1$}} }
+    child { node[var] {\rotatebox{-90}{$X_2$}} }
+    child { node[var] {\rotatebox{-90}{$X_3$}} }
+    child { node[var] {\rotatebox{-90}{$X_4$}} }
+    child { node[var] {\rotatebox{-90}{$X_5$}} }
+  };
+\end{tikzpicture}
+    }
+    \caption{3-of-5 voting logic, expanded as (AND-OR) \acrfull{dnf}}
+    \label{fig:example-3of5-voter-tree}
+\end{figure}

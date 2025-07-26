@@ -1,0 +1,123 @@
+\section{Bitpacked Random Number Generator}
+
+Monte Carlo simulations, probability evaluations, and other sampling-based procedures benefit greatly from efficient, high-quality \acrfull{rng}s. A large class of modern \acrshort{rng}s are known as \textit{counter-based \acrfull{prng}s}, because they use integer counters (e.g., 32-bit or 64-bit) along with a stateless transformation to produce random outputs. The \emph{Philox} family of counter-based \acrshort{prng}s is a well-known example, featuring fast generation, high period, and good statistical properties. In this section, we discuss the general principles of counter-based \acrshort{prng}s, explain how Philox fits into this paradigm, analyze its complexity, and present a concise pseudocode version of the \(\text{Philox }4\times32\text{-10}\) variant. Subsequently, we detail the bitpacking scheme used to reduce memory consumption when storing large numbers of Bernoulli samples.
+
+A counter-based \acrshort{prng} maps a user-supplied \emph{counter} (plus, optionally, a \emph{key}) to a fixed-size block of random bits via a deterministic function. Formally, if 
+\[
+  \mathbf{x} \;=\; (x_1, x_2, \ldots, x_k)
+\]
+is a vector of one or more 32-bit or 64-bit counters, and 
+\[
+  \mathbf{k} \;=\; (k_1, k_2, \ldots, k_m)
+\]
+is a key vector, then a counter-based \acrshort{prng} defines a transformation 
+\[
+   \mathcal{F}(\mathbf{x}, \mathbf{k})
+   \;=\;
+   (\rho_1, \rho_2, \ldots, \rho_r),
+\]
+where each \(\rho_j\) is typically a 32-bit or 64-bit output. Different increments of the counter \(\mathbf{x}\) produce different pseudo-random outputs \(\rho_j\). The process is stateless in the sense that advancing the RNG amounts to incrementing the counter (e.g., \(\mathbf{x}\mapsto \mathbf{x} + 1\)).
+
+Compared to older recurrence-based \acrshort{rng}s such as linear congruential generators or the Mersenne Twister, counter-based methods offer more straightforward parallelization, reproducibility across multiple streams, and strong structural simplicity: no internal state must be updated or maintained. This is particularly valuable in distributed Monte Carlo simulations or \acrshort{gpu}-based sampling, where each thread or work-item can be assigned a different counter. Philox constructs its pseudo-random outputs by applying a small set of mixed arithmetic (multiplication/bitwise) rounds to an input \emph{counter} plus \emph{key}. In particular, \(\mathrm{Philox}\,4\times32\text{-10}\) (often shortened to "Philox-4x32-10”) works on four 32-bit integers at a time:
+\[
+  \mathbf{S} = (S_0, S_1, S_2, S_3),
+  \qquad
+  \mathbf{K} = (K_0, K_1).
+\]
+The four elements \(\{S_0, S_1, S_2, S_3\}\) collectively represent the counter, e.g., \((x_0, x_1, x_2, x_3)\). The two key elements \((K_0, K_1)\) are used to tweak the generator's sequence. A single invocation of Philox-4x32-10 transforms \(\mathbf{S}\) into four new 32-bit outputs after ten rounds of mixing. At each round, the algorithm:
+\begin{enumerate}
+    \item Multiplies two of the state words by fixed "magic constants” to create partial products.
+    \item Takes the high and low 32-bit portions of those 64-bit products.
+    \item Incorporates the round key to shuffle the words.
+    \item Bumps the key by adding constant increments \((\mathrm{W32A} = 0x9E3779B9 \text{ and } \mathrm{W32B} = 0xBB67AE85)\).
+\end{enumerate}
+After ten rounds, the final \((S_0, S_1, S_2, S_3)\) is returned as the pseudo-random block. A new call to Philox increases the counter \(\mathbf{S}\) by one (e.g., \(S_3 \mapsto S_3 + 1\)) and re-enters the same function. The Philox-4x32-10 algorithm is designed so that each blocking call requires a \emph{constant number} of operations, independent of the size of any prior "state.” Specifically, each round involves:
+\[
+  \mathcal{O}(1)\;\text{ arithmetic operations},
+\]
+and there are \(\mathrm{R} = 10\) rounds. Thus, each Philox invocation is asymptotically constant time \(\mathcal{O}(\mathrm{R}) = \mathcal{O}(1)\). The total cost to generate 128 bits (4 words \(\times\) 32 bits) is therefore constant time per call.
+
+\subsection{The 10-round Philox-4x32}
+Our implementation follows the standard 10-round approach for generating one block of four 32-bit random words, also called Philox-4x32-10. Let \(M_{\mathrm{A}}=0xD2511F53\), \(M_{\mathrm{B}}=0xCD9E8D57\) be the multipliers, and let \((K_0, K_1)\) be the key which is updated each round by \(\mathrm{W32A}=0x9E3779B9\) and \(\mathrm{W32B}=0xBB67AE85\). The function \(\text{Hi}(\cdot)\) returns the high 32 bits of a 64-bit product, and \(\text{Lo}(\cdot)\) returns the low 32 bits. Because each call produces four 32-bit pseudo-random words, Philox-4x32-10 is particularly convenient for batched sampling. If only a single 32-bit word is needed, one can still call the function and discard the excess words; however, many applications consume all four outputs (e.g., to produce four floating-point variates).
+
+\begin{algorithm}[ht]
+  \caption{Philox-4x32-10}\label{alg:philox}
+  \begin{algorithmic}[1]
+    %------------------------------------------------------------
+    \Require Four 32-bit counters $(S_0,S_1,S_2,S_3)$,
+            key $(K_0,K_1)$
+    \Ensure  Transformed counters $(S_0,S_1,S_2,S_3)$
+    %------------------------------------------------------------
+    \Statex
+    %--------------------- Philox_Round -------------------------
+    \Procedure{Philox\_Round}{$(S_0,S_1,S_2,S_3),\,(K_0,K_1)$}
+      \State $P_0 \gets M_{\text{A}}\times S_0$ \Comment{64-bit product}
+      \State $P_1 \gets M_{\text{B}}\times S_2$ \Comment{64-bit product}
+      \State $T_0 \gets \mathrm{Hi}(P_1)\,\oplus\,S_1\,\oplus\,K_0$
+      \State $T_1 \gets \mathrm{Lo}(P_1)$
+      \State $T_2 \gets \mathrm{Hi}(P_0)\,\oplus\,S_3\,\oplus\,K_1$
+      \State $T_3 \gets \mathrm{Lo}(P_0)$
+      \State $K_0 \gets K_0 + \mathrm{W32A}$
+      \State $K_1 \gets K_1 + \mathrm{W32B}$
+      \State \Return $\bigl((T_0,T_1,T_2,T_3),\,(K_0,K_1)\bigr)$
+    \EndProcedure
+    %------------------- Philox4x32_10 --------------------------
+    \Statex
+    \Procedure{Philox4x32\_10}{$(S_0,S_1,S_2,S_3),\,(K_0,K_1)$}
+      \For{$i \gets 1$ \textbf{to} 10}
+        \State $\bigl(S_0,S_1,S_2,S_3),\,(K_0,K_1) \gets$
+               \Call{Philox\_Round}{$(S_0,S_1,S_2,S_3),\,(K_0,K_1)$}
+      \EndFor
+      \State \Return $(S_0,S_1,S_2,S_3)$
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+\subsection{Bitpacking for Probability Sampling}
+It takes exactly one bit to represent the outcome of a trial. If these If outcomes are stored naively, each one occupies a full 8-bit byte. Hence, only \( \tfrac{1}{8} \) of the allocated space is used for actual data. By instead packing up to \(w\) indicators into a \(w\)-bit machine word, the memory usage can be reduced by a factor of up to \(8\) (in the simplest scenario of 8-bit groupings). In more general terms:
+\[
+  \text{Memory usage }M_{\text{naive}}
+  \;=\;
+  N \times 8\;\text{bits},
+  \qquad
+  \text{Memory usage }M_{\text{pack}}
+  \;=\;
+  \left\lceil\frac{N}{w}\right\rceil \,\times\,w\;\text{bits}.
+\]
+In our implementation, each call to Philox-4x32-10 yields 128 bits of randomness. We use those bits to draw exactly 128 Bernoulli outcomes at once, then combine them into a \(\mathrm{bitpack}\) of two 64-bit integers. For instance, if we choose a batch size of \(4\)-bits to represent four Bernoulli samples in a single chunk, we can:
+
+\begin{enumerate}
+    \item Generate a block \(\{r_0, r_1, r_2, r_3\}\) of four 32-bit random integers from Philox.
+    \item Convert each \(r_i\) into a uniform \([0,1)\) floating-point value by dividing by \(2^{32}\).
+    \item Compare each to the target probability \(p\).
+    \item Form a 4-bit integer, each bit set to \(1\) if the corresponding comparison succeeded, or \(0\) otherwise.
+\end{enumerate}
+
+Repeating these steps for multiple rounds of 4 bits each can fill a 16-bit or 32-bit \(\mathrm{bitpack}\) variable with many Bernoulli indicators. Then it can be stored into an array at a single index, reducing memory overhead by constant factor of $N$. 
+
+\begin{algorithm}[H]
+  \caption{Bit-packing of four Bernoulli samples into a 4-bit block}
+  \label{alg:four_bit_pack}
+  \begin{algorithmic}[1]
+    %------------------------------------------------------------
+    \Require Probability $p\in[0,1]$, random 32-bit words $(r_0,r_1,r_2,r_3)$
+    \Ensure  4-bit integer bits containing the four Bernoulli draws
+    %------------------------------------------------------------
+    \Procedure{FourBitPack}{$p,(r_0,r_1,r_2,r_3)$}
+      \State bits $\gets 0$
+      \For{$i \gets 0$ \textbf{to} 3}
+        \State $u_i \gets r_i / 2^{32}$ \Comment{$u_i\in[0,1)$}
+        \If{$u_i < p$}
+            \State $b_i \gets 1$
+        \Else
+            \State $b_i \gets 0$
+        \EndIf
+        \State bits $\gets$ bits $\mid (b_i \ll i)$ 
+               \Comment{set bit $i$ to $b_i$}
+      \EndFor
+      \State \Return bits
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+In this procedure, \(\Vert\) denotes a bitwise OR, and \(\ll\) denotes a left shift. One then repeats the above call to accumulate multiple 4-bit blocks (e.g., for a total of 16 bits, one calls FourBitPack four times and merges the results with the appropriate shifts).

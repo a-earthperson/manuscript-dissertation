@@ -1,0 +1,73 @@
+\subsection{Conjunctive Normal Form (CNF)}
+\acrfull{cnf} is a specific subset of \acrshort{f-nnf}. \acrshort{cnf} further restricts this structure: a \acrshort{cnf} formula is a conjunction of clauses, where each clause is a disjunction of literals. Thus, every \acrshort{cnf} is an NNF where the formula has depth at most two: a top-level conjunction whose direct children are disjunctions of literals. Negations never apply to anything except individual variables.
+
+Despite computational intractability of most queries, \acrshort{cnf} is the dominant input language for \acrshort{sat} solvers, which employ highly optimized heuristics far surpassing brute-force complexity in practice. Many real-world verification, synthesis, and combinatorial search problems are encoded as \acrshort{cnf} for this reason.
+
+\subsubsection{Key Properties}
+
+\paragraph{Flatness}
+As a formula or DAG, a \acrshort{cnf} has depth at most two. The root is a conjunction $\wedge$ whose direct children are disjunctions $\vee$ of literals (leaf nodes).
+
+\paragraph{Simple-disjunction}
+All disjunctions operate directly on literals--there are no nested or compound subformulas inside disjunctions.
+
+\paragraph{Closure under conjunction}
+The conjunction of two \acrshort{cnf} formulas yields another \acrshort{cnf} formula.
+
+\paragraph{Non-uniqueness}
+\acrshort{cnf} is not canonical. Logically equivalent formulas can have very different \acrshort{cnf} representations due to clause or literal redundancy, reordering, or other syntactic differences.
+
+\subsubsection{Construction and Compilation}
+Constructing \acrshort{cnf} from arbitrary Boolean formulas using Tseitin encoding or distributive laws takes $(\mathcal{O}(|\varphi|))$ time and space, potentially with introduction of auxiliary variables for compactness. Any propositional formula can be converted to an equisatisfiable \acrshort{cnf} using methods such as Tseitin encoding, which can be performed in $(\mathcal{O}(|\varphi|))$ time and size for a formula $(\varphi)$. This transformation ensures that the original and resulting \acrshort{cnf} formulas have the same satisfiability, though logical equivalence is not guaranteed.
+
+\subsubsection{Query Complexity}
+
+\paragraph{Implicant Query (IM)}
+Checking whether a term implies a \acrshort{cnf} formula can be done in $(\mathcal{O}(|\text{term}| + |\text{\acrshort{cnf}}|))$ time.
+
+\paragraph{Satisfiability (Consistency, CO)}
+Determining satisfiability of a general \acrshort{cnf} formula is NP-complete; the best algorithms run in time $(\mathcal{O}(2^n))$ in the worst case, where $(n)$ is the number of variables, though modern \acrshort{sat} solvers perform much better in practice.
+
+\paragraph{Validity (VA)}
+Checking whether a \acrshort{cnf} is a tautology is co-NP-complete. No polynomial-time algorithm is known unless $P = NP$.
+
+\paragraph{Prime Implicant Generation}
+Extracting a single prime implicant from a known model (an assignment satisfying the \acrshort{cnf}) can be performed in polynomial time. This process involves iteratively attempting to remove each literal from the model and checking if the \acrshort{cnf} remains satisfied. Each removal can be checked in time linear in the size of the \acrshort{cnf}, and all removals together give a total complexity of $(\mathcal{O}(|\text{\acrshort{cnf}}| \cdot |M|))$, where $M$ is the model. With efficient algorithms, this task can be done in linear time.
+\begin{enumerate}
+    \item Finding any model or implicant: Equivalent to \acrshort{sat}, and thus NP-complete.
+    \item Enumerating all prime implicants: Exponential time in the worst case; the number of prime implicants can be exponential in formula size.
+    \item Recognizing essential prime implicants: NP-complete.
+\end{enumerate}
+
+\paragraph{Model Counting (CT)}
+Counting the number of satisfying assignments is $\#P$-complete.
+For a \acrshort{cnf} with primal treewidth ($w$) and ($n$) clauses, model counting via dynamic programming on a tree decomposition can be done in ($\mathcal{O}(n2^w)$) time when the decomposition is given.
+For a \acrshort{cnf} with incidence treewidth ($w$) and ($N$) tree decomposition nodes, counting can be done in $(\mathcal{O}(2^w(kd+\delta)N))$, where ($d$) is maximum variable degree, ($\delta$) is multiplication time.
+
+\paragraph{Model Enumeration (ME)}
+Enumerating all models is not feasible in polynomial time in general, due to potentially exponential output size.
+
+\paragraph{Clausal Entailment (CE), Equivalence (EQ), Sentential Entailment (SE)}
+All are co-NP-complete (or worse) in general for \acrshort{cnf}.
+
+\subsubsection{CNF as a Source for Knowledge Compilation}
+\acrshort{cnf} serves as the standard input for compilation into tractable reasoning languages:
+
+\paragraph{\acrshort{cnf} to \acrshort{dnnf}}
+With given decomposition tree of width ($w$) and ($n$) clauses, can be compiled in $(\mathcal{O}(nw2^w))$ time and space. Complexity is singly exponential in treewidth and linear in formula size when width is bounded.
+
+\paragraph{\acrshort{cnf} to \acrshort{d-dnnf}}
+Using tools like c2d and DSHARP, for \acrshort{cnf} with incidence treewidth ($k$) and size (n), can be compiled into \acrshort{dnnf} of size $(\mathcal{O}(2^k n))$.
+
+\paragraph{\acrshort{cnf} to \acrshort{sdd}}
+For a \acrshort{cnf} with ($n$) variables and vtree of width ($w$), bottom-up compilation yields \acrshort{sdd} of size $(\mathcal{O}(n2^{w}))$, and can be performed in $(\mathcal{O}(nw))$ time if the vtree is fixed.
+
+\paragraph{\acrshort{cnf} to \acrshort{obdd}}
+Top-down approaches with caching result in size and time $(\mathcal{O}(2^{\text{pathwidth}}))$ for \acrshort{obdd}, where pathwidth is a width measure related to treewidth.
+
+\subsubsection{Compilers}
+\begin{enumerate}
+    \item \acrshort{dnnf}/\acrshort{d-dnnf}: c2d, dsharp (output size $(\mathcal{O}(2^{\text{width}} n))$)
+    \item \acrshort{robdd}: \acrshort{cudd}, BuDDy (output size $(\mathcal{O}(2^{\text{pathwidth}}))$)
+    \item \acrshort{sdd}: \acrshort{sdd} package (output size $(\mathcal{O}(n2^{w}))$)
+\end{enumerate}

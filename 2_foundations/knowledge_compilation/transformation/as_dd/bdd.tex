@@ -1,0 +1,76 @@
+\subsubsection{Binary Decision Diagrams (BDD)}
+\label{sec:bdd}
+
+Let $f: \{0,1\}^n \to \{0,1\}$ be an $n$-variable Boolean function. A \acrfull{bdd} is a directed acyclic graph whose internal nodes represent decisions on a single Boolean variable, and whose terminal (sink) nodes represent constant outputs ($0$ or $1$).
+
+\begin{definition}[\acrlong{bdd}]
+\label{def:bdd}
+A \acrlong{bdd} for $f$ is a tuple $B =\bigl(N,n_0,V,E,T\bigr)$ with the following components:
+\begin{enumerate}
+\item $N$ is a finite set of nodes, partitioned into \emph{internal} nodes and \emph{terminal} nodes.
+\item $n_0 \in N$ is the \emph{root node}, where evaluations begin.
+\item $V={x_1,x_2,\dots,x_n}$ is the set of Boolean variables associated with the internal nodes.
+\item $E \subseteq N \times {0,1} \times N$ is the edge set. Each internal node $u$ has two labeled edges, $(u,0,v_0)$ and $(u,1,v_1)$, indicating the next node in the diagram if $x_i=0$ or $x_i=1$ at node $u$.
+\item $T$ is a mapping that assigns the value $0$ or $1$ to each terminal node of $B$.
+\end{enumerate}
+For any input $a = (a_1,a_2,\dots,a_n)\in\{0,1\}^n$ one identifies a unique path from $n_0$ to a terminal node by at each internal node following the edge labeled by the tested variable's value in $a$. The value of $f(a)$ is given by the terminal node reached, as encoded by $T$.
+\end{definition}
+
+\noindent\textbf{Interpretation.} Each internal node corresponds to a variable test: if the variable is $0$ (i.e.\ $\text{false}$), follow the \emph{0-edge}, and if it is 1 $(\text{true})$, follow the \emph{1-edge}. Eventually, one reaches a sink node labeled $\text{false}=0$ or $\text{true}=1$.
+
+\paragraph{Example.} For the three-variable function
+$f(a,b,c)=a \land \bigl(b \lor c\bigr)$,
+Figure~\ref{fig:example_bdd} shows a small \acrshort{bdd}. Each circular node tests one variable $a$, $b$, or $c$; the dashed and solid edges denote the 0- and 1-branches, respectively. Terminal nodes (squares) contain a 0 or 1 label.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=2.1cm,thick,
+main node/.style={circle,draw,font=\sffamily\small\bfseries},
+terminal node/.style={rectangle,draw,font=\sffamily\small\bfseries}]
+
+\node[main node] (A) {a};
+\node[main node] (B) [below left=1.6cm of A, xshift=0.6cm] {b};
+\node[main node] (C) [below right=1.6cm of A, xshift=-0.6cm] {c};
+\node[terminal node] (T1) [below=1.8cm of B] {1};
+\node[terminal node] (T0) [below=1.8cm of C] {0};
+
+\path[every node/.style={font=\sffamily\scriptsize}]
+(A) edge[dashed] node[left]  {0} (T0)
+edge[solid]  node[right] {1} (B)
+(B) edge[dashed] node[left]  {0} (C)
+edge[solid]  node[right] {1} (T1)
+(C) edge[dashed] node[left]  {0} (T0)
+edge[solid]  node[right] {1} (T1);
+
+\end{tikzpicture}
+\caption{A \acrfull{bdd} for $f(a,b,c)=a \land \bigl(b \lor c\bigr)$.}
+\label{fig:example_bdd}
+\end{figure}
+
+In practice, \acrshort{bdd}s may experience large variations in size depending on how variables are tested as one traverses the graph. The \textit{ordered} and \textit{reduced} variants of \acrshort{bdd}s are especially important, as they yield canonical forms for fixed variable orderings.
+
+\begin{definition}[\acrfull{obdd}]
+\label{def:obdd}
+An \acrfull{obdd} imposes a strict ordering $\pi$ on the variables ${x_1,\dots,x_n}$. For every path from the root to a terminal node, if the path encounters variables $x_i$ and $x_j$, then $x_i$ is tested before $x_j$ whenever $i<j$ with respect to $\pi$. Equivalently, no path may test a higher-indexed variable and later test a lower-indexed one.
+\end{definition}
+
+\acrshort{obdd}s are also known as \emph{read-once branching programs with an ordering restriction.} Bryant showed that under a particular variable order, the representation is often more compact than arbitrary \acrshort{bdd}s and that many operations (e.g., equivalence checking, conjunction, disjunction) can be carried out efficiently.
+
+\begin{definition}[[\acrfull{robdd}]
+\label{def:reducedobdd}
+An \acrshort{obdd} is said to be \emph{reduced} if it contains no isomorphic subgraphs and no node whose 0- and 1-branches lead to the exact same child. Equivalently, one applies two \textit{reduction rules}:
+\begin{enumerate}
+\item \textbf{Elimination Rule:} If, for a given node $v$, the 0-edge and 1-edge both point to the same successor, remove $v$ and connect its incoming edges directly to that successor.
+\item \textbf{Merging Rule:} If two distinct nodes $u$ and $v$ test the same variable and have identical 0- and 1-successors, merge them into a single node.
+\end{enumerate}
+A \emph{\acrfull{robdd}} respects a global variable order $\pi$ and has been minimized via these rules.
+\end{definition}
+
+\textbf{Canonical Representation.} One of the principal advantages of $\mathrm{ROBDD}$s is that, for a fixed variable ordering, every Boolean function has a unique representation. Consequently, checking whether two functions are identical reduces to testing whether their $\mathrm{ROBDD}$s coincide as node- and edge-labeled graphs.
+
+\begin{theorem}[Canonical Form of \acrshort{robdd}s]
+\label{thm:canonical}
+Let $\pi$ be a fixed ordering on the variables ${x_1,\dots,x_n}$. Then for any Boolean function $f$ of $n$ variables, its reduced \acrshort{obdd} with respect to $\pi$ is unique.
+\end{theorem}
+
+A direct consequence is that striving for reduced ordered forms both shrinks redundant structure and supports robust equivalence checks.

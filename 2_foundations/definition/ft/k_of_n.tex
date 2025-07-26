@@ -1,0 +1,28 @@
+\subsection{Definition of k-of-n Voting Logic}
+\label{sec:kn_voting_logic_definition}
+
+A \emph{k-of-n} gate, denoted \(\mathrm{VOT}(k/n)\), outputs 1 if and only if \emph{at least} \(k\) of its \(n\) inputs equal 1. Such a gate, often referred to as a \emph{threshold} or \emph{majority voting} gate, conveniently models partial redundancy and majority-vote mechanisms. Concretely, let each of the \(n\) input events be represented by a binary variable:
+\[
+X_1, \, X_2, \, \dots, \, X_n \;\in\;\{0,1\}.
+\]
+The gate's output \(Y\) is then defined by
+\begin{equation}
+\label{eq:kn_gate_boolean}
+Y 
+\;=\;
+\begin{cases}
+1, & \text{if }\, \displaystyle\sum_{i=1}^{n} X_i \;\ge\; k,\\[4pt]
+0, & \text{otherwise}.
+\end{cases}
+\end{equation}
+Equivalently, \(Y=1\) can be expressed as a disjunction of conjunctions:
+\begin{equation}
+\label{eq:k_of_n_or_of_ands}
+Y 
+\;=\;
+\Bigl[\sum_{i=1}^{n} X_i \,\ge\, k\Bigr]
+\;=\;
+\bigvee_{\substack{S\,\subseteq\,\{1,\dots,n\}\\|S|=k}}
+\;\;\biggl(\,\bigwedge_{i\in S} X_i\biggr),
+\end{equation}
+meaning that at least one subset \(S\subseteq \{1,\dots,n\}\) of size \(k\) has all its corresponding \(X_i\) set to 1. Any larger subset \(\lvert S\rvert > k\) naturally satisfies the same condition.

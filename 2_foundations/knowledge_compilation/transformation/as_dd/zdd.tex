@@ -1,0 +1,47 @@
+\subsubsection{Zero-Suppressed Decision Diagrams (ZDD)}
+\label{sec:zdd}
+
+For certain applications, notably combinatorial itemset enumeration and other \emph{sparse} set representations, \acrfull{zdd} can be more compact than standard \acrshort{bdd}s. Although \acrshort{zdd}s adhere to similar principles of node-based variable testing, they selectively \emph{omit} many zero-branches that do not yield new information.
+
+\paragraph{Key Distinctions.}
+While \acrshort{zdd}s also enforce an ordering and can be reduced via isomorphism checks, the core difference lies in the zero-suppression mechanism:
+\begin{itemize}
+\item If following a 0-edge provides no meaningful distinction in the final outcome, that 0-edge and its corresponding node are pruned.
+\item The 1-branches are retained but merged where possible, much as in \acrshort{robdd}s.
+\end{itemize}
+By removing portions of the diagram where "nothing interesting" (i.e.\ no new sets or subsets) occurs, the diagram remains compact.
+
+\paragraph{Illustrative Example}
+Revisiting $f(a,b,c)=a \land \bigl(b \lor c\bigr)$ from above, Figure~\ref{fig:zdd} sketches a plausible \acrshort{zdd}. Note here:
+\begin{itemize}
+\item Node (a) splits into a 0-edge that immediately goes to a node (or directly to a \texttt{0}-terminal) that is pruned if it carries no unique set representation.
+\item The 1-edge leads to further variable tests ($b$ or $c$), but many 0-branches are again suppressed if they do not alter the final outcome distinct from an already-represented path.
+\end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=2cm,thick,
+main node/.style={circle,draw,font=\sffamily\small\bfseries},
+terminal node/.style={rectangle,draw,font=\sffamily\small\bfseries}]
+
+\node[main node] (A) {$a$};
+\node[main node] (B) [below right of=A] {$b$};
+\node[main node] (C) [below left of=B] {$c$};
+
+\node[terminal node] (Z1) [below of=C] {1};
+\node[terminal node] (Z0) [right of=Z1,node distance=2.8cm] {0};
+
+\path[every node/.style={font=\sffamily\scriptsize}]
+(A) edge[dashed] node[left]  {0} (Z0)
+edge[solid]  node[right] {1} (B)
+(B) edge[dashed] node[left]  {0} (C)
+edge[solid]  node[right] {1} (Z1)
+(C) edge[dashed] node[left]  {0} (Z0)
+edge[solid]  node[right] {1} (Z1);
+
+\end{tikzpicture}
+\caption[A \acrfull{zdd} for $f(a,b,c)=a \land \bigl(b \lor c\bigr)$.]{A \acrfull{zdd} for $f(a,b,c)=a \land \bigl(b \lor c\bigr)$. Many zero-branches are pruned.}
+\label{fig:zdd}
+\end{figure}
+
+In general, \acrshort{zdd}s apply much the same merging rules as \acrshort{robdd}s and can yield similarly unique structures for a given variable order. They tend to excel in representing large but sparsely populated families of subsets (e.g., all minimal cut sets in a reliability system) because superfluous 0-edges are systematically suppressed.

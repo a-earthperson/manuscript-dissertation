@@ -1,0 +1,23 @@
+\section{Model Translation}
+Model representation in the PRA domain is encumbered by format fragmentation and proprietary development practices. A small group of stakeholders, each using specialized file structures, has little incentive to converge on a single standard. Proposing a new "universal" format can inadvertently add yet another layer of fragmentation if adoption proves limited. Conversely, attempting a fully connected translation map among all existing formats is a significant undertaking, requiring both ongoing maintenance and broad community participation that may not materialize.
+
+\subsection{PRAcciolini: Translation without a Single Intermediate Representation}
+In view of these constraints, the short-term strategy is to create a system of lightweight interfaces under an open-source tool, referred to here as \emph{PRAcciolini}, that interlinks existing translation tools without defaulting to a single pivot format. Rather than striving for every possible conversion path, the goal is to form what might be called a "translation spanning tree": a subset of connections that covers most practical needs while avoiding excessive overhead. This design allows each domain-specific library to retain its native parsing and exporting routines, with conversions performed only when required.
+
+\begin{figure}[h!]
+  \includesvg[width=\textwidth]{3_identifying_gaps/benchmarking/datasets/translation/figs/translations-pracciolini.svg}
+    \caption{Example of supported model translations in PRAcciolini.}
+  \label{fig:translations}
+\end{figure}
+
+As shown in Figure~\ref{fig:translations}, a CAFTA XML file can be transformed into FTREX FTP or SAPHSOLVE JSON, while MAR-D data can be republished as OpenPSA XML and potentially mapped to a TensorFlow compatible format. Round-trip testing (translating from one format to another and back again) verifies fidelity, ensuring that essential model information remains intact. By removing the need for a monolithic "canonical" structure, this partial translation network can remain both flexible and modular, minimizing risky lock-step updates whenever new releases or extensions emerge.
+
+\subsection{Long-Term Goal: OpenPRA JSON Schema}
+The long-term initiative extends beyond partial connectivity to propose an openly licensed JSON schema under the OpenPRA umbrella. This plan intends to balance retained compatibility with existing standards against the specialized requirements of nuclear licensing. Two major factors underlie this choice:
+
+\begin{itemize}
+\item \textbf{Extensibility and Clarity:} JSON natively supports hierarchical key-value pairs that facilitate both human readability and efficient parsing. PRA models tend to store domain-specific knowledge, not merely numeric parameters, making readability a high priority. Unlike FlatBuffers or similar purely binary formats, JSON offers a middle ground by allowing large, descriptive models without sacrificing parser performance.
+\item \textbf{Nuclear-Specific Needs:} Although OpenPSA XML has served as a standard in probabilistic safety, it is no longer actively maintained. The OpenPRA JSON schema seeks to preserve core OpenPSA semantics while adding a namespace dedicated to nuclear regulation. This extension accommodates plant-specific elements and licensing-related fields that exceed the scope of general probabilistic models.
+\end{itemize}
+
+Thus, the near-term effort builds a manageable translation spanning tree through PRAcciolini, minimizing integration burdens across multiple closed-source tools. Simultaneously, OpenPRA JSON emerges as a robust, future-facing schema for those organizations requiring more comprehensive and domain-tailored data structures. This dual approach, maintaining workable interoperability while evolving a modern open standard, addresses both the immediate priorities of the PRA community and the long-term need for a sustainable, extensible foundation.

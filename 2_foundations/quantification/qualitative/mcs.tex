@@ -1,0 +1,40 @@
+\subsubsection{Method for Obtaining Minimal Cut Sets (MOCUS)}
+
+Originally proposed by Fussell and Vesely in 1974\,\cite{Fussell1974MOCUS}, the \acrshort{mocus} algorithm remains one of the most widely deployed techniques for top-down generation of minimal cut sets in \acrshort{pra} tools. The procedure starts from the \textsc{top} event of a fault tree and repeatedly expands each logic gate until only basic events remain.
+
+Let the following symbols be defined:
+\begin{itemize}
+  \item $w$ identifier of a logic gate
+  \item $\varphi$ identifier of a basic event
+  \item $\rho_{w,i}$ \emph{i}-th input to gate $w$
+  \item $\lambda_{w}$ fan-in (number of inputs) of gate $w$
+  \item $\Delta_{x,y}$ entry located at row $x$, column $y$ of the \acrfull{bics} matrix
+  \item $x_{\max}$ ($y_{\max}$) current maximum row (column) index in~$\Delta$
+\end{itemize}
+
+\input{2_foundations/quantification/qualitative/equations/mocus_algo}
+
+Two refinement steps convert \acrshort{bics} to \acrshort{mcs}:
+\begin{enumerate}
+  \item Remove duplicate basic events within each row.
+  \item Discard any \acrshort{bics} that is a superset of another \acrshort{bics}.
+\end{enumerate}
+
+\input{2_foundations/quantification/qualitative/figures/sample_mocus_ft}
+
+% \input{2_foundations/definition/ft/figs/ft_3_of_5}
+
+Table \ref{tab:sample_mocus_ft_data} summarizes the sample fault tree by matching the formulas provided for the algorithm.
+
+\input{2_foundations/quantification/qualitative/tables/sample_mocus_ft_data}
+
+Figure~\ref{fig:mocus_flow} schematically depicts the evolution of the $\Delta_{x,y}$ matrix for the fault tree in Figure \ref{fig:sample_mocus_ft}. 
+
+After gate expansion, elimination of duplicates (e.g.\ event $X_2$) and removal of supersets (e.g.\ $\{X_2,X_4,X_3\}$) yield the \acrshort{mcs} family:
+\[
+  \bigl\{\,\{X_1,X_2\},\; \{X_2,X_3\},\; \{X_1,X_4\}\,\bigr\}.
+\]
+
+\input{2_foundations/quantification/qualitative/figures/mocus_flow}
+
+Although algorithmically elegant, the recursive nature of \acrshort{mocus} can incur considerable computational overhead for large, deeply nested fault trees.  Nonetheless, virtually every \acrshort{pra} tool integrates some variant of \acrshort{mocus} for minimal cut-set calculation.

@@ -1,0 +1,96 @@
+\subsection{Knowledge Compilation}
+Casting \acrshort{pra} model as \acrshort{pdag} allows to view the model a set of boolean propositional statements. Thus, any question that can be asked about the system, can be seen as a general reasoning (queries or transformations) over the knowledge base, defined by the propositional statements. A common approach to dealing with such problems is knowledge compilation.
+
+Knowledge Compilation has emerged as a significant direction of research for addressing the computational intractability inherent in general propositional reasoning tasks. This approach, which has a long tradition in reasoning Artificial Intelligence, was notably structured and analyzed in the work of Darwiche and Marquis. KC fundamentally involves splitting the reasoning process into two distinct phases:
+\begin{enumerate}
+    \item An \textbf{off-line compilation phase}: In this initial phase, a knowledge base (represented, for instance, as a propositional theory or formula) is transformed or "compiled" into a different representation, referred to as a tractable form, or target language. The target language is specifically chosen because it supports certain desirable properties, such as tractability for specific queries (questions) or allowing polynomial time evaluation.
+    \item An \textbf{on-line query-answering phase}: Once compiled, the resulting target representation is utilized to answer queries efficiently. The goal is for these query answering procedures to be polynomial time with respect to the size of the compiled representation.
+\end{enumerate}
+The primary rationalization behind this two-phase approach is to \textbf{shift as much of the computational overhead as possible into the off-line compilation phase}. While the compilation step itself can be computationally hard, this initial cost is amortized over the potentially large number of subsequent on-line queries. This amortized cost makes the overall reasoning process more efficient when multiple queries are anticipated on the same knowledge base.
+
+\subsection{Negation Normal Form (NNF)}
+The field of knowledge compilation operates primarily on a subset of boolean expression that conform to a set of properties. In general, imposition of more properties results increased tractability of the queries, i.e. answering questions becomes easier, however, at the cost of the size of boolean expression. The primary ``workhorse'' of Knowledge compilation is \acrfull{nnf}.
+
+Boolean \acrfull{nnf} is a syntactic restriction for Boolean formulas such that negations (NOT operators) are applied only directly to variables and not to compound subformulas. Formally, a Boolean formula is in \acrshort{nnf} if it is built from variables, their negations, conjunctions (AND), and disjunctions (OR), where NOT appears only as part of literals.
+
+A boolean expression in \acrshort{nnf} can be represented as a rooted directed acyclic graph, \acrshort{dag}. The leaf of the graph correspond to constants (0, 1) or literals ($a$, $\neg b$), presented in the expression. The internal nodes of the \acrshort{dag} correspond to AND ($\land$) and OR ($\lor$) gates. Internal gates cannot be associated with NOT gates.
+
+In the context of knowledge compilation, \acrshort{nnf} serves as a foundational target language. Knowledge bases compiled into \acrshort{nnf} allow efficient model checking and form the basis for further restricted normal forms like \acrfull{cnf}, \acrfull{dnf}, \acrfull{dnnf}, or \acrfull{d-dnnf}. \acrshort{nnf} enables subsequent transformations and reasoning tasks to be performed with well-bounded complexity, as it ensures logical negation is ``pushed down'' to the leaves of the formula's parse tree, simplifying subsequent manipulations.
+
+\subsubsection{Properties of NNF}
+ \acrshort{nnf}s can be classified based on adherence to particular properties/restrictions. The set of  \acrshort{nnf}s that adhere to a set of properties defines a representational language, $L$ in Table \ref{tbl:kc_language_properties}.
+
+\paragraph{Decomposability}
+An \acrshort{nnf} is decomposable if, at every conjunction ($\land$) gate, the sets of variables feeding into the subformulas of its children are pairwise disjoint. That is, for any $\wedge$-node with children, the sets of variables involved in the subformulas rooted at those children share no variables. 
+Formally, for any $\wedge$-node with children ($\alpha_1, \ldots, \alpha_n$),
+\[
+\mathrm{Vars}(\alpha_i) \cap \mathrm{Vars}(\alpha_j) = \emptyset \quad \forall i \neq j
+\]
+This property ensures tractable consistency checking and supports efficient computation on the representation. The language of \acrshort{dnnf} comprises those \acrshort{nnf}s that are decomposable.
+
+\paragraph{Determinism}
+An \acrshort{nnf} is deterministic if, at every disjunction ($\lor$) gate, the sets of models (i.e., assignments that make the subformulas true) computed by its children are mutually exclusive--no single assignment satisfies more than one child. 
+Zero-overlap of assignments between children guarantees tractable model counting. Determinism together with decomposability yields \acrfull{d-dnnf}, which enables polytime validity, implicant, and model counting queries. \acrfull{sdd}s are a strict subset of \acrshort{d-dnnf} with additional structure.
+
+\paragraph{Smoothness}
+An \acrshort{nnf} is smooth if, at every disjunction ($\lor$) gate, all children depend on the same set of variables (atoms). That is, for every OR-node, the set of variables in each child's subformula is identical. Smoothness simplifies certain operations in knowledge compilation and ensures that the models of disjuncts are over a fixed set of variables. Smoothness can always be enforced on any \acrshort{dnnf} in polynomial time without affecting succinctness. \acrfull{sd-dnnf} enforces decomposability, determinism, and smoothness.
+
+\paragraph{Flatness}
+An \acrshort{nnf} is flat if the circuit/tree has height at most two: the root is an AND or OR, and the children are literals or simple conjunction/disjunctions of literals. Both \acrshort{cnf} and \acrshort{dnf} are examples of \acrfull{f-nnf}: In \acrshort{cnf}, the root is AND, its children are ORs of literals (clauses); in \acrshort{dnf}, the root is OR, its children are ANDs of literals (terms). Flatness restricts structural complexity and further subclasses are defined by additional properties: for instance, \acrshort{cnf} requires each clause to have no repeated variables, and \acrshort{dnf} requires each term to have unique variables.
+
+\subsubsection{Summary}
+The following sections explore common target languages that find uses in Knowledge Compilation and can be used in \acrshort{pra}. For each selected language we note it's main properties, construction algorithms, and tractable queries available for this languages. We focus on the following:
+\begin{enumerate}
+    \item \acrshort{cnf} --- the most well-studied form, ubiquitous in solving SAT problem.
+    \item \acrshort{dnf} --- a form that naturally renders itself for \acrlong{et} analysis and acts as a precursor for more sophisticated essential prime implicant search.
+    \item \acrshort{bdd}, \acrshort{zdd}, \acrshort{sdd} --- most tractable target languages, featured in the majority of practical applications.
+\end{enumerate}
+This is not an exhaustive list. It's intention is to provide a summary of rigorous formalism that can find uses in \acrfull{pra}.
+
+\input{2_foundations/knowledge_compilation/transformation/classes}
+
+\begin{landscape}
+\begin{longtable}{@{}lccccccc@{}}
+\caption[Properties of selected target languages.]{Properties of selected target languages.}
+\label{tbl:kc_language_properties}\\
+\toprule
+\textbf{Property} & \textbf{NNF} & \textbf{CNF} & \textbf{DNF} & \textbf{DNNF} & \textbf{d-DNNF} & \textbf{SDD} & \textbf{ROBDD} \\
+\midrule
+\endfirsthead
+
+\multicolumn{8}{c}{\textit{Continued: Properties of selected target languages.}}\\
+\toprule
+\textbf{Property} & \textbf{NNF} & \textbf{CNF} & \textbf{DNF} & \textbf{DNNF} & \textbf{d-DNNF} & \textbf{SDD} & \textbf{ROBDD} \\
+\midrule
+\endhead
+
+\endfoot
+\bottomrule
+\endlastfoot
+
+Decomposable                &  &  & $\top$ & $\top$ & $\top$ & $\top$ & $\top$ \\
+Structured Decomposable  &  &  &  &  &  & $\top$ & $\top$ \\
+Deterministic               &  &  & $\top$ &  & $\top$ & $\top$ & $\top$ 
+\\
+Strong Determinism          &  &  &  &  &  & $\top$ & $\top$ \\
+Smooth                      &  &  &  &  &  & $\top$ & $\top$ \\
+Flat                        &  & $\top$ & $\top$ &  &  &  &  \\
+\midrule
+\textbf{Query Type} & & & & & & & \\
+\midrule
+% Succinctness                & Universal & Universal & Universal & Universal & Less succinct & Similar to d-DNNF & Least succinct \\
+Consistency (CO)            & NP-c & coNP-c & polytime & polytime & polytime & polytime & polytime \\
+Model Enumeration (ME)      & NP-c & poly-delay & poly-delay & poly-delay & poly-delay & poly-delay & poly-delay \\
+Model Counting (CT)         & \#P-hard & \#P-hard & \#P-hard & \#P-hard & polytime & polytime & polytime \\
+Equivalence (EQ)            & coNP-c & coNP-c & coNP-c & coNP-c & coNP-c & polytime$^*$ & polytime$^\dagger$ \\
+Conditioning                & polytime & polytime & polytime & polytime & polytime & polytime & polytime \\
+Forgetting                  & coNP-c. & coNP-c. & coNP-c. & coNP-c. & coNP-c. & polytime & NP-hard \\
+Boolean Combination         & polytime & polytime & polytime & polytime & polytime & polytime & polytime \\
+\multicolumn{8}{l}{%
+  \begin{tabular}[t]{@{}l@{}}
+    $*$: SDD equivalence: polytime when compressed with a fixed vtree.\\
+    $\dagger$: OBDD equivalence: polytime with fixed variable order.\\
+  \end{tabular}}\\
+\bottomrule
+\end{longtable}
+\end{landscape}

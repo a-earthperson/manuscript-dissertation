@@ -1,0 +1,100 @@
+%----------------------------------------
+% Section: Probabilistic Risk Assessment Model Structure
+%----------------------------------------
+
+\subsection{\color{yellow}{Probabilistic Risk Assessment Model Structure}}
+\label{sec:pra_model_structure}
+
+Probabilistic Risk Assessment (PRA) model generation is a crucial step in the design, operation, and decommissioning phases of a nuclear power plant (NPP). Different PRA software tools implement distinct methods for model generation, storage, and exchange. Understanding these methods is essential for enhancing interoperability and advancing tool capabilities. In this work, we focus on two representative tools: SAPHIRE (via its SAPHSOLVE solver) and SCRAM (via the Open-PSA Model Exchange Format).
+
+\subsubsection{\color{yellow}{SAPHSOLVE Models}}
+\label{sec:saphsolve_models}
+
+SAPHIRE's quantification engine, SAPHSOLVE, exposes two primary solvers--Fault Tree Solver and Event Tree/Sequence Solver--via a JSON-based remote interface. Below we outline SAPHIRE's background and the structure of its input/output files.
+
+\paragraph{Overview of SAPHIRE}
+SAPHIRE is a comprehensive software package for PRA, documented in a seven-volume manual \cite{24}:
+\begin{enumerate}
+  \item \textbf{Volume 1:} Overview of capabilities and summary of subsequent volumes.
+  \item \textbf{Volume 2:} Technical reference covering fault-tree logic, minimal cut-sets, probability concepts, importance measures, uncertainty, and seismic calculations.
+  \item \textbf{Volume 3:} User guide describing each feature in detail.
+  \item \textbf{Volume 4:} Tutorial on building a PRA database using a simple example.
+  \item \textbf{Volume 5:} Guide to SAPHIRE's workspace types.
+  \item \textbf{Volume 6:} Quality assurance methods, testing, and configuration control.
+  \item \textbf{Volume 7:} Data loading, conversion methods, and validation.
+\end{enumerate}
+Users interact via a graphical user interface (GUI) or an Application Programming Interface (API) that orchestrates nine specialized engines:
+\begin{itemize}
+  \item \emph{Fault Tree Solver}: Generates cut-sets from fault-tree logic and basic event data.
+  \item \emph{Event Tree/Sequence Solver}: Computes end-states and associated cut-sets for event trees.
+  \item \emph{Cut Set Post-Processor}: Applies rule files to update cut-sets without regeneration.
+  \item \emph{Cut Set Updater}: Ensures minimality of cut-sets after post-processing.
+  \item \emph{Event Tree Linker}: Defines dependencies between fault-tree and event-tree constructs.
+  \item \emph{Cut Set Partition Processor}: Partitions cut-sets into end-states.
+  \item \emph{Change Set Processor}: Updates basic event data via change sets.
+  \item \emph{Uncertainty Sampler}: Performs Monte Carlo and Latin Hypercube sampling.
+  \item \emph{End-State Gather}: Aggregates cut-sets by end-state.
+\end{itemize}
+For remote web-based quantification, only the Fault Tree Solver and Event Tree/Sequence Solver are invoked via SAPHSOLVE.
+
+\paragraph{SAPHSOLVE Model Structure}
+SAPHSOLVE uses JavaScript Object Notation (JSON) \cite{37} for its input (``\texttt{.jsonp}'') and output (``\texttt{.jsonc}'') files. This format was chosen for its lightweight, self-describing nature and ease of integration in web environments \cite{15}.
+
+\paragraph{Input File Specification}
+The input file (\texttt{.jsonp}) comprises:
+\begin{itemize}
+  \item \textbf{Header:} Model metadata and truncation parameters.
+  \item \textbf{System Gate List:} Definitions of top-level system gates.
+  \item \textbf{Fault Tree List:} Logic expressions for each fault tree.
+  \item \textbf{Sequence List:} Event-tree definitions mapping fault-tree outputs to sequences.
+  \item \textbf{Event List:} Basic event failure rates and initiating event frequencies.
+\end{itemize}
+Each file represents either a single fault tree or a combined fault/event-tree model. All models used in this study are available in the project repository \cite{38}.
+
+\begin{figure}[htbp]
+  \centering
+  % \includegraphics[width=0.7\textwidth]{saphsolve_input_structure}
+  \caption{General structure of the SAPHSOLVE input file \cite{15}.}
+  \label{fig:saphsolve_input}
+\end{figure}
+
+\paragraph{Output File Specification}
+The output file (\texttt{.jsonc}) returns:
+\begin{itemize}
+  \item \textbf{General Information:} Solver version, file path, and timestamp.
+  \item \textbf{Truncation Parameters:} Values used during cut-set generation.
+  \item \textbf{Workspace Pair:} Phase (fault or event tree) and model identifier.
+  \item \textbf{Sequence Results:} For each sequence or fault tree, the number of cut-sets, total failure probability, and detailed cut-set lists.
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  % \includegraphics[width=0.7\textwidth]{saphsolve_output_structure}
+  \caption{General structure of the SAPHSOLVE output file \cite{15}.}
+  \label{fig:saphsolve_output}
+\end{figure}
+
+\subsubsection{\color{yellow}{Open-PSA Model Exchange Framework}}
+\label{sec:openpsa_mef}
+
+The Open-PSA \acrshort{mef} \cite{36} was developed to enable software-independent PRA model sharing. It uses \acrshort{xml} for its explicit, hierarchical representation of model constructs.
+
+\paragraph{Overview of SCRAM}
+It operates via a command-line interface, performing fault-tree and event-tree quantification, cut-set generation, importance measures, and uncertainty analyses.
+
+\paragraph{SCRAM Model Structure}
+SCRAM adheres to a five-layer XML architecture (Figure~\ref{fig:openpsa_arch}):
+\begin{enumerate}
+  \item \textbf{Stochastic Layer:} Probability distributions of basic event failure rates.
+  \item \textbf{Fault Tree Layer:} Logical structure of fault trees.
+  \item \textbf{Meta-Logical Layer:} Common-cause groups, delete terms, and recovery rules.
+  \item \textbf{Event Tree Layer:} Initiating events and consequences.
+  \item \textbf{Report Layer:} Computed results and importance measures.
+\end{enumerate}
+
+\begin{figure}[htbp]
+  \centering
+  % \includegraphics[width=0.7\textwidth]{openpsa_architecture}
+  \caption{Architecture of the Open-PSA Model Exchange Format \cite{36}.}
+  \label{fig:openpsa_arch}
+\end{figure}

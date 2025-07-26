@@ -1,0 +1,69 @@
+\sisetup{
+  scientific-notation      = true,
+  table-format             = 1.2e-2,
+  round-mode               = places,
+  round-direction          = up,
+  round-precision          = 2,
+  group-separator          = {,},
+  group-minimum-digits     = 4,
+  table-number-alignment   = center,
+}
+
+\begin{longtable}{@{}c l l S@{}}
+\caption{Initiating Events for the Generic Sodium Cooled Fast Reactor}%
+\label{tbl:initiating_events}\\
+\toprule
+\textbf{\#} & \textbf{ID} & \textbf{Event Sequence} & \textbf{IE Freq (/reactor yr.)} \\
+\midrule
+\endfirsthead
+
+\multicolumn{4}{c}{\textit{Continued: \acrlong{ie}s for the \acrfull{gscfr}}}\\
+\toprule
+\textbf{\#} & \textbf{ID} & \textbf{Event Sequence} & \textbf{IE Freq (/reactor yr.)} \\
+\midrule
+\endhead
+
+\endfoot
+\bottomrule
+\endlastfoot
+
+1  & LCDL  & Loss of Circulation -- Delayed                                 & 1.10e-8  \\
+2  & LF1A  & Single Pump Loss of Flow -- Group A                            & 5.00e-1  \\
+3  & LF1B  & Single Pump Loss of Flow -- Group B                            & 1.50e-1  \\
+4  & LF1C  & Single Pump Loss of Flow -- Group C                            & 2.50e-1  \\
+5  & LF1D  & Single Pump Loss of Flow -- Group D                            & 2.70e-2  \\
+6  & LF2A  & Double Pump Loss of Flow -- Group A                            & 2.10e-2  \\
+7  & LF2B  & Double Pump Loss of Flow -- Group B                            & 4.70e-3  \\
+8  & LF2C  & Double Pump Loss of Flow -- Group C                            & 2.20e-4  \\
+9  & LF2D  & Double Pump Loss of Flow -- Group D                            & 2.60e-9  \\
+10 & LF2E  & Double Pump Loss of Flow -- Group E                            & 7.00e-6  \\
+11 & LF2F  & Double Pump Loss of Flow -- Group F                            & 3.60e-4  \\
+12 & LONP  & Loss of Normal Power                                           & 1.00e-1  \\
+13 & LOCP  & Loss of Constant Power                                         & 1.00e-1  \\
+14 & OCSP  & Overcooling by Secondary Pump Overspeed                        & 3.30e-2  \\
+15 & OCPP  & Overcooling by Primary Pump Overspeed                          & 3.00e-1  \\
+16 & OCSL  & Overcooling by Major Steam Leak                                & 1.00e-1  \\
+17 & RISA  & Slow Reactivity Insertion Group A (<0.20 \$)                   & 3.00e-2  \\
+18 & RISB  & Slow Reactivity Insertion Group B (0.20--0.65 \$)              & 7.70e-3  \\
+19 & RISC  & Slow Reactivity Insertion Group C (0.65--1.10 \$)              & 1.70e-6  \\
+20 & RISD  & Slow Reactivity Insertion Group D (0.20--0.65 \$)              & 1.00e-5  \\
+21 & RIFL  & Fast Reactivity Insertion (>1.00 \$)                           & 2.90e-8  \\
+22 & RIFS  & Fast Reactivity Insertion (<0.35 \$)                           & 1.00e-3  \\
+23 & ANTC  & Anticipatory Shutdown                                          & 5.00e-1  \\
+24 & SCRM  & Scram                                                          & 7.00e-1  \\
+25 & SHDL  & Long Shutdown                                                  & 1.00e+0  \\
+26 & SHDS  & Short Shutdown                                                 & 6.00e+0  \\
+27 & TBOP  & Loss of Steam Plant Heat Removal                               & 3.70e-1  \\
+28 & TAIR  & Transient -- Loss of Instrument Air                            & 2.50e-1  \\
+29 & TSHC  & Transient -- Unrecoverable Loss of Shield Cooling              & 3.30e-2  \\
+30 & TSDC  & Transient -- Unrecoverable Loss of a Shutdown Cooler           & 5.80e-3  \\
+31 & TSEC  & Loss of Secondary System Heat Removal                          & 6.30e-1  \\
+32 & EVTR  & Evaporator Tube Rupture                                        & 1.00e-4  \\
+33 & SPTR  & Superheater Tube Failure                                       & 1.33e-1  \\
+34 & MDLF  & Local Faults: Metal Driver Breach Initiator                    & 1.48e-12 \\
+35 & MELF  & Local Faults: Metal Experiment Breach Initiator                & 4.50e+1  \\
+36 & OELF  & Local Faults: Oxide Experiment Breach Initiator                & 4.50e+1  \\
+37 & SFPB  & Subassembly Local Fault from Partial Blockage                  & 1.40e-1  \\
+38 & SFLE  & Subassembly Local Fault from Loading Error                    & 6.00e-2  \\
+
+\end{longtable}

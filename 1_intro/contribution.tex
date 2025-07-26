@@ -1,0 +1,19 @@
+\section{Key Contributions}
+The primary technical contributions of this dissertation can be summarized as follows:
+
+\begin{enumerate}
+\item \textbf{Data-Parallel Monte Carlo for Boolean Systems:}  
+We introduce a new framework that estimates probabilities for all \emph{success} and \emph{failure} states in a single run of Monte Carlo sampling. By representing each random system state in a bit-packed data structure, we achieve high-throughput simulations where Boolean operators (AND, OR, \(k/n\), etc.) map naturally to bitwise operations on GPUs or multi-core CPUs.
+
+\item \textbf{Integration with Probabilistic Circuits:}  
+To unify event/fault tree logic with more flexible gate structures, we embed the model in a \emph{probabilistic circuit} representation. This perspective enables node-level factorization and sum mixtures, opening doors to advanced decomposition-based analyses while retaining parallel-friendly evaluation.
+
+\item \textbf{Sampling Techniques for Partial-Derivatives:}  
+We develop a bitwise algorithm to approximate partial derivatives of the system’s failure probability with respect to individual or clustered component reliabilities. By evaluating logical expressions under complementary assignments (as guided by the Shannon expansion), these derivatives can be computed in the same Monte Carlo pass. This capability facilitates advanced sensitivity and importance ranking in large models. It also opens a path towards integrating model evaluation with learning-based tasks.
+
+\item \textbf{Benchmarking Against Industry Tools:}  
+Through a series of case studies—most notably, the generic pressurized water reactor (PWR) reference model—we compare our approach with standard PRA tools (CAFTA, FTREX, SAPHIRE, SCRAM, XFTA). Results indicate that at comparable accuracy, our framework can surpass existing methods by orders of magnitude in runtime performance. We discuss how discrepancies in extremely low-probability events should be carefully monitored via convergence diagnostics.
+
+\item \textbf{Prototype Implementation:}  
+We present an open-source reference implementation named Canopy, built using the SYCL programming model. The code is portable across a variety of parallel architectures, including consumer GPUs and specialized accelerators. We provide usage examples and discuss future directions, such as unifying the approach with importance sampling to better handle rare events and building correlated sampling routines amenable to common-cause failure modeling.
+\end{enumerate}

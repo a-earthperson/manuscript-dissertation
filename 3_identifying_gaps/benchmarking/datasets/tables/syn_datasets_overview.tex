@@ -1,0 +1,68 @@
+\begin{longtable}{@{}llll@{}}
+\caption[Summary of generated synthetic model datasets and their parameterizations.]{Summary of generated synthetic model datasets and their parameterizations \cite{aras_synthetic_2025}.}
+\label{tab:syn_datasets_overview}\\
+\toprule
+\textbf{Dataset Name} & \textbf{Parameter} & \textbf{Value / Range} & \textbf{Formats} \\* \midrule
+\endfirsthead
+\multicolumn{4}{c}{\textit{Continued: Summary of generated synthetic model datasets and their parameterizations.}}\\
+\toprule
+\textbf{Dataset Name} & \textbf{Parameter} & \textbf{Value / Range} & \textbf{Formats} \\* \midrule
+\endhead
+%
+\bottomrule
+\endfoot
+%
+\endlastfoot
+
+100\_to\_100k\_voter & Number of basic events & 100, 1,000, 10,000, 100,000 & OpenPSA \\
+                     & Gate weights          & all gates; K/N only          &               \\
+                     & Common basic events (\%) & 0.01                      &               \\
+\midrule
+1\_to\_4k & Number of gates   & 1--4,000                     & JSInp \\
+                         & Gate type sequence & Alternating OR/AND           &                 \\
+\midrule
+1\_to\_50k           & Number of gates       & 1--50,000                     & OpenPSA,\\
+                     & Gate type sequence    & Alternating OR/AND            & JSInp   \\
+\midrule
+1\_to\_5k            & Number of gates       & 1--5,000                      & OpenPSA,\\
+                     & Gate type sequence    & Alternating OR/AND            & JSInp   \\
+\midrule
+2\_to\_100k          & Number of basic events & 2, 10, 100, 1,000, 10,000, 100,000 & OpenPSA \\
+                     & Gate types            & AND, OR                       &                 \\
+                     & Common basic events (\%) & 0.01--0.09                 &                 \\
+\midrule
+500\_to\_750         & Number of basic events & 500, 550, 600, 750            & OpenPSA \\
+                     & Gate weights           & [AND, OR, K/N]                &          \\
+                     & Common basic events (\%) & 0.5--0.7                    &          \\
+                     & Common gates (\%)      & 0.3--0.5                      &          \\
+                     & CCF groups             & 0 or 2                        &          \\
+\midrule
+c1-P\_0.01-0.05      & Number of basic events & 100:50:5000                   & OpenPSA,\\
+                     & Gate weights           & [1,1,1,0,0]                   & JSInp   \\
+                     & Max/Min probability    & max 0.05, min 0.01            &                 \\
+\midrule
+c2-P\_0.5-0.9        & Number of basic events & 100:50:5000                   & OpenPSA \\
+                     & Gate weights           & [1,1,1,0,0]                   &         \\
+                     & Max/Min probability    & max 0.9, min 0.5              &         \\
+\midrule
+c3-P\_0.01-0.9       & Number of basic events & 100:50:5000                   & OpenPSA \\
+                     & Gate weights           & [1,1,1,0,0]                   &         \\
+                     & Max/Min probability    & max 0.9, min 0.01             &         \\
+\midrule
+c4-P\_0.05-0.9       & Number of basic events & 100:50:5000                   & OpenPSA \\
+                     & Gate weights           & [1,1,1,0,0]                   &         \\
+                     & Max/Min probability    & max 0.9, min 0.05             &         \\
+\midrule
+c5-P\_0.1-0.9        & Number of basic events & 100:50:5000                   & OpenPSA \\
+                     & Gate weights           & [1,1,1,0,0]                   &         \\
+                     & Max/Min probability    & max 0.9, min 0.1              &         \\
+\midrule
+c6-P\_0.25-0.9       & Number of basic events & 100:50:5000                   & OpenPSA \\
+                     & Gate weights           & [1,1,1,0,0]                   &         \\
+                     & Max/Min probability    & max 0.9, min 0.25             &         \\
+\midrule
+c7-P\_0.35-0.9       & Number of basic events & 100:50:5000                   & OpenPSA \\
+                     & Gate weights           & [1,1,1,0,0]                   &         \\
+                     & Max/Min probability    & max 0.9, min 0.35             &         \\
+\bottomrule
+\end{longtable}

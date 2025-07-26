@@ -1,0 +1,110 @@
+\section{Introduction}
+Benchmarking and profiling are fundamental processes for evaluating the computational performance and reliability of \acrshort{pra} tools. These processes enable the identification of performance bottlenecks, inform optimization strategies, and provide a basis for fair comparison between different quantification engines. This chapter presents a systematic benchmarking and profiling study of two PRA quantification engines: scram and SAPHSOLVE. The study uses a combination of synthetic models, the Aralia dataset, and generic Pressurized Water Reactor (PWR) models. The benchmarking methodology, performance metrics, and key findings are presented, followed by a detailed discussion of profiling results and their implications for future tool development.
+
+\section{Benchmarking Methodology}
+The benchmarking and profiling framework adopted in this study is inspired by a diagnostic methodology analogous to medical diagnostics. Just as a physician conducts an initial assessment followed by more detailed investigations, the evaluation of PRA tools begins with quick diagnostics through benchmarking, followed by detailed diagnostics via profiling. The overall workflow is illustrated in Figure~\ref{fig:diagnostic}, which serves as an overview of the approach.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/diagnostic}
+
+The benchmarking phase focuses on measuring key performance metrics such as CPU time and memory usage. However, benchmarking alone is insufficient for uncovering the root causes of inefficiency. Profiling is therefore employed to analyze the internal behavior of the code, identify computational hotspots, and guide targeted improvements. The combined outcomes of benchmarking and profiling inform an enhancement roadmap, which may include code optimization and the adoption of parallel computing strategies.
+
+\subsection{Benchmarking Process}
+The benchmarking process is structured around three essential components: the PRA model, the quantification tool, and the benchmarking configuration. Figure~\ref{fig:benchmarking_methodology} provides a schematic representation of the benchmarking methodology.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/benchmarking_methodology}
+
+Synthetic models are generated to facilitate controlled and reproducible comparisons between quantification engines. The model generator is parameterized to produce fault trees with varying numbers of basic events, gate types, and common-cause failures. Table~\ref{tab:model_generator_parameters} summarizes the key arguments and configurations used in the case study.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/tables/model_generator_parameters}
+
+The number of basic events is systematically varied from 100 to 5,000 in increments of 50, resulting in 99 distinct models for each engine. Gate types are randomly assigned, with AND, OR, and K/N gates occurring with equal probability. Notably, scram accepts truncation parameters via the command line, while SAPHSOLVE requires them in the input file. A probability truncation value of $10^{-20}$ is used, and no size truncation is applied. Common-cause failures, uncertainty analysis, and importance measures are excluded from this study.
+
+The benchmarking environment is standardized to ensure fair comparison. All tools are executed with a 30-minute wall-clock time limit, 16 GB RAM, and a single CPU core. BenchExec is used to manage resource allocation and collect performance data.
+
+\subsection{Profiling Process}
+Profiling is conducted to gain deeper insight into the internal performance characteristics of the quantification engines. The profiling methodology is depicted in Figure~\ref{fig:profiling}. A challenging PRA model is selected based on benchmarking results to ensure sufficient runtime for meaningful analysis. The quantification engine is compiled in release mode with maximum optimization and debug information enabled. Intel VTune is used as the profiler due to its comprehensive analysis capabilities and user-friendly interface.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/profiling}
+
+For scram, profiling is performed on a model with 450 basic events for MOCUS MCUB, MOCUS REA, and ZBDD, and on a model with 350 basic events for BDD. For SAPHSOLVE, profiling is conducted on a model with 310 basic events, with truncation sizes varied to assess performance under different conditions. The SAPHSOLVE profiling is performed on a Windows 10 system due to observed differences in performance between the Linux and Windows versions.
+
+\section{Benchmarking Results and Discussion}
+The quick diagnostics phase evaluates the performance of scram and SAPHSOLVE across the generated synthetic models. Table~\ref{tab:quantified_input_files} summarizes the number of input files successfully quantified (out of 99 input files) by each engine and approach.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/tables/quantified_input_files}
+
+The results indicate that the MOCUS and ZBDD algorithms in scram, as well as the MOCUS algorithm in SAPHSOLVE, are able to quantify the majority of models. The BDD approach in scram is limited by high memory requirements, resulting in only three successful quantifications. Models that cannot be quantified typically fail during the cut set generation step. For example, the ft-1300 model requires adjustment of the limit order in the size of minimal cut sets (MCS) to complete quantification. The relationship between the limit order and quantification time is exponential, as illustrated in Figure~\ref{fig:ft_1300}.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/ft_1300}
+
+A comparison of the number of cut sets generated by scram and SAPHSOLVE reveals that, in most cases, the results are consistent. However, differences are observed in a few models, particularly when using the ZBDD approach in scram. The probability results obtained by scram-MOCUS-MCUB and SAPHSOLVE-MOCUS-MCUB are identical, providing a valuable cross-check between the two engines.
+
+The quantification time for scram is approximately linear with respect to the number of cut sets generated, as shown in Figure~\ref{fig:scram_quant_time}. While most models are quantified within the time limit, some require up to 20 minutes, which is not acceptable for practical PRA applications. The ZBDD approach is significantly faster than MOCUS, and BDD is the fastest when sufficient resources are available.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/scram_quant_time}
+
+Memory usage in scram increases with model size, as depicted in Figure~\ref{fig:scram_memory_usage}. BDD runs are generally infeasible due to excessive memory demands. The flat line in the figure represents the predefined memory limit.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/scram_memory_usage}
+
+SAPHSOLVE quantifies 82 out of 99 models using the MOCUS approach with MCUB probability approximation. Its quantification time is consistently low, as shown in Figure~\ref{fig:saphsolve_quant_time}, due to early termination and efficient resource management. However, the Linux version of SAPHSOLVE is less capable than the Windows version when running without truncation.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/saphsolve_quant_time}
+
+SAPHOLVE's memory usage is also efficient, as depicted in Figure~\ref{fig:saphsolve_memory_usage}. The number of cut sets generated is slightly lower than in scram, which contributes to faster results.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/saphsolve_memory_usage}
+
+The benchmarking results highlight the trade-offs between speed, memory usage, and output detail. scram provides more detailed output but at the cost of higher resource consumption, while SAPHSOLVE is optimized for speed and minimal output.
+
+\section{Profiling Results and Discussion}
+Profiling provides detailed diagnostics of the quantification engines, enabling the identification of computational hotspots and inefficiencies. The profiling setup differs between scram and SAPHSOLVE due to differences in model formats, programming languages, and operating environments.
+
+\subsection{scram Profiling}
+Table~\ref{tab:scram_profiling} summarizes the profiling results for scram across different quantification approaches and input files.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/tables/scram_profiling}
+
+Hot spot analysis reveals that result reporting and cut set generation dominate computation time for the MOCUS and ZBDD algorithms. BDD construction is the primary bottleneck for the BDD approach. Figures~\ref{fig:vtune_scram_mocus_mcub} through~\ref{fig:vtune_scram_zbdd} provide VTune profiling results for each approach.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/vtune_scram_mocus_mcub}
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/vtune_scram_mocus_rea}
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/vtune_scram_bdd}
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/vtune_scram_zbdd}
+
+\subsection{SAPHSOLVE Profiling}
+Table~\ref{tab:saphsolve_profiling} presents the profiling results for SAPHSOLVE at different truncation sizes.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/tables/saphsolve_profiling}
+
+The relationship between truncation size and calculation time in SAPHSOLVE is exponential, as shown in Figure~\ref{fig:saphsolve_truncation_time}. For large truncation sizes, performance degrades significantly, indicating a need for optimization in the size truncation implementation.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/plots/saphsolve_truncation_time}
+
+Table~\ref{tab:saphsolve_vtune} summarizes the VTune profiling results for SAPHSOLVE, highlighting the dominant functions and their contribution to total runtime.
+
+\input{3_identifying_gaps/benchmarking/profiling_methods/tables/saphsolve_vtune}
+
+Functions responsible for cut set generation dominate the runtime, especially as truncation size increases. This observation underscores the importance of efficient cut set management in large scale PRA quantification.
+
+\section{Conclusion}
+Benchmarking and profiling are indispensable for the rigorous evaluation and improvement of PRA quantification engines. The results presented in this chapter demonstrate that while both scram and SAPHSOLVE are capable of quantifying large synthetic models, their performance characteristics differ significantly. scram offers detailed output and multiple quantification approaches but at the cost of higher resource consumption. SAPHSOLVE is optimized for speed and minimal output but exhibits performance degradation for large truncation sizes. Profiling reveals that cut set generation is the primary computational bottleneck in both engines. These insights provide a foundation for targeted optimization and future development of high performance PRA tools.
+
+\input{task_IV/_}
+
+\section{Benchmarked Metrics}
+\section{Available Tools - Versions \& Descriptions}
+
+\chapter{Optimizing Available Tools}
+ % \sectionP{}
+point to papers and egemen's dissertation
+
+ \subsection{Instrumenting for Profiling}
+ \section{Profiling Metrics}
+ \subsection{CPU Usage, Memory Footprint, Parallel Scalability}
+ \subsection{Real-Time vs. Offline Calculation Needs}
+ \subsection{Identifying Kernel Hotspots and Bottlenecks}
+\section{Picking Low Hanging Fruit - Optimizations}

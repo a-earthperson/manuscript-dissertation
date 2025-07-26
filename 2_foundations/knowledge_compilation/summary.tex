@@ -1,0 +1,28 @@
+% table summarizing equivalent forms, columns for:
+
+% 1. equivalence: bijective, etc.
+% 2. canonical: uniquenuess, etc.
+% 3. uses: bdd for prob, nnf for mocus, anf removes negations, etc.
+% 4. relative size on conversion
+% 5. conversion time complexity
+% 6. real-world performance constraints for conversion
+
+% The semantics of the risk model-language have been developed for succinct representation of risk-reliability. That is exactly †he intent - = a language should serve the needs of the represented domain. Howecver
+% Knowing what problems can be solved efficiently.
+
+The risk model-language has been developed for efficient and tractable model building and representation of risk and reliability of the systems at hand.
+The semantic distinctions between Initiating Events, Event Tree, and Fault Trees provides human-interpretable language that allows engineers to effectively reason about potential failure events and their consequences, describe failure propagation paths between them, and iteratively and systematically increase description granularity of these these paths.
+While this is approach facilities effective model building and allows quantification of small systems, it quickly becomes intractable even for moderately sized systems. 
+Furthermore, an inherent inhomogeneity of data structures involved, though ``human-readable'', complicates qualitative and quantitative computational analysis of the model as a whole. 
+
+Therefore, a unified form of \acrshort{pra} model is required. 
+Firstly, such form must be deterministically generated from the human-built data structures without loss of information.
+Secondly, it must be ``computer-friendly'' and facilitate optimized quantitative and qualitative risk analyses and operations such as probability estimation, minimal cut set generation, etc.
+Finally, it should allow iterative updates in correspondence to the evolution of the underlying PRA model.
+
+In this section, we will show how these requirements can be achieved by viewing risk models as \acrfull{pdag}. We show how \acrshort{pdag} model maps on \acrshort{pdag} and how standard \acrshort{pra} methods can be viewed as operations on graphs. 
+Furthermore, we show how \acrshort{pdag}s can be viewed as collections of propositional logic statements --- knowledge bases.
+This view provides fundamental mathematical rigor to \acrshort{pra} formalism, by casting PRA methods as queries over and transformation of aforementioned knowledge bases.
+Not only this formalism provides strong computational bounds and guarantees for the algorithms of interest, but it also explicitly separates the preparation and analysis steps of \acrshort{pra} model, allowing for efficient separation and querying.
+
+% these are just suggestions! do as you please.

@@ -1,0 +1,11 @@
+\subsection{Automated Synthetic Model Generation}
+
+Synthetic PRA models were generated using an automated model generation utility that supports both fault tree (FT) and event tree (ET) structures \cite{earthperson_pra_2022}. The generation process is configurable, with users specifying probabilistic parameters either through a command-line interface (CLI) for fault trees or via a comma-separated values (CSV) configuration file for event trees. The generator outputs models in multiple formats, including OpenPSA XML and SAPHSOLVE JSInp and XFTA.
+
+For fault tree generation, the CLI interface accepts arguments that define the number of basic events, the types and weights of logic gates, the probabilities assigned to basic events, and the structure of the tree, including the presence of common basic events and gates as well as parent-child relationships. The event tree generator, on the other hand, is configured through a CSV file that specifies the event tree structure and the associated fault trees for each functional event. This file includes arguments for naming conventions, the number of functional events, and the logic and data for each linked fault tree. For both FTs and ETs, the generator allows for the specification of random seeds to ensure reproducibility.
+
+Model validation is performed for OpenPSA models using a RELAX NG schema, which ensures that the generated XML files conform to the required standard. Validation results, including any errors, are logged for further review and correction.
+
+Table~\ref{tab:autogen_config_et_ft} summarizes the key input parameters required for both FT and ET generation \cite{Farag2023Benchmarking}.
+
+\input{3_identifying_gaps/benchmarking/datasets/tables/syn_ft_settings}

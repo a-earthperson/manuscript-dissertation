@@ -1,0 +1,34 @@
+\begin{longtable}{@{}lll@{}}
+\small
+\caption{Summary of the MHTGR model structure, including event trees, fault trees, and top events.}
+\label{tab:mhtgr_dataset_summary}\\
+\toprule
+\textbf{Event Tree} & \textbf{Fault Tree} & \textbf{Top Event} \\* \midrule
+\endfirsthead
+\multicolumn{3}{c}{\textit{Continued: Summary of the generic MHTGR PRA model structure.}}\\
+\toprule
+\textbf{Event Tree} & \textbf{Fault Tree} & \textbf{Top Event} \\* \midrule
+\endhead
+\bottomrule
+\endfoot
+\endlastfoot
+
+Primary coolant leaks & CRW & Loss of HTS cooling \\
+Small steam generator leaks & Shutdown cooling system & Turbine building closed cooling\\
+& (SCS) & water subsystem failure \\
+Moderate steam generator leaks & Automatic Steam & Reactor plant cooling\\
+& Generator Dump & water subsystem failure \\
+Loss of HTS cooling (HTS) & Reaccor Trip & Loss of Class IE 120 VAC\\
+& & uninterruptible power supply \\
+Loss of offsite power (LOOP) & Moisture Monitor Detection & SCS failure in at least one\\
+& & module where HTS failed \\
+Control rod withdrawal (CRW) & Automatic Steam & Failure of SCS when one\\
+& Generator Isolation & module requires cooling \\
+Anticipated transients & Steam Generator & Loss of SCS cooling when four\\
+requiring scram (ATRS) & Relief Train Response & modules require cooling \\
+& Reactor Cavity Cooling System & Heater failure \\
+& HPS Pumpdown & Demineralizer failures \\
+& & Circulating water subsystem failure \\
+& & Service water subsystem failure \\
+\bottomrule
+\end{longtable}

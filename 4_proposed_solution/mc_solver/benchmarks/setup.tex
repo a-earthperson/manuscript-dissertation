@@ -1,0 +1,16 @@
+\subsection{Runtime Environment and Benchmarking Setup}
+\label{subsec:runtime_environment}
+
+All experiments were performed on a consumer-grade desktop provisioned with an NVIDIA\textsuperscript{\textregistered} GeForce GTX~1660~SUPER graphics card (1{,}408~CUDA cores, 6\,\acrshort{gb} of dedicated GDDR6 memory) and a 10th-generation Intel\textsuperscript{\textregistered} Core\textsuperscript{TM}~i7-10700 \acrshort{cpu} (2.90\,GHz base clock, with turbo-boost and hyperthreading enabled). The code implementation relies on \acrshort{sycl} using the AdaptiveCpp (formerly HipSYCL) framework, which employs an LLVM based runtime and \acrfull{jit} kernel compilation.
+
+\subsubsection*{Monte Carlo Sampling Strategy}
+Each fault tree model was evaluated through a single pass (one iteration), generating as many Monte Carlo samples as would fit into the \acrshort{gpu}'s 6\,\acrshort{gb} memory. A 64-bit counter-based Philox4x32x10 random number generator was applied in parallel to produce the basic-event realizations. Note, with the exception of \texttt{das9205}, for which 5 passes were performed (in $\approx 0.96$ seconds), all inputs were quantified using just one pass. We specifically chose \texttt{das9205} since its overall event probability is quite low, and requires many naive Monte Carlo samples.
+
+\subsubsection*{Bit-Packing and Data Types}
+To reduce memory usage and increase vectorized throughput, every batch of Monte Carlo results was bit-packed into 64-bit words. Accumulated tallies of successes or failures were stored as 64-bit integers, while floating-point calculations (e.g., probability estimates) used double precision (64-bit floats). These design decisions are intended to maintain numerical consistency and make use of native hardware operations (such as population-count instructions for threshold gates).
+
+\subsubsection*{Execution Procedure}
+Upon launching the application, the enabling overhead (host-device transfers, \acrshort{jit} compilation, and kernel configuration) was included in the total wall-clock measurement. Each benchmark was compiled at the \texttt{-O3} optimization level to ensure efficient instruction generation. Every experiment was repeated at least five times, and measured runtimes were averaged to reduce the impact of transient background processes or scheduling variations on the host system.
+
+\subsection{Assumptions and Constraints}
+The primary objective was to gauge runtime across a set of fault trees that vary widely in size, logic complexity, and probability ranges within a typical Monte Carlo integration workflow. The experiments assume independent operation of the test machine, with no significant other processes contending for \acrshort{gpu} or \acrshort{cpu} resources. All sampling took place within a single pass, so the measured wall times incorporate initial kernel launches, memory copies, and statistical collection of gate outcomes. No specialized forms of hardware optimization beyond the data-parallel approach (e.g., pinned memory or asynchronous streams) were used.

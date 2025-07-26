@@ -1,0 +1,134 @@
+\subsection{Disjunctive Normal Form (DNF)}
+\label{sec:event_trees_as_2_lvl_circuits}
+
+\subsubsection{Definition and Properties}
+\acrfull{dnf} is a classical representation language for propositional theories. A \acrshort{dnf} formula is a disjunction of terms, with each term being a conjunction of literals (variables or their negations). Formally, a \acrshort{dnf} formula has the form ( $T_1 \vee T_2 \vee \cdots \vee T_m$ ), where each ( $T_i = l_{i1} \wedge l_{i2} \wedge \cdots \wedge l_{ik}$ ), with $l_{ij}$ --- a literal. \acrshort{dnf} is a subset of \acrshort{nnf} and more specifically, a \acrfull{f-nnf}. It is universal: any propositional theory has a \acrshort{dnf} representation. \acrshort{dnf} is not canonical; equivalent functions may have different \acrshort{dnf} syntactic forms. Every \acrshort{dnf} formula is also a \acrshort{dnnf} but is not in general deterministic (and thus not always a \acrshort{d-dnnf}).
+
+\subsubsection{Construction}
+To construct a \acrshort{dnf}, rewrite the propositional theory as a disjunction of conjunctions of literals, with each term representing a possible partial assignment that satisfies the theory. Mechanical conversion from other forms (such as  \acrshort{cnf}) to \acrshort{dnf} can require exponential space in the worst case.
+Applications \acrshort{dnf} appears in:
+\begin{enumerate}
+\item Model-based diagnosis, where explicit representation of models is useful for enumerative reasoning.
+\item Knowledge compilation pipelines as a source or target language and as an intermediary form in bottom-up compilation to tractable representations.
+\item Problems requiring efficient model enumeration, such as explanation generation or solution space exploration.
+\end{enumerate}
+
+\subsubsection{Compilers and Implementations}
+\paragraph{Bottom-Up Compilation from \acrshort{dnf} to  \acrshort{obdd}/ \acrshort{sdd}}
+Each \acrshort{dnf} term (conjunction of literals) is individually compiled into the target structure ( \acrshort{obdd} or  \acrshort{sdd}). Terms are then combined using the ``Apply'' (disjunction) function, which is polynomial-time in the size of the operands.
+\begin{enumerate}
+    \item  \acrshort{obdd} Implementations: The CUDD package is a widely used library supporting  \acrshort{obdd} construction and manipulation, including efficient Apply operations.
+    \item  \acrshort{sdd} Implementations: The  \acrshort{sdd} package, by the authors of  \acrshort{sdd}, is the primary implementation for Sentential Decision Diagrams, fully supporting bottom-up compilation and "Apply".
+\end{enumerate}
+
+\paragraph{Top-Down Compilation}
+Compilation algorithms initially designed for  \acrshort{cnf}, such as Decision- \acrshort{sdd} compilers, can also be used directly on \acrshort{dnf} input. These compilers operate recursively using principles from SAT solving, caching, and structural decomposition.
+\begin{enumerate}
+    \item Actual Implementations: The  \acrshort{sdd} package and other SAT-based compilers (e.g., c2d for  \acrshort{dnnf} compilation) can process \acrshort{dnf} input, although their performance is generally tuned for  \acrshort{cnf}.
+\end{enumerate}
+
+No sources identify compilers specific to \acrshort{dnf}-to- \acrshort{cnf} conversion or tailored \acrshort{dnf}-to-\acrshort{dnf} simplification outside of general boolean function minimization algorithms (such as Quine-McCluskey or Espresso), which are not the focus of knowledge compilation pipelines.
+
+\subsubsection{Polynomial-Time Queries and Complexities}
+\paragraph{Consistency (CO)} ( $O(\lvert \Delta\rvert)$ ). Satisfiability is determined by checking that at least one term contains no complementary literals.
+\paragraph{Model Enumeration (ME)} Polynomial delay per model ( $\mathcal{O}(\lvert T_i\rvert)$ ) per model for term ( $T_i$ ). All models can be enumerated efficiently by expanding the terms.
+\paragraph{Others} All other standard queries (e.g., Validity [VA], Clausal Entailment [CE], Model Counting [CT], Equivalence [EQ], etc.): Intractable unless ( $P=NP$ ) or $\#P=FP$ (e.g., Model Counting is $\#P$-hard).
+\begin{enumerate}
+    \item Validity (VA): co-NP-complete;
+    \item Clausal Entailment (CE): co-NP-complete;
+    \item Model Counting (CT): \#P-hard.
+\end{enumerate}
+
+\acrshort{dnf} is a flat, non-canonical, universal language supporting tractable consistency checking and model enumeration. It is commonly used as a source or intermediate representation in compilation pipelines targeting  \acrshort{obdd},  \acrshort{sdd}, or related languages, with mainstream libraries like CUDD and the  \acrshort{sdd} package implementing practical bottom-up compilation from \acrshort{dnf}. All other semantic queries, including entailment and model counting, are computationally intractable.
+
+Despite the aforementioned intractability, however, \acrshort{dnf} find a unique place in PRA analysis. A pure Even-Tree Diagrams can be represented as sum-or-products boolean formulas.
+
+\subsubsection{Event Tree Structures as Sum-Product Networks}
+Consider a specific branch \(\omega_j\) leading to the end-state \(X_j\).  By definition, \(\omega_j\) occurs if and only if:
+\begin{enumerate}
+    \item The initiating event \(I\) happens: \(i=1\).
+    \item For each functional event \(F_k\), the branch specifies a particular outcome (success or failure).  Suppose \(\omega_j\) includes successes for some subset of indices \(\alpha\subseteq \{1,\ldots,n\}\) and failures for the complementary indices.  We can write this as:
+    \[
+        \bigwedge_{k\in \alpha}  \bigl(f_{k}^{\text{succ}} = 1\bigr)
+        \quad\wedge\quad
+        \bigwedge_{k\notin \alpha} \bigl(f_{k}^{\text{fail}} = 1\bigr).
+    \]
+\end{enumerate}
+Hence, the branch event \(\omega_j\) is logically equivalent to a single \emph{product term}:
+\begin{equation}
+\label{eq:branch_conjunction}
+    \omega_j \;\equiv\; 
+    \bigl(i=1\bigr)
+    \;\wedge\;
+    \bigwedge_{k\in \alpha} \bigl(f_k^{\text{succ}}=1\bigr)
+    \;\wedge\;
+    \bigwedge_{k\notin \alpha} \bigl(f_k^{\text{fail}}=1\bigr).
+\end{equation}
+In standard Boolean notation, each literal (e.g., \(f_k^{\text{succ}}\)) is a variable that can be 0 or 1, and the branch is the \(\land\) (AND) of those variables. An event tree describing all possible outcomes from \(I\) and the subsequent functional events can be viewed as the union (logical OR) of its disjoint branches:
+\[
+    \Omega \;=\; \omega_1 \;\cup\; \omega_2 \;\cup\;\cdots \;\cup\; \omega_m.
+\]
+In Boolean terms, this is the \(\lor\) (OR) of the product terms corresponding to each branch:
+\begin{equation}
+\label{eq:event_tree_disjunction}
+    \Omega
+    \;\equiv\;
+    \omega_1
+    \;\lor\;
+    \omega_2
+    \;\lor\;\cdots\lor\;
+    \omega_m.
+\end{equation}
+Substituting each branch's conjunction form (as in Eq.~\eqref{eq:branch_conjunction}) into Eq.~\eqref{eq:event_tree_disjunction} yields:
+\[
+    \Omega 
+    \;\;=\;\;
+    \Bigl[
+        i \;\wedge\; \prod_{k\in \alpha_1} f_k^{\text{succ}} \;\wedge\; \prod_{k\notin \alpha_1} f_k^{\text{fail}}
+    \Bigr]
+    \;\;\lor\;\;
+    \Bigl[
+        i \;\wedge\; \prod_{k\in \alpha_2} f_k^{\text{succ}} \;\wedge\; \prod_{k\notin \alpha_2} f_k^{\text{fail}}
+    \Bigr]
+    \;\;\lor\;\;
+    \cdots
+\]
+where each \(\alpha_r\) is the set of functional events that succeed along branch \(r\).
+
+A standard \acrshort{dnf} (\acrshort{sop}) expression in Boolean algebra is
+\[
+    \bigl(\text{literal}_1 \;\wedge\;\text{literal}_2 \;\wedge\;\cdots\bigr)
+    \;\;\lor\;\;
+    \bigl(\text{literal}_{1}' \;\wedge\;\text{literal}_{2}' \;\wedge\;\cdots\bigr)
+    \;\;\lor\;\;\cdots
+\]
+Each term in the sum (OR) is a logical AND of literals (variables or their negations). Comparing with Eq.~\eqref{eq:event_tree_disjunction}, we see that an event tree is exactly a disjunction of terms, each term being a conjunction of the initiating event \(i\) (set to 1) and the success/failure indicators for each \(F_k\). Since any negation can be encoded by stating whether \(F_k\) is \(\text{succ}\) (\(f_k^{\text{succ}}=1\)) or \(\text{fail}\) (\(f_k^{\text{fail}}=1\)), the entire event tree \(\Omega\) is in \acrshort{dnf}:
+\[
+    \Omega \;=\; 
+    \bigvee_{j=1}^m
+    \Bigl[
+        \;\bigwedge_{\ell\in \Lambda_j}
+        (\text{appropriate literal})
+    \Bigr].
+\]
+
+\subsubsection{Tractability of Event Trees}
+\label{sec:tractability_event_trees}
+
+Within \(\operatorname{SP}\!-\)networks (sum-product networks), a sum gate provides a weighted sum of child distributions, whereas a product gate factorizes them.  An event tree can be cast as an \(\operatorname{SP}\!-\)network by feeding each branch's literal probabilities into product gates (one per branch), then summing over all branches with a sum gate.  Once constructed, evaluating the resulting \(\operatorname{SP}\!-\)network at a specific configuration \(\mathbf{x}\) or marginalizing out some of the variables is linear in the size of that network.  Nevertheless, the tractability of event trees (and their circuit representations) heavily depends on their size and structure.  We summarize several key considerations below:
+
+\begin{enumerate}
+    \item \emph{\acrshort{dnf} size grows exponentially.}
+    
+    Suppose an event tree includes \(n\) functional events, each of which can succeed or fail.  In the worst case, enumerating \emph{all} possible outcome branches (i.e.\ each success/failure pattern) yields up to \(2^n\) conjunction terms.  Hence, the disjunctive normal form (\acrshort{dnf}) representation can become exponentially large.  Computing or marginalizing probabilities over such a large \acrshort{dnf} may become prohibitively expensive if \(n\) is large enough.
+
+    \item \emph{Evaluation linear in network size.}
+    
+    Even though the \acrshort{dnf} itself may blow up exponentially, once the event tree is translated into an \(\operatorname{SP}\!-\)network, key inference tasks (such as evaluating it at a configuration or marginalizing over certain variables) proceed in time linear in the \emph{compiled network size}.  That said, if the underlying network has already reached exponential size in the number of events, the linear-time evaluation does not necessarily improve the overall worst-case complexity.
+    
+    \item \emph{Approximations abound.}
+    
+    In practice, analysts often employ approximations to keep event trees tractable.  One possibility is \emph{decomposability}, a core principle behind tractable probabilistic circuits whereby each product gate operates on disjoint sets of variables.  If the system decomposes (e.g.\ different safety barriers protect disjoint sets of equipment), one can evaluate probabilities without enumerating all branches.  Another common approximation is to prune paths with very low probabilities or ignore paths that only negligibly contribute to the overall risk.
+\end{enumerate}
+
+Fully enumerated event trees, regardless of being interpretable as \acrshort{dnf}/\acrshort{sp} networks, trade tractability for expressivity. The intuitive branching structure and conditional probability assignments make event trees easy to interpret. PRA analysts can read off and reason about the high-level scenario decomposition, incorporate domain knowledge, and analyze each branch explicitly.  If the number of critical functional events is moderate, enumerating all branches remains tractable. As the depth and breadth of the tree grow, any brute-force probability computation over such a large \acrshort{dnf}/\acrshort{sop} circuit is equally exponential in the worst case. Even though \(\operatorname{SP}\!-\)networks offer efficient linear-time evaluation with respect to the circuit size, the underlying circuit itself may have size exponential in \(n\).

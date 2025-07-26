@@ -1,0 +1,412 @@
+\subsection{Summary of Generated Synthetic Datasets}
+\label{sec:synthetic-datasets-summary}
+
+A total of thirteen distinct synthetic model datasets \cite{aras_synthetic_2025} were generated using the methodology described above. Each dataset is characterized by its structural configuration, parameter ranges, and output formats. The datasets are designed to cover a broad spectrum of model sizes and complexities. All models are deep fault trees, with variations in the number of gates, basic events, and gate type distributions.
+
+The \texttt{100\_to\_100k\_voter} dataset consists of models with 100, 1,000, 10,000, and 100,000 basic events, with gate weights configured either for all gate types or for K/N gates only, and a fixed percentage of common basic events. The \texttt{1\_to\_4k} dataset contains models with the number of gates ranging from 1 to 4,000, alternating between OR and AND gates. The \texttt{1\_to\_50k} and \texttt{1\_to\_5k} datasets similarly vary the number of gates from 1 up to 50,000 and 5,000, respectively, with alternating gate types and are provided in multiple formats. The \texttt{2\_to\_100k} dataset includes models with basic events ranging from 2 to 100,000, with AND and OR gate types and varying percentages of common basic events. The \texttt{500\_to\_750} dataset features models with 500, 550, 600, and 750 basic events, with specific gate weights, common event percentages, and, in some cases, common-cause failure groups.
+
+The remaining datasets, labeled \texttt{c1-P\_0.01-0.05} through \texttt{c7-P\_0.35-0.9}, are parameter sweeps where the number of basic events ranges from 100 to 5,000, and the maximum and minimum probabilities for basic events are systematically varied. These datasets are provided in OpenPSA and, where applicable, SAPHSOLVE JSInp formats.
+
+Table~\ref{tab:syn_datasets_overview} provides an overview of the generated datasets, including their naming conventions, key parameter ranges, and supported formats. All datasets are publicly available and are structured to facilitate reproducibility and direct comparison across PRA quantification engines.
+
+% \begin{landscape}
+\input{3_identifying_gaps/benchmarking/datasets/tables/syn_datasets_overview}
+% \end{landscape}
+
+
+
+\begin{comment}
+% table listing all the datasets, with columns:
+% names, parameter types and range
+% % https://github.com/openpra-org/synthetic-models/tree/main/models
+All the models are deep FTs, not wide FTs
+
+% 100_to_100k_voter
+# in total 8 + 8 = 16 files
+# contains the same models for both openpsa and xfta formats
+# only the content of the files are different
+# naming convention: 100-01-all.xml
+# meaning: 10 basic events, 0.01 percent out of these basic events are common basic events, the weight of [AND, OR, K/N, NOT, XOR] gates = [1.0, 1.0, 1.0, 1.0, 1.0].
+# naming convention: 100-01-KN.xml
+# meaning: 10 basic events, 0.01 percent out of these basic events are common basic events, the weight of [AND, OR, K/N, NOT, XOR] gates = [0.0, 0.0, 1.0, 0.0, 0.0].
+# list of file names:
+100-01-KN.xml
+100-01-all.xml
+1000-01-KN.xml
+1000-01-all.xml
+10000-01-KN.xml
+10000-01-all.xml
+100000-01-KN.xml
+100000-01-all.xml
+
+% 1_to_4k/saphsolve-jsinp
+# in total 23 files
+# contains only the saphsolve-jsinp models
+# naming convention: 10Gates.JSInp
+# meaning: there are in total 10 gates, the gates start with `or` gate following `and` gate following `or` gate and so on.
+#list of file names:
+1000Gates.JSInp
+100Gates.JSInp
+11Gates.JSInp
+1Gates.JSInp
+2000Gates.JSInp
+200Gates.JSInp
+21Gates.JSInp
+3000Gates.JSInp
+300Gates.JSInp
+31Gates.JSInp
+4000Gates.JSInp
+400Gates.JSInp
+41Gates.JSInp
+500Gates.JSInp
+51Gates.JSInp
+600Gates.JSInp
+61Gates.JSInp
+700Gates.JSInp
+71Gates.JSInp
+800Gates.JSInp
+81Gates.JSInp
+900Gates.JSInp
+91Gates.JSInp
+
+% 1_to_50k
+# in total 69 + 69 = 138 files
+# contains the same models in openpsa and saphsolve-jsinp formats
+# naming convention: 10Gates.xml
+# meaning: there are in total 10 gates, the gates start with `or` gate following `and` gate following `or` gate and so on.
+#list of file names:
+10000Gates.xml
+1000Gates.xml
+100Gates.xml
+11000Gates.xml
+11Gates.xml
+12000Gates.xml
+13000Gates.xml
+14000Gates.xml
+15000Gates.xml
+16000Gates.xml
+17000Gates.xml
+18000Gates.xml
+19000Gates.xml
+1Gates.xml
+20000Gates.xml
+2000Gates.xml
+200Gates.xml
+21000Gates.xml
+21Gates.xml
+22000Gates.xml
+23000Gates.xml
+24000Gates.xml
+25000Gates.xml
+26000Gates.xml
+27000Gates.xml
+28000Gates.xml
+29000Gates.xml
+30000Gates.xml
+3000Gates.xml
+300Gates.xml
+31000Gates.xml
+31Gates.xml
+32000Gates.xml
+33000Gates.xml
+34000Gates.xml
+35000Gates.xml
+36000Gates.xml
+37000Gates.xml
+38000Gates.xml
+39000Gates.xml
+40000Gates.xml
+4000Gates.xml
+400Gates.xml
+41000Gates.xml
+41Gates.xml
+42000Gates.xml
+43000Gates.xml
+44000Gates.xml
+45000Gates.xml
+46000Gates.xml
+47000Gates.xml
+48000Gates.xml
+49000Gates.xml
+50000Gates.xml
+5000Gates.xml
+500Gates.xml
+51Gates.xml
+6000Gates.xml
+600Gates.xml
+61Gates.xml
+7000Gates.xml
+700Gates.xml
+71Gates.xml
+8000Gates.xml
+800Gates.xml
+81Gates.xml
+9000Gates.xml
+900Gates.xml
+91Gates.xml
+
+% 1_to_5k\
+# in total 24 + 24 + 24 = 72 files
+# contains the same models in openpsa, saphsolve, xfta formats
+# naming convention: 10Gates.xml
+# meaning: there are in total 10 gates, the gates start with `or` gate following `and` gate following `or` gate and so on.
+# list of file names:
+1000Gates.xml
+100Gates.xml
+11Gates.xml
+1Gates.xml
+2000Gates.xml
+200Gates.xml
+21Gates.xml
+3000Gates.xml
+300Gates.xml
+31Gates.xml
+4000Gates.xml
+400Gates.xml
+41Gates.xml
+5000Gates.xml
+500Gates.xml
+51Gates.xml
+600Gates.xml
+61Gates.xml
+700Gates.xml
+71Gates.xml
+800Gates.xml
+81Gates.xml
+900Gates.xml
+91Gates.xml
+
+% 2_to_100k\
+# in total 50 + 50 = 10 files
+# contains the same models in openpsa and xfta formats
+# list of file names:
+10-01-and.xml
+10-01-or.xml
+10-05-and.xml
+10-05-or.xml
+100-01-and.xml
+100-01-or.xml
+100-01.xml
+100-02.xml
+100-03.xml
+100-04.xml
+100-05.xml
+100-06.xml
+100-07.xml
+100-08.xml
+100-09.xml
+1000-01-and.xml
+1000-01-or.xml
+1000-01.xml
+1000-02.xml
+1000-03.xml
+1000-04.xml
+1000-05.xml
+1000-06.xml
+1000-07.xml
+1000-08.xml
+1000-09.xml
+10000-01-and.xml
+10000-01-or.xml
+10000-01.xml
+10000-02.xml
+10000-03.xml
+10000-04.xml
+10000-05.xml
+10000-06.xml
+10000-07.xml
+10000-08.xml
+10000-09.xml
+100000-01-and.xml
+100000-01-or.xml
+100000-01.xml
+100000-02.xml
+100000-03.xml
+100000-04.xml
+100000-05.xml
+100000-06.xml
+100000-07.xml
+100000-08.xml
+100000-09.xml
+2-01-and.xml
+2-01-or.xml
+
+% 500_to_750
+| #   | Argument                                         | [options]           | Default       | Option #1    | Option #2    | Option #3    | Option #4    | Option #5        | Option #6        | Option #7    | Option #8    |
+|-----|--------------------------------------------------|---------------------|---------------|--------------|--------------|--------------|--------------|------------------|------------------|--------------|--------------|
+| 1*  | name for the fault tree                          | [--ft-name]         | Autogenerated | BE_500_1     | BE_750_2     | BE_500_2     | BE_750_1     | BE_500_1_CCF**   | BE_750_1_CCF     | BE_550_1     | BE_600_1     |
+| 2   | name for the root gate                           | [--root]            | root          | root         | root         | root         | root         | root             | root             | root         | root         |
+| 3   | seed for the PRNG                                | [--seed]            | 123           | 123          | 123          | 123          | 123          | 123              | 123              | 123          | 123          |
+| 4*  | # of basic events                                | [-b or --num-basic] | 100           | 500          | 750          | 500          | 750          | 500              | 750              | 550          | 600          |
+| 5*  | avg. # of gate arguments                         | [-a or --num-args]  | 3.0           | 10           | 10           | 10           | 10           | 10               | 10               | 10           | 10           |
+| 6*  | weights for [AND, OR, K/N, NOT, XOR] gates       | [--weights-g]       | [1,1,0,0,0]   | [1,1,1,0,0]  | [1,1,1,0,0]  | [1,1,1,0,0]  | [1,1,1,0,0]  | [1,1,1,0,0]      | [1,1,1,0,0]      | [1,1,1,0,0]  | [1,1,1,0,0]  |
+| 7*  | avg. %% of common basic events per gate          | [--common-b]        | 0.3           | 0.5          | 0.7          | 0.7          | 0.5          | 0.5              | 0.5              | 0.5          | 0.5          |
+| 8*  | avg. %% of common gates per gate                 | [--common-g]        | 0.1           | 0.3          | 0.5          | 0.5          | 0.3          | 0.3              | 0.3              | 0.3          | 0.3          |
+| 9*  | avg. # of parents for common basic events        | [--parents-b]       | 2             | 5            | 5            | 5            | 5            | 5                | 5                | 5            | 5            |
+| 10* | avg. # of parents for common gates               | [--parents-g]       | 2             | 5            | 5            | 5            | 5            | 5                | 5                | 5            | 5            |
+| 11  | # of gates (discards parents-b/g and common-b/g) | [-g or --num-gate]  | 0             | 0            | 0            | 0            | 0            | 0                | 0                | 0            | 0            |
+| 12  | maximum probability for basic events             | [--max-prob]        | 0.1           | 0.05         | 0.05         | 0.05         | 0.05         | 0.05             | 0.05             | 0.05         | 0.05         |
+| 13* | minimum probability for basic events             | [--min-prob]        | 0.000001      | 0.01         | 0.01         | 0.01         | 0.01         | 0.01             | 0.01             | 0.01         | 0.01         |
+| 14  | # of house events                                | [--num-house]       | 0             | 0            | 0            | 0            | 0            | 0                | 0                | 0            | 0            |
+| 15  | # of ccf groups                                  | [--num-ccf]         | 0             | 0            | 0            | 0            | 0            | 2                | 2                | 0            | 0            |
+| 16* | a file to write the fault tree                   | [-o or --out]       | -             | BE_500_1.xml | BE_750_2.xml | BE_500_2.xml | BE_750_1.xml | BE_500_1_CCF.xml | BE_750_1_CCF.xml | BE_550_1.xml | BE_600_1.xml |
+| 17  | apply the Aralia format to the output            | [--aralia]          | -             | -            | -            | -            | -            | -                | -                | -            | -            |
+| 18  | nest NOT connectives in Boolean formulae         | [--nest]            | -             | -            | -            | -            | -            | -                | -                | -            | -            |
+
+% c1-P_0.01-0.05
+# saphsolve-jsinp
+### Configuration 1 `c1-P_0.01-0.05` Arguments and Values
+
+| #  | Arguments                                          | Value                     |
+|----|----------------------------------------------------|---------------------------|
+| 1  | Fault tree name                                    | Autogenerated             |
+| 2  | The root gate name                                 | root                      |
+| 3  | The seed of the random number generator            | 123                       |
+| 4  | **The number of basic events**                     | **100:50:5000**           |
+| 5  | The number of house events                         | 0                         |
+| 6  | The number of CCF groups                           | 0                         |
+| 7  | The average number of gate arguments               | 3.0                       |
+| 8  | The weights of gate types [AND, OR, K/N, NOT, XOR] | [1.0, 1.0, 1.0, 0.0, 0.0] |
+| 9  | Percentage of common basic events per gate         | 0.3                       |
+| 10 | Percentage of common gates per gate                | 0.1                       |
+| 11 | The avg. number of parents for common basic events | 2                         |
+| 12 | The avg. number of parents for common gates        | 2                         |
+| 13 | **Maximum probability for basic events**           | **0.05**                  |
+| 14 | **Minimum probability for basic events**           | **0.01**                  |
+
+# openpsa
+### Configuration 1 `c1-P_0.01-0.05` Arguments and Values
+
+| #  | Arguments                                          | Value                     |
+|----|----------------------------------------------------|---------------------------|
+| 1  | Fault tree name                                    | Autogenerated             |
+| 2  | The root gate name                                 | root                      |
+| 3  | The seed of the random number generator            | 123                       |
+| 4  | **The number of basic events**                     | **100:50:5000**           |
+| 5  | The number of house events                         | 0                         |
+| 6  | The number of CCF groups                           | 0                         |
+| 7  | The average number of gate arguments               | 3.0                       |
+| 8  | The weights of gate types [AND, OR, K/N, NOT, XOR] | [1.0, 1.0, 1.0, 0.0, 0.0] |
+| 9  | Percentage of common basic events per gate         | 0.3                       |
+| 10 | Percentage of common gates per gate                | 0.1                       |
+| 11 | The avg. number of parents for common basic events | 2                         |
+| 12 | The avg. number of parents for common gates        | 2                         |
+| 13 | **Maximum probability for basic events**           | **0.05**                  |
+| 14 | **Minimum probability for basic events**           | **0.01**                  |
+
+% c2-P_0.5-0.9/openpsa
+### Configuration 2 `c2-P_0.5-0.9` Arguments and Values
+
+| #  | Arguments                                          | Value                     |
+|----|----------------------------------------------------|---------------------------|
+| 1  | Fault tree name                                    | Autogenerated             |
+| 2  | The root gate name                                 | root                      |
+| 3  | The seed of the random number generator            | 123                       |
+| 4  | **The number of basic events**                     | **100:50:5000**           |
+| 5  | The number of house events                         | 0                         |
+| 6  | The number of CCF groups                           | 0                         |
+| 7  | The average number of gate arguments               | 3.0                       |
+| 8  | The weights of gate types [AND, OR, K/N, NOT, XOR] | [1.0, 1.0, 1.0, 0.0, 0.0] |
+| 9  | Percentage of common basic events per gate         | 0.3                       |
+| 10 | Percentage of common gates per gate                | 0.1                       |
+| 11 | The avg. number of parents for common basic events | 2                         |
+| 12 | The avg. number of parents for common gates        | 2                         |
+| 13 | **Maximum probability for basic events**           | **0.9**                   |
+| 14 | **Minimum probability for basic events**           | **0.5**                   |
+
+% c3-P_0.01-0.9/openpsa
+### Configuration 3 `c3-P_0.01-0.9` Arguments and Values
+
+| #  | Arguments                                          | Value                     |
+|----|----------------------------------------------------|---------------------------|
+| 1  | Fault tree name                                    | Autogenerated             |
+| 2  | The root gate name                                 | root                      |
+| 3  | The seed of the random number generator            | 123                       |
+| 4  | **The number of basic events**                     | **100:50:5000**           |
+| 5  | The number of house events                         | 0                         |
+| 6  | The number of CCF groups                           | 0                         |
+| 7  | The average number of gate arguments               | 3.0                       |
+| 8  | The weights of gate types [AND, OR, K/N, NOT, XOR] | [1.0, 1.0, 1.0, 0.0, 0.0] |
+| 9  | Percentage of common basic events per gate         | 0.3                       |
+| 10 | Percentage of common gates per gate                | 0.1                       |
+| 11 | The avg. number of parents for common basic events | 2                         |
+| 12 | The avg. number of parents for common gates        | 2                         |
+| 13 | **Maximum probability for basic events**           | **0.9**                   |
+| 14 | **Minimum probability for basic events**           | **0.01**                  |
+
+% c4-P_0.05-0.9/openpsa
+### Configuration 4 `c4-P_0.05-0.9` Arguments and Values
+| #  | Arguments                                          | Value                     |
+|----|----------------------------------------------------|---------------------------|
+| 1  | Fault tree name                                    | Autogenerated             |
+| 2  | The root gate name                                 | root                      |
+| 3  | The seed of the random number generator            | 123                       |
+| 4  | *The number of basic events*                       | **100:50:5000**           |
+| 5  | The number of house events                         | 0                         |
+| 6  | The number of CCF groups                           | 0                         |
+| 7  | The average number of gate arguments               | 3.0                       |
+| 8  | The weights of gate types [AND, OR, K/N, NOT, XOR] | [1.0, 1.0, 1.0, 0.0, 0.0] |
+| 9  | Percentage of common basic events per gate         | 0.3                       |
+| 10 | Percentage of common gates per gate                | 0.1                       |
+| 11 | The avg. number of parents for common basic events | 2                         |
+| 12 | The avg. number of parents for common gates        | 2                         |
+| 13 | **Maximum probability for basic events**           | **0.9**                   |
+| 14 | **Minimum probability for basic events**           | **0.05**                  |
+
+% c5-P_0.1-0.9/openpsa
+### Configuration 5 `c5-P_0.1-0.9` Arguments and Values
+| #  | Arguments                                          | Value                     |
+|----|----------------------------------------------------|---------------------------|
+| 1  | Fault tree name                                    | Autogenerated             |
+| 2  | The root gate name                                 | root                      |
+| 3  | The seed of the random number generator            | 123                       |
+| 4  | **The number of basic events**                     | **100:50:5000**           |
+| 5  | The number of house events                         | 0                         |
+| 6  | The number of CCF groups                           | 0                         |
+| 7  | The average number of gate arguments               | 3.0                       |
+| 8  | The weights of gate types [AND, OR, K/N, NOT, XOR] | [1.0, 1.0, 1.0, 0.0, 0.0] |
+| 9  | Percentage of common basic events per gate         | 0.3                       |
+| 10 | Percentage of common gates per gate                | 0.1                       |
+| 11 | The avg. number of parents for common basic events | 2                         |
+| 12 | The avg. number of parents for common gates        | 2                         |
+| 13 | **Maximum probability for basic events**           | **0.9**                   |
+| 14 | **Minimum probability for basic events**           | **0.1**                   |
+
+% c6-P_0.25-0.9/openpsa
+### Configuration 6 `c6-P_0.25-0.9` Arguments and Values
+| #  | Arguments                                          | Value                     |
+|----|----------------------------------------------------|---------------------------|
+| 1  | Fault tree name                                    | Autogenerated             |
+| 2  | The root gate name                                 | root                      |
+| 3  | The seed of the random number generator            | 123                       |
+| 4  | **The number of basic events**                     | **100:50:5000**           |
+| 5  | The number of house events                         | 0                         |
+| 6  | The number of CCF groups                           | 0                         |
+| 7  | The average number of gate arguments               | 3.0                       |
+| 8  | The weights of gate types [AND, OR, K/N, NOT, XOR] | [1.0, 1.0, 1.0, 0.0, 0.0] |
+| 9  | Percentage of common basic events per gate         | 0.3                       |
+| 10 | Percentage of common gates per gate                | 0.1                       |
+| 11 | The avg. number of parents for common basic events | 2                         |
+| 12 | The avg. number of parents for common gates        | 2                         |
+| 13 | **Maximum probability for basic events**           | **0.9**                   |
+| 14 | **Minimum probability for basic events**           | **0.25**                  |
+
+% c7-P_0.35-0.9/openpsa
+### Configuration 7 `c7-P_0.35-0.9` Arguments and Values
+| #  | Arguments                                          | Value                     |
+|----|----------------------------------------------------|---------------------------|
+| 1  | Fault tree name                                    | Autogenerated             |
+| 2  | The root gate name                                 | root                      |
+| 3  | The seed of the random number generator            | 123                       |
+| 4  | **The number of basic events**                     | **100:50:5000**           |
+| 5  | The number of house events                         | 0                         |
+| 6  | The number of CCF groups                           | 0                         |
+| 7  | The average number of gate arguments               | 3.0                       |
+| 8  | The weights of gate types [AND, OR, K/N, NOT, XOR] | [1.0, 1.0, 1.0, 0.0, 0.0] |
+| 9  | Percentage of common basic events per gate         | 0.3                       |
+| 10 | Percentage of common gates per gate                | 0.1                       |
+| 11 | The avg. number of parents for common basic events | 2                         |
+| 12 | The avg. number of parents for common gates        | 2                         |
+| 13 | **Maximum probability for basic events**           | **0.9**                   |
+| 14 | **Minimum probability for basic events**           | **0.35**                  |
+\end{comment}

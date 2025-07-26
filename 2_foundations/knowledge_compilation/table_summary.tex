@@ -1,0 +1,27 @@
+\begin{longtable}{@{}l p{0.2\textwidth} c c c c c c c@{}}
+\caption{Succinctness and properties of various Boolean circuit formalisms. $\surd$~--~satisfied, $\circ$~--~not satisfied.}%
+\label{tbl:succinctness_properties}\\
+\toprule
+\textbf{Formalism} & \textbf{Succinctness (Relative)} & \textbf{Flatness} & \textbf{Smoothness} & \textbf{Determinism} & \textbf{Decomposability} & \textbf{Polytime Model Enumeration (ME)} & \textbf{Polytime Model Counting (CT)} & \textbf{Polytime Essential Prime Implicant Generation (EPI)} \\
+\midrule
+\endfirsthead
+
+\multicolumn{9}{c}{\textit{Continued: Succinctness and properties of various Boolean circuit formalisms.}}\\
+\toprule
+\textbf{Formalism} & \textbf{Succinctness (Relative)} & \textbf{Flatness} & \textbf{Smoothness} & \textbf{Determinism} & \textbf{Decomposability} & \textbf{Polytime Model Enumeration (ME)} & \textbf{Polytime Model Counting (CT)} & \textbf{Polytime Essential Prime Implicant Generation (EPI)} \\
+\midrule
+\endhead
+
+\endfoot
+\bottomrule
+\endlastfoot
+
+NNF   & Most succinct (equally succinct to CO-LSNNF) & $\circ$ & $\circ$ & $\circ$ & $\circ$ & $\circ$ (unless P=NP) & $\circ$ (unless P=NP) & $\bullet$ \\
+DNF   & Less succinct than DNNF, d-DNNF, etc.         & $\surd$ & $\circ$ & $\circ$ & $\surd$ (is a subset of DNNF) & $\surd$ & $\circ$ (unless P=NP) & $\bullet$ \\
+CNF   & Less succinct than MODS                       & $\surd$ & $\circ$ & $\circ$ & $\circ$ & $\circ$ (unless P=NP) & $\circ$ (unless P=NP) & $\bullet$ \\
+DNNF  & More succinct than d-DNNF, OBDD, DNF etc.     & $\circ$ (nested) & $\circ$ & $\circ$ & $\surd$ & $\surd$ & $\circ$ (unless P=NP) & $\bullet$ \\
+d-DNNF& Less succinct than DNNF, more than OBDD, MODS & $\circ$ (nested) & $\circ$ (not required for all) & $\surd$ & $\surd$ & $\surd$ & $\surd$ & $\bullet$ \\
+SDD   & Strict subset of d-DNNF                       & $\circ$ (nested) & $\circ$ (not required for all) & $\surd$ (subset of d-DNNF) & $\surd$ (subset of d-DNNF) & $\surd$ & $\surd$ & $\bullet$ \\
+OBDD  & Less succinct than DNNF, d-DNNF, more than OBDD$<$, MODS & $\circ$ (can be deep) & $\surd$ & $\surd$ & $\surd$ & $\surd$ & $\surd$ & $\bullet$ \\
+
+\end{longtable}

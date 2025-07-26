@@ -1,0 +1,77 @@
+\subsection{Probabilistic Risk Assessment Tools and Issues}
+\label{sec:pra_tools_history}
+
+In the evolution of \acrshort{pra} during the 1970s, various tools were concurrently developed to facilitate the analysis process. Below is a list of some notable \acrshort{pra} tools:
+
+\begin{itemize}
+\item \textbf{PREP and KITT} \cite{18}: Developed as computer code for automatically evaluating a fault tree by Idaho Nuclear Corporation. PREP obtains \acrshort{mcs} of the fault tree using either Monte Carlo or deterministic methods, while KITT obtains numerical probabilities associated with the tree.
+
+\item \textbf{\acrshort{mocus}} \cite{19}: Developed by Aerojet Nuclear Company, a computer program to obtain minimal cut sets from fault trees.
+
+\item \textbf{MODULE} \cite{20}: A computer program capable of handling minimal cut set generation, importance analysis, and uncertainty analysis.
+
+\item \textbf{SIGPI} \cite{21}: A program developed by \acrshort{llnl} for the \acrshort{nrc} that could compute complex systems' probability.
+
+\item \textbf{CAFTA} \cite{22}: Used to develop, maintain, and update single-top failure models using fault tree and event tree modeling techniques. It is currently maintained under the Phoenix Architect Module \cite{23} and is primarily utilized by United States \acrshort{npp} operators.
+
+\item \textbf{SAPHIRE} \cite{24}: A follow-up work of IRRAS \cite{25,26}, developed by the \acrshort{inl} for the \acrshort{nrc}. Released in 1987, it is widely used for performing complete \acrshort{pra} on personal computers and is one of the most used \acrshort{pra} tools in the US.
+
+\item \textbf{RISKMAN} \cite{27}: A personal computer (PC) based, general-purpose, integrated tool for quantitative risk analysis developed by ABS Consulting, Inc \cite{28}.
+
+\item \textbf{KIRAP} \cite{29}: A fault tree construction and analysis code package.
+
+\item \textbf{RiskSpectrum} \cite{30}: An advanced software developed by Relcon Scandpower AB, increasingly used for developing fault trees and event trees to assess system reliability in various parts of \acrshort{npp}.
+
+\item \textbf{RiskA} \cite{31}: An integrated reliability and \acrshort{pra} tool developed by the FDS Team.
+
+\item \textbf{XFTA} \cite{32}: A calculation engine initially developed in 2012 as part of the Open-PSA initiative.
+
+\item \textbf{SCRAM} \cite{33}: An open-source, command-line risk analysis multi-tool currently under enhancement in the PRAG in the Nuclear Engineering Department at \acrshort{ncsu}.
+
+\item \textbf{DeRisk} \cite{34}: A dynamic, uncertain causality graph-embedded risk analysis code package.
+\end{itemize}
+
+To summarize, numerous \acrshort{pra} tools have been developed and continuously improved. CAFTA is the preferred choice for most \acrshort{npp} operators in the US. SAPHIRE is the \acrshort{nrc}'s primary software tool for modeling, evaluating, and validating \acrshort{npp} results. Meanwhile, SCRAM is a versatile open-source \acrshort{pra} tool that can perform nearly all \acrshort{pra} calculations.
+
+Although significant improvements have been made, there is still ample opportunity for further enhancements in \acrshort{pra} tools to utilize resources efficiently and obtain accurate results more quickly. Below are some of the current areas requiring improvement~\cite{35}:
+
+\begin{itemize}
+\item \textbf{Quantification time and efficiency}
+\begin{itemize}
+\item Extremely long quantification times may tax the quantification engine, leading to extended waiting periods and potential failures due to memory limitations.
+\item Fire \acrshort{pra} models are significantly larger than typical internal-events models, presenting additional quantification challenges.
+\end{itemize}
+
+\item \textbf{Dependency analysis for human reliability analysis}
+
+\item \textbf{Model development, maintenance, and updates}
+\begin{itemize}
+    \item Manual, labor-intensive processes are error-prone and should be automated.
+    \item Model manipulation (often done through flag settings in text files) is time-consuming, inefficient, and prone to error.
+\end{itemize}
+
+\item \textbf{Risk aggregation}
+\begin{itemize}
+    \item \textit{Multi-hazard models:}
+    \begin{itemize}
+        \item Internal-events models often rely on rare-event approximations. These may be inadequate for external events such as earthquakes, high winds, and external flooding, where fragilities of Systems, Structures, and Components are typically higher.
+        \item Accurate probability calculations in seismic \acrshort{pra} can quickly exhaust memory if rare-event approximations are not used.
+    \end{itemize}
+    \item \textit{Multi-unit sites:}
+    \begin{itemize}
+        \item Many current \acrshort{pra} models assume independence among units at a site, yet in practice, many resources are shared among units.
+    \end{itemize}
+    \item Analyzing combinations of \acrshort{pra} model elements for criticality.
+    \item Uncertainty analysis:
+    \begin{itemize}
+        \item Most models currently apply only parametric uncertainties, lacking more detailed components.
+    \end{itemize}
+    \item Communication of risk insights:
+    \begin{itemize}
+        \item Presenting \acrshort{pra} information to non-\acrshort{pra} practitioners has been a longstanding challenge.
+    \end{itemize}
+    \item Incorporating new \acrshort{pra} technologies into existing models.
+\end{itemize}
+\end{itemize}
+
+This project specifically addresses quantification speed, efficiency, model development, maintenance, and updates. Additionally, we discuss risk aggregation, focusing on multi-hazard \acrshort{pra} models.

@@ -1,0 +1,52 @@
+\subsection{Comparative Accuracy \& Runtime}
+
+Table~\ref{tab:canopy-logp-mae} and Figure~\ref{fig:canopy_rel_error_plot} summarize the accuracy of three approximate quantification methods \acrfull{rea}, \acrfull{mcub}, and our \acrshort{gpu}-accelerated Monte Carlo by listing each approach's mean relative error in the log-probability (\(\log p\)) domain, alongside the total MC samples and runtime. Although each fault tree exhibits its own complexities, several broad trends emerge:
+
+\begin{enumerate}
+    \item \textbf{\acrshort{rea} accuracy strongly depends on the \emph{actual} top-event probability.}
+    \begin{itemize}
+        \item For trees with very low-probability failures (e.g., \texttt{baobab1}, \texttt{das9202}, \texttt{isp9605}), where individual component failures rarely coincide, \acrshort{rea}'s mean error often remains near or below \(10^{-2}\) in log space. This indicates that summing only the first-order minimal cut sets--assuming higher-order intersections contribute negligibly--can be valid when the system is indeed dominated by single-component or few-component events.
+        \item However, for fault trees with moderate or higher top-event probabilities (\(\gtrsim 10^{-2}\)), \acrshort{rea}'s inaccuracy tends to grow (for instance, up to \(10^{-1}\) in \texttt{edf9203}, \texttt{edf9204}, and \texttt{edfpa15b}). In these cases, ignoring the overlap of multiple cut sets leads to a visible systematic error.
+    \end{itemize}
+
+    \item \textbf{Min-Cut Upper Bound (\acrshort{mcub}) often mirrors \acrshort{rea} but with exaggerated errors in certain overlapping cut configurations.}
+    \begin{itemize}
+        \item In many models (e.g., \texttt{cea9601}, \texttt{baobab3}, \texttt{das9601}), \acrshort{mcub} closely tracks \acrshort{rea}, suggesting that higher-order combinations remain negligible in those systems.
+        \item Yet, in a few cases involving heavy cut-set overlap (e.g., \texttt{das9209}, row~14), \acrshort{mcub} soars to a mean log-probability error of \(\sim 17\), dwarfing \acrshort{rea} or Monte Carlo. This highlights the well-known pitfall: if multiple cut sets are not genuinely ``rare'' and substantially overlap, the union bound becomes extremely loose.
+    \end{itemize}
+
+    \item \textbf{Monte Carlo yields more consistent and often dramatically lower numerical errors for most moderate- to high-probability top events.}
+    \begin{itemize}
+        \item For example, in \texttt{das9201} (row~6) and \texttt{edf9203} (row~19), the Monte Carlo error is well below \(10^{-3}\), whereas both \acrshort{rea} and \acrshort{mcub} can exceed \(10^{-1}\). In these situations, ignoring or bounding higher-order intersections proves inadequate, while direct sampling naturally captures all overlaps.
+        \item However, for fault trees with extremely small top-event probabilities, Monte Carlo's variance can become harder to control. For instance, some rows (\texttt{das9204}, \texttt{das9205}, \texttt{isp9605}, \texttt{isp9607}) show that roughly \(10^{8}\)--\(10^{9}\) samples are required to constrain the error within a few tenths in \(\log p\). Those entries either exhibit a slightly higher Monte Carlo error than \acrshort{rea}/\acrshort{mcub} or demonstrate that we needed a disproportionately large sample count (and thus more runtime) to compete with simple rare-event approximations.
+    \end{itemize}
+
+    \item \textbf{Sampling scale and runtime remain surprisingly feasible, even for up to \(10^{9}\) draws.}
+    \begin{itemize}
+        \item Despite some test cases sampling in the hundreds of millions or billions, runtimes remain \(\approx 0.2\)--\(0.3\)~s for most fault trees, rarely exceeding 1~s (see, for instance, row~10 with 3.3~B samples and \(\sim 0.96\)~s). This indicates that the bit-packed, data-parallel Monte Carlo engine is highly optimized, making large-sample simulation a viable alternative to purely analytical approaches for many real-world PRA problems.
+        \item By contrast, the bounding methods (\acrshort{rea} and \acrshort{mcub}) typically run in negligible time but deliver inconsistent accuracy depending on each tree's structure. In practice, a hybrid strategy may emerge: apply bounding methods for quick estimates, then selectively invoke large-sample Monte Carlo for trees or subsections where the bounding approximation diverges.
+    \end{itemize}
+
+    \item \textbf{Omitted or Extreme Cases.}
+    \begin{itemize}
+        \item Rows where Monte Carlo entries are missing (e.g., \texttt{das9209} and \texttt{edf9206}) indicate difficulty in converging to a useful estimate within a fixed iteration budget. Conversely, \acrshort{mcub} shows erratic jumps in some of those same cases, underlining the fact that both bounding and sampling approaches can struggle in certain outliers.
+        \item Model \texttt{nus9601} (row~43) lacks all three error columns since no reference solution was available, reflecting a scenario where direct verification remains pending or inapplicable. Nevertheless, the completion time of \(\sim 0.29\)~s for a partial exploration suggests that the structural overhead of large fault trees can still be handled efficiently.
+    \end{itemize}
+\end{enumerate}
+
+These results affirm that Monte Carlo methods, when equipped with high throughput sampling, can achieve the most robust accuracy across a broader spectrum of top-event probabilities, particularly in configurations where standard cut set approximations fail to capture significant event dependencies. At the same time, rare-event with exceptionally small probabilities can pose challenges for naive sampling, revealing the potential need for adaptive variance-reduction techniques or partial enumerations. In practice, analysts may combine bounding calculations (\acrshort{rea}/\acrshort{mcub}) for quick screening or preparatory checks, then use hardware-accelerated Monte Carlo to refine those domains most susceptible to underestimation or overestimation by simpler approximations. Alternatively, for very large models, where exact solutions may be unavailable, data-parallel Monte Carlo can still estimate event probabilities without building minimal cut sets. 
+
+\input{task_III/canopy/tables/canopy_rel_error}
+
+\subsection{Memory Consumption}
+
+As mentioned previously, the memory was set to the maximum allocatable 6\acrshort{gb}, constrained by the NVIDIA GTX 1660 SUPER \acrshort{gpu}'s \acrshort{vram}. Figure \ref{fig:canopy_rel_error_plot_1} plots the actual consumed memory, as a function of \acrshort{pdag} input size and total number of bits sampled per node (gate or basic-event) per pass. Since there are multiple types of preprocessing steps, all of which affect the final size of the pruned \acrshort{pdag}, those have been plotted in Figure \ref{fig:canopy_rel_error_plot_2} for completeness. Since the nature of the actual pruning logic is not being benchmarked here, we named these v1, v2, v3 respectively. The key takeaways are that while some trees are more compressible than others, nearly all computations were performed by saturating available \acrshort{vram}. As a zoomed out version of Figure \ref{fig:canopy_rel_error_plot_1} , Figure \ref{fig:sampled_bits_mem} projects trends for the sampled bits count, as a function of model size, for varying amounts of available \acrshort{ram}.
+\begin{landscape}
+\begin{figure}[p]
+    \centering
+    \includesvg[width=1.38\textheight]{task_III/canopy/plots/rel_error.svg}
+    \caption{Relative error (Log-probability) for \acrfull{dpmc} vs \acrfull{mcub} and \acrfull{rea}}
+    \label{fig:canopy_rel_error_plot}
+\end{figure}
+\end{landscape}
+

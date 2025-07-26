@@ -1,0 +1,57 @@
+\chapter{Current State of PRA Software}
+\acrfull{pra} has evolved significantly since its inception in the 1970s, propelled by ever more complex risk models and simultaneous leaps in computational power. Early \acrshort{pra} efforts, such as those contributing to the seminal Reactor Safety Study (WASH-1400), vividly demonstrated how hardware constraints shaped the scope and fidelity of probabilistic analyses. Yet even as computers transitioned from mainframes to personal desktops and, more recently, to modern high-performance clusters and cloud-based platforms, \acrshort{pra} software has embraced only incremental shifts, leaving gaps in usability, scalability, and methodological clarity.
+
+Historically, many \acrshort{pra} codes were developed simultaneously. PREP and KITT exemplify early attempts to automate fault-tree evaluations via Monte Carlo or deterministic algorithms, while \acrshort{mocus} and SIGPI were similarly groundbreaking in generating \acrfull{mcs} and computing complex system probabilities. Tools such as MODULE, RISKMAN, and IRRAS soon followed, addressing importance measures, uncertainty quantification, and more extensive \acrfull{pc} based risk analyses. By the 1980s, software like CAFTA, \acrshort{saphire}, and RiskSpectrum had begun to dominate the industry.
+
+\acrshort{pra} practitioners navigate a crossroads today. On one hand, complex models, covering fire \acrshort{pra}, seismic events, multi-unit sites, or other external hazards, demand enormous computational resources. On the other, advanced \acrfull{hpc} techniques, distributed computing paradigms, and open-source frameworks promise to shift \acrshort{pra} into a new era of scalability, interoperability, and collaborative development. Nevertheless, major hurdles remain: commercial or institutional code lock-in, difficulty automating large model manipulation, and persistent struggles to communicate risk insights effectively to non-expert audiences.
+
+
+\input{task_I/tables/pra_tools_summary}
+
+\section{An Evolving Computing Landscape}
+
+Throughout the 1970s and 1980s, \acrshort{pra} computations commonly ran on mainframes or minicomputers, with analysts waiting on batch-queued jobs that crunched fault trees over hours or days. Early codes (e.g., PREP, KITT, and MOCUS) demonstrated proof-of-concept methods Monte Carlo approaches in particular, that established \acrshort{pra} as a rigorous discipline, even if they suffered from limited memory and processing capacities. When desktop computing came to the forefront, \acrshort{pra} tools shifted toward independently deployable \acrshort{pc} software, reducing mainframe dependency yet introducing new trade-offs, such as limited storage, slower clock speeds, and often rudimentary interfaces.
+
+By the late 1980s, large-scale \acrshort{pra} had grown more intricate. Regulatory demands for \acrshort{lwr} safety analyses, multi-component reliability demonstrations, and external-event modeling (e.g., for seismic or fire hazards) made factorized approaches less practical. Projects like RISKMAN, CAFTA, and \acrshort{saphire} promised more streamlined user experiences, some of which integrated event-tree building, fault-tree calculation, and uncertainty analysis in a single workflow. Despite these advancements, most such tools were architected for single-core execution and local desktop memory.
+
+A persistent theme, even today, is that many \acrshort{pra} tool developers have yet to fully embrace modern concurrency and distribute their workflows across multiple cores, nodes, or cloud services. As \acrshort{pra} models expand to incorporate multi-hazard interactions (e.g., seismic plus fire), multi-unit dependencies across nuclear sites, or advanced risk concepts that require large parametric and epistemic uncertainty analyses, conventional single-threaded or lightly parallel solutions become prohibitively slow. The near-term challenge is clear: \acrshort{pra} software must be more flexible and parallelized.
+
+
+\section{Persistent Limitations}
+
+\subsection{Scalability}
+
+While many \acrshort{pra} codes now run on modern operating systems, few can seamlessly scale to high performance clusters or cloud environments. Even industry staples such as CAFTA or \acrshort{saphire} often rely on serial quantification algorithms or modest concurrency at best. Fire \acrshort{pra} or seismic probabilistic models can easily contain tens of thousands of basic events, pushing memory footprints into gigabytes for tasks that require cut set manipulation. This ballooning complexity drives extended simulation run times; absent robust parallelization, analyses can bog down for hours or days, risking quantification failures altogether.
+
+\subsection{Model Development}
+
+The manual labor required to build and maintain \acrshort{pra} models remains a pervasive dilemma. Flag-file manipulation, manual event-tree expansions, or piecemeal data updates can cause inconsistent modeling states, which is particularly worrisome for multi-hazard and dependency analyses. New features or coverage of external hazards (e.g., tornado missiles, external flooding, or wildfire) often require major re-modeling efforts, a process that is not entirely error-proof. Although most analyst-facing \acrshort{pra} tools provide \acrshort{gui}s for managing models as diagrams and tables, the larger community still seeks high levels of workflow automation to support version control, auditing, and streamlined scenario expansions.
+
+\subsection{Dependency Analysis}
+
+Another challenge is robustly capturing dependencies across broad modeling scale. One such example is \acrfull{hra} dependencies. Humans interact dynamically with evolving scenarios. These dependencies are seldom trivial to encode in classical fault trees~\cite{diaconeasa_ads-idac_2017, diaconeasa_branching_2018}. Tools rarely provide out-of-the-box methods to incorporate advanced \acrshort{hra} models or cross-system dependencies beyond standard common-cause failures. The upshot is that results related to operator actions under multi-hazard events may be incomplete or reliant on overly simplified assumptions.
+
+\subsection{Multi-Hazard, Multi-Unit Modeling}
+
+Modern risk considerations increasingly demand multi-unit site analyses. Typical \acrshort{pra} models assume independence among units, but in reality, resources such as power supplies, control staff, or emergency cooling systems may be shared. Incorporating multi-unit or multi-hazard coupling can yield combinatorial explosions in the number of possible scenarios. Attempts to unify external-event hazard curves (for example, combining site-level seismic or flooding profiles) within large \acrshort{pra} models often strain memory to the breaking point if naive enumerations are used.
+
+\subsection{Communication of Risk Insights}
+
+Even as \acrshort{pra} findings grow more sophisticated, effectively communicating these results and uncertainties to non-\acrshort{pra} practitioners remains an ever-present challenge. While the field has embraced user-friendly front ends and reporting features, many \acrshort{pra} experts in nuclear energy or other high-hazard industries note that bridging technical detail with executive decision-making demands more intuitive dashboards, real-time updates (especially in emergencies), and visualization tools. Closed-source \acrshort{pra} suites often provide only limited or proprietary visualization capabilities, making it difficult to develop interactive analytics that align with organizational needs.
+
+\subsection{Transparency, Licensing and Community Support}
+
+Most widely used \acrshort{pra} platforms, \acrshort{saphire}, CAFTA, RiskSpectrum, and others, remain closed-source or only partially accessible. This approach can hinder large-scale scientific collaboration and hamper efforts to optimize for multicore or cluster environments, where specialized data structures and concurrency frameworks often require deep source-code modifications. Closed-source ecosystems also limit the sector's ability to adopt new technologies rapidly (e.g., HPC libraries, containerization, or automation frameworks), forcing researchers to rely on special arrangements or ad-hoc workarounds for fundamentally modernization-oriented tasks.
+
+In contrast, open-source efforts such as SCRAM~\cite{scram} and OpenFTA~\cite{opensource_fta_tools} provide public codebases that permit community-level improvements. SCRAM, for instance, has become a flexible multi-tool for fault tree quantification, cut set manipulation, and simplified event-tree analysis.
+
+\section{Looking Forward}
+The \acrshort{pra} community stands on the cusp of transformative change. While computing performance has never been more accessible, \acrshort{pra} models continue to outgrow the traditional serial workflows that once defined the field. Near-term developments in \acrshort{pra} software are poised to address some of the most pressing limitations. Solving these challenges will likely necessitate HPC-optimized frameworks that can process large correlated event spaces efficiently. Over the long run, new paradigms such as quantum computing or \acrfull{fhe} might enable secure, large-scale \acrshort{pra} analysis, but these remain mostly academic for now. The future lies in merging new parallel computing capabilities with a broader appreciation of large multi-hazard scenarios, cross-unit interactions, and the need for robust, flexible user tools. Equally crucial is reducing the manual burden of model manipulation and ensuring that risk information, be it for licensing decisions or real-time emergency response, can be communicated effectively, even to those without specialized \acrshort{pra} backgrounds.
+
+\subsection{PRA Tools in this Study}
+
+Building upon a rich tool landscape, this study examines \acrshort{pra} software both proprietary and open source. While black-box testing conditions were used for CAFTA, XFTA, and \acrshort{ftrex}, deeper, instrumented studies became possible with open-source or partially open packages. For instance, \acrshort{saphsolve}, a back-end solver linked to \acrshort{saphire} 8, was evaluated under a special arrangement that revealed concurrency bottlenecks and potential HPC avenues, albeit constrained by the larger, closed \acrshort{saphire} ecosystem. SCRAM, under a \acrshort{gpl} license, offered the most freedom to extend directly, and has since been incorporated under the broader OpenPRA project umbrella. The insights gathered from this study have been used to define the design requirements for OpenPRA~\cite{openpra_initiative_openpra_2024}, which focuses on HPC scaling, web-based deployment, remote collaboration, and simplified data management across \acrshort{pra} frameworks.
+
+
+% In short, the next generation of \acrshort{pra} software extends well beyond mere quantification engines. It must integrate automation, concurrency, user engagement, and open collaboration at every stage of risk modeling, from constructing multi-hazard trees to aggregating complex uncertain outcomes. Striking that balance promises safer, more transparent, and ultimately more credible risk assessments across the nuclear sector and beyond.
+

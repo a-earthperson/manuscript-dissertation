@@ -1,0 +1,37 @@
+\sisetup{ 
+  scientific-notation = true,
+  table-format        = 1.2e-2,
+  round-mode          = places,
+  round-direction     = up,
+  round-precision     = 2,
+  group-separator     = {,},
+  group-minimum-digits= 4,
+  table-number-alignment = center,
+}
+\begin{longtable}{@{}lrrrSSS@{}}
+\caption[Quantification results for the \acrshort{pwr} aftershock model at two truncation levels.]{Quantification results for the \acrshort{pwr} aftershock model at two truncation levels \cite{batikh_time-dependent_2023}.}
+\label{tab:PWR-aftershock-trunc}\\
+\toprule
+\multirow{2}{*}{\textbf{Input}} &
+  \multicolumn{1}{l}{\multirow{2}{*}{\textbf{\begin{tabular}[c]{@{}l@{}}Sequence\\ Count\end{tabular}}}} &
+  \multicolumn{2}{c}{\textbf{\# Minimal Cut Sets}} &
+  \multicolumn{2}{c}{\textbf{Probability}} &
+  \multicolumn{1}{c}{\multirow{2}{*}{\textbf{\begin{tabular}[c]{@{}l@{}}Percentage\\ Difference\end{tabular}}}} \\* \cmidrule(lr){3-6}
+ &
+  \multicolumn{1}{l}{} &
+  \multicolumn{1}{l}{$P_{\text{cut}} = 10^{-7}$} &
+  \multicolumn{1}{l}{$P_{\text{cut}} = 10^{-20}$} &
+  \multicolumn{1}{l}{$P_{\text{cut}} = 10^{-7}$} &
+  \multicolumn{1}{l}{$P_{\text{cut}} = 10^{-20}$} &
+  \multicolumn{1}{l}{} \\* \midrule
+\endfirsthead
+\bottomrule
+\endfoot
+\endlastfoot
+\textbf{1} & 30 & 668 & 31,132,273 & 3.1090E-03 & 3.1656E-03 & 1.79 \\
+\textbf{2} & 3  & 47  & 17,938     & 2.8278E-05 & 3.0606E-05 & 7.61 \\
+\textbf{3} & 3  & 42  & 144,013    & 1.4515E-04 & 1.4668E-04 & 1.04 \\
+\textbf{4} & 8  & 11  & 580,190    & 4.4697E-06 & 7.3165E-06 & 38.91 \\
+\textbf{5} & 8  & 29  & 1,314,498  & 2.8961E-05 & 3.1139E-05 & 6.99 \\
+\textbf{6} & 33 & 868 & 21,248,913 & 2.6158E-03 & 2.8147E-03 & 7.07 \\* \bottomrule
+\end{longtable}

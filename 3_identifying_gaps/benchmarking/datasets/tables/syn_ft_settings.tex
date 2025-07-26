@@ -1,0 +1,42 @@
+\begin{longtable}{@{}lllll@{}}
+\caption{Configuration options for automatically generating synthetic event \& fault trees.}
+\label{tab:autogen_config_et_ft}\\
+\toprule
+\textbf{Argument} &
+  \textbf{Option} &
+  \textbf{\begin{tabular}[c]{@{}l@{}}Type\end{tabular}} &
+  \textbf{Default} &
+  \textbf{\begin{tabular}[c]{@{}l@{}}Applied\\ Option\end{tabular}} \\* \midrule
+\endfirsthead
+\multicolumn{5}{c}{\textit{Continued: Configuration options for automatically generating synthetic event \& fault trees.}}\\
+\toprule
+\textbf{Argument} &
+  \textbf{Option} &
+  \textbf{\begin{tabular}[c]{@{}l@{}}Option\\ Type\end{tabular}} &
+  \textbf{Default} &
+  \textbf{\begin{tabular}[c]{@{}l@{}}Applied\\ Option\end{tabular}} \\* \midrule
+\endhead
+%
+\bottomrule
+\endfoot
+%
+\endlastfoot
+Name for event tree                         & --et-name   & \acrshort{regexp}/string   & autogen & n\_min\_max \\
+Number of \acrfull{fe}s                      & --num-func & range, int      & 1     & 1:10:100 \\
+Name for fault tree                         & --ft-name   & \acrshort{regexp}/string   & autogen & n\_min\_max \\
+Name for the top gate                       & --root      & string          & root    &             \\
+Seed for \acrshort{prng}                               & --seed      & int             & 123     & 372         \\
+Number of \acrshort{be}s                      & --num-basic & range, int      & 100     & 100:50:5000 \\
+Avg. number of gate arguments            & --num-args  & +ve float       & 3.0     &             \\
+Weights {[}AND, OR, VOT, NOT, \acrshort{xor}{]} & --weights-g     & +ve float{[}{]}      & {[}1,1,1,1,1{]}  & {[}1,1,1,0,0{]}         \\
+Avg. \% of common \acrshort{be}s per gate     & --common-b  & +ve float       & 0.3     &             \\
+Avg. \% of common gates per gate            & --common-g  & +ve float       & 0.1     &             \\
+Avg. number parents for common \acrshort{be}s  & --parents-b & +ve float       & 2       &             \\
+Avg. number of parents for common gates  & --parents-g & +ve float           & 2       &             \\
+Number of gates (\textless{}= 0 means auto) & --num-gate  & int             & 0       &             \\
+Maximum probability of \acrshort{be}s         & --max-prob & float {[}0,1{]} & 0.5     & 0.05        \\
+Minimum probability of \acrshort{be}s         & --min-prob  & float {[}0,1{]} & 0.5     & 0.01        \\
+Number of \acrfull{he}s                     & --num-house & int             & 0       &             \\
+Number of \acrshort{ccf} groups                        & --num-ccf   & int             & 0       &             \\
+Output format {[}\acrshort{xml}, \acrshort{json}, \acrshort{jsinp}{]}               & --out       & \{xml, jsinp, json\}   & xml     & xml, jsinp   \\* \bottomrule
+\end{longtable}

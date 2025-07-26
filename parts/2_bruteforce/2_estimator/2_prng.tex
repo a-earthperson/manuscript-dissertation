@@ -40,36 +40,36 @@ and there are \(\mathrm{R} = 10\) rounds. Thus, each Philox invocation is asympt
 \subsection{Philox-4x32-10 Pseudocode}
 Our implementation follows the standard 10-round approach for generating one block of four 32-bit random words, also called Philox-4x32-10. Let \(M_{\mathrm{A}}=0xD2511F53\), \(M_{\mathrm{B}}=0xCD9E8D57\) be the multipliers, and let \((K_0, K_1)\) be the key which is updated each round by \(\mathrm{W32A}=0x9E3779B9\) and \(\mathrm{W32B}=0xBB67AE85\). The function \(\text{Hi}(\cdot)\) returns the high 32 bits of a 64-bit product, and \(\text{Lo}(\cdot)\) returns the low 32 bits. Because each call produces four 32-bit pseudo-random words, Philox-4x32-10 is particularly convenient for batched sampling. If only a single 32-bit word is needed, one can still call the function and discard the excess words; however, many applications consume all four outputs (e.g., to produce four floating-point variates).
 
-\begin{algorithm}[ht]
-\caption{Philox-4x32-10}
-\SetKwInOut{Input}{Input}
-\SetKwInOut{Output}{Output}
+% \begin{algorithm}[ht]
+% \caption{Philox-4x32-10}
+% \SetKwInOut{Input}{Input}
+% \SetKwInOut{Output}{Output}
 
-\Input{Four 32-bit counters \((S_0, S_1, S_2, S_3)\), Key \((K_0, K_1)\)}
-\Output{Transformed counters \((S_0, S_1, S_2, S_3)\)}
+% \Input{Four 32-bit counters \((S_0, S_1, S_2, S_3)\), Key \((K_0, K_1)\)}
+% \Output{Transformed counters \((S_0, S_1, S_2, S_3)\)}
 
-\SetKwFunction{FPhiloxRound}{Philox\_Round}
-\SetKwFunction{FPhilox}{Philox4x32\_10}
+% \SetKwFunction{FPhiloxRound}{Philox\_Round}
+% \SetKwFunction{FPhilox}{Philox4x32\_10}
 
-\SetKwProg{Fn}{Function}{:}{}
-\Fn{\FPhiloxRound{$(S_0, S_1, S_2, S_3), (K_0, K_1)$}}{
-  $P_0 \gets M_{\mathrm{A}} \times S_0$\;  \tcp{64-bit product}
-  $P_1 \gets M_{\mathrm{B}} \times S_2$\;  \tcp{64-bit product}
-  $T_0 \gets \text{Hi}(P_1)\;\oplus\;S_1\;\oplus\;K_0$\;
-  $T_1 \gets \text{Lo}(P_1)$\;
-  $T_2 \gets \text{Hi}(P_0)\;\oplus\;S_3\;\oplus\;K_1$\;
-  $T_3 \gets \text{Lo}(P_0)$\;
-  $K_0 \gets K_0 + \mathrm{W32A}$\;
-  $K_1 \gets K_1 + \mathrm{W32B}$\;
-  \KwRet{$(T_0, T_1, T_2, T_3), (K_0, K_1)$}\;
-}
-\Fn{\FPhilox{$(S_0, S_1, S_2, S_3), (K_0, K_1)$}}{
-  \For{$i \gets 1$ \KwTo $10$}{
-    $(S_0, S_1, S_2, S_3), (K_0, K_1) \gets$ \FPhiloxRound{$S_0, S_1, S_2, S_3, K_0, K_1$}\;
-  }
-  \KwRet{$(S_0, S_1, S_2, S_3)$}\;
-}
-\end{algorithm}
+% \SetKwProg{Fn}{Function}{:}{}
+% \Fn{\FPhiloxRound{$(S_0, S_1, S_2, S_3), (K_0, K_1)$}}{
+%   $P_0 \gets M_{\mathrm{A}} \times S_0$\;  \tcp{64-bit product}
+%   $P_1 \gets M_{\mathrm{B}} \times S_2$\;  \tcp{64-bit product}
+%   $T_0 \gets \text{Hi}(P_1)\;\oplus\;S_1\;\oplus\;K_0$\;
+%   $T_1 \gets \text{Lo}(P_1)$\;
+%   $T_2 \gets \text{Hi}(P_0)\;\oplus\;S_3\;\oplus\;K_1$\;
+%   $T_3 \gets \text{Lo}(P_0)$\;
+%   $K_0 \gets K_0 + \mathrm{W32A}$\;
+%   $K_1 \gets K_1 + \mathrm{W32B}$\;
+%   \KwRet{$(T_0, T_1, T_2, T_3), (K_0, K_1)$}\;
+% }
+% \Fn{\FPhilox{$(S_0, S_1, S_2, S_3), (K_0, K_1)$}}{
+%   \For{$i \gets 1$ \KwTo $10$}{
+%     $(S_0, S_1, S_2, S_3), (K_0, K_1) \gets$ \FPhiloxRound{$S_0, S_1, S_2, S_3, K_0, K_1$}\;
+%   }
+%   \KwRet{$(S_0, S_1, S_2, S_3)$}\;
+% }
+% \end{algorithm}
 
 \subsection{Bitpacking for Probability Sampling}
 It takes exactly one bit to represent the outcome of a trial. If these If outcomes are stored naively, each one occupies a full 8-bit byte. Hence, only \( \tfrac{1}{8} \) of the allocated space is used for actual data. By instead packing up to \(w\) indicators into a \(w\)-bit machine word, the memory usage can be reduced by a factor of up to \(8\) (in the simplest scenario of 8-bit groupings). In more general terms:
@@ -94,28 +94,28 @@ In our implementation, each call to Philox-4x32-10 yields 128 bits of randomness
 \noindent Repeating these steps for multiple rounds of 4 bits each can fill a 16-bit or 32-bit \(\mathrm{bitpack}\) variable with many Bernoulli indicators. Then it can be stored into an array at a single index, reducing memory overhead by constant factor of $N$. 
 
 
-\begin{algorithm}[H]
-\caption{Bitpacking of Four Bernoulli Samples Into a 4-Bit Block}
-\SetKwInOut{Input}{Input}
-\SetKwInOut{Output}{Output}
+% \begin{algorithm}[H]
+% \caption{Bitpacking of Four Bernoulli Samples Into a 4-Bit Block}
+% \SetKwInOut{Input}{Input}
+% \SetKwInOut{Output}{Output}
 
-\Input{Probability \(p \in [0,1]\), 4 random 32-bit words \((r_0, r_1, r_2, r_3)\)}
-\Output{4-bit integer \(\mathrm{bits}\), storing 4 Bernoulli draws}
+% \Input{Probability \(p \in [0,1]\), 4 random 32-bit words \((r_0, r_1, r_2, r_3)\)}
+% \Output{4-bit integer \(\mathrm{bits}\), storing 4 Bernoulli draws}
 
-\SetKwFunction{FMain}{FourBitPack}
-\SetKwProg{Fn}{Function}{:}{}
-\Fn{\FMain{\(p, (r_0, r_1, r_2, r_3)\)}}{
-    $\mathrm{bits} \gets 0$\;
-    \For{$i \gets 0$ \KwTo $3$}{
-        $u_i \gets \frac{r_i}{2^{32}} \;\; \in [0,1)$\;
-        $b_i \gets \begin{cases}
-            1, & \text{if }u_i < p\\
-            0, & \text{else}
-        \end{cases}$\;
-        $\mathrm{bits} \gets \mathrm{bits} \;\;\Vert\;\; (b_i \ll i)$ \tcp*[r]{Set bit \(i\) to \(b_i\)}
-    }
-    \KwRet $\mathrm{bits}$\;
-}
-\end{algorithm}
+% \SetKwFunction{FMain}{FourBitPack}
+% \SetKwProg{Fn}{Function}{:}{}
+% \Fn{\FMain{\(p, (r_0, r_1, r_2, r_3)\)}}{
+%     $\mathrm{bits} \gets 0$\;
+%     \For{$i \gets 0$ \KwTo $3$}{
+%         $u_i \gets \frac{r_i}{2^{32}} \;\; \in [0,1)$\;
+%         $b_i \gets \begin{cases}
+%             1, & \text{if }u_i < p\\
+%             0, & \text{else}
+%         \end{cases}$\;
+%         $\mathrm{bits} \gets \mathrm{bits} \;\;\Vert\;\; (b_i \ll i)$ \tcp*[r]{Set bit \(i\) to \(b_i\)}
+%     }
+%     \KwRet $\mathrm{bits}$\;
+% }
+% \end{algorithm}
 
 \noindent In this procedure, \(\Vert\) denotes a bitwise OR, and \(\ll\) denotes a left shift. One then repeats the above call to accumulate multiple 4-bit blocks (e.g., for a total of 16 bits, one calls FourBitPack four times and merges the results with the appropriate shifts).

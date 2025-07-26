@@ -5,27 +5,45 @@
                onehalfspacing % spacing: onehalfspacing or doublespacing
                ]{ncsuthesis}
 
+\def \docrev{v0.0.2}
+\def \docsrc{https://github.com/a-earthperson/manuscript-dissertation}
+\def \docdoi{github/a-earthperson/manuscript-dissertation}
+
 %\documentclass[openany,oneside,titlepage,letterpaper]{book}
 
 %%----------------------------------------------------------------------------%%
 %%------------------------------ Import Packages -----------------------------%%
 %%----------------------------------------------------------------------------%%
 \usepackage{xcolor}
-\usepackage{algorithm2e}
+% \usepackage{algorithm2e}
 \usepackage{booktabs}  % professionally typeset tables
 \usepackage{amsmath}
+%% for definitions
 \usepackage{amsthm}
+
 \usepackage{amssymb} 
 \usepackage{amsfonts}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\usepackage{makecell}
+\usepackage{subcaption}
+
 \usepackage{tikz}
 \usepackage{tikz-qtree}
-\usetikzlibrary{calc,positioning}
+\usetikzlibrary{shapes,arrows,arrows.meta,positioning,intersections, calc,graphs,graphdrawing,quotes,circuits.logic.US,fit,shadows,backgrounds}
+\usegdlibrary{layered}
 \usepackage{textcomp}  % better copyright sign, among other things
 \usepackage{lscape}
 \usepackage{longtable}
 \usepackage{multirow}
-\usepackage{subfig}    % composite figures
-\usepackage{natbib}    % ability to use citet,citep
+% \usepackage{subfig}    % composite figures
+% \usepackage{natbib}    % ability to use citet,citep
+\usepackage{float}
+\usepackage{comment}
+\usepackage{bytefield}
+\usepackage{minted}
 % \usepackage{fancyhdr}  % creates headers
 
 \usepackage{siunitx} % For aligning numbers by decimal point
@@ -33,18 +51,36 @@
 %%% For accessing system, OTF and TTF fonts
 %%% (would have been loaded by polylossia anyway)
 \usepackage{fontspec}
-\usepackage{xunicode} %% loading this first to avoid clash with bidi/arabic
+% \usepackage{xunicode} %% loading this first to avoid clash with bidi/arabic
 
 %%% For language switching -- like babel, but for xelatex
-\usepackage{polyglossia}
+% \usepackage{polyglossia}
+% \usepackage{algorithmicx}
 
-\setmainlanguage{english}
-\setotherlanguages{hindi,sanskrit} %% or other languages
+\usepackage[inkscapelatex=false]{svg}
+\usepackage[xindy,acronym,toc]{glossaries}
+
+
+\usepackage[
+  pdfauthor={Arjun Earthperson},
+  pdftitle={Change title in optional.tex},
+  pdfcreator={pdftex},
+  pdfsubject={NC State ETD Dissertation},
+  pdfkeywords={change key words in optional.tex},
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  filecolor=black,
+  urlcolor=black,
+]{hyperref}
+
+% \setmainlanguage{english}
+% \setotherlanguages{hindi,sanskrit} %% or other languages
 \newfontfamily\devanagarifont[Script=Devanagari]{Noto Serif Devanagari}
 
 
 %Citations should be of the form ``author year''  not ``author, year''
-\bibpunct{(}{)}{;}{a}{}{,} % changes apalike bst into AMS format
+% \bibpunct{(}{)}{;}{a}{}{,} % changes apalike bst into AMS format
  
 %%----------------------------------------------------------------------------%%
 %%---------------------------- Formatting Options ----------------------------%%
@@ -160,44 +196,56 @@
 %\makeglossaries
 %\glsaddall %  to list all entries <<<<<
 
+\usepackage[backend=biber]{biblatex}
+\addbibresource{refs/my_software.bib}
+\addbibresource{refs/my_datasets.bib}
+\addbibresource{refs/my_reports.bib}
+\addbibresource{refs/my_articles.bib}
+\addbibresource{refs/my_papers.bib}
+\addbibresource{refs/my_thesis.bib}
+\addbibresource{refs/references_doc.bib}
 
 %%---------------------------------------------------------------------------%%
 \begin{document}
 %%---------------------------------------------------------------------------%%
+
 \frontmatter
-
-
-\include{front}
-
-\thesistableofcontents
-\thesislistoftables
-\thesislistoffigures
-% \addcontentsline{toc}{chapter}{List of Algorithms}
-% \listofalgorithms
-% \thesisacronyms
-% \thesisdefinitions
+\input{0_preamble/_}
 
 %%---------------------------------------------------------------------------%%
 \mainmatter
 % Chapters can remove or add
-\include{parts/_}
+\input{1_intro/_}
+\input{2_foundations/_}
+\input{3_identifying_gaps/_}
+\input{4_proposed_solution/_}
+\input{parts/_}
+
+\printbibliography[
+heading=bibintoc,
+title={References}
+]
+\appendix
 
 %%---------------------------------------------------------------------------%%
 %%  Bibliography 
 %% or use BibTeX
-\bibliography{references}
-\bibliographystyle{apalike}
+% \bibliography{references}
+% \bibliographystyle{apalike}
 
 %%---------------------------------------------------------------------------%%
 % Appendices
 %\ensureoddstart
 \restoregeometry
-
-\appendix
-\input{appendix/_}
+\backmatter
+% \appendix
+% \input{appendix/_}
 
 %\newgeometry{margin=1in,lmargin=1.25in,footskip=\chapterfootskip, includehead, includefoot}
 
+
+
+% \backmatter
 % Can remove or add
 
 \restoregeometry
@@ -205,5 +253,5 @@
 %%---------------------------------------------------------------------------%%
 
 %%---------------------------------------------------------------------------%%
-\backmatter
+
 \end{document}

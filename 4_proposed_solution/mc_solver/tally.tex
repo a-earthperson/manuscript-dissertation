@@ -1,0 +1,161 @@
+\section{Tallying Layer Outputs}
+\label{sec:tally_kernel}
+
+At every Monte-Carlo iteration the simulator produces, for each logic node
+\(v\in \mathcal{V}\), a bit-packed buffer encoding
+\[
+  \mathbf{Y}_v^{(t)}
+  \;=\;
+  \bigl(y_{v,1}^{(t)}, y_{v,2}^{(t)},\dots, y_{v,N}^{(t)}\bigr)
+  \in\{0,1\}^N,
+  \quad t = 1,\dots,T,
+\]
+where \(N\!=\!B\!\times\!P\!\times\!\omega\) is the number of Bernoulli trials
+per Monte-Carlo \emph{iteration}:
+\begin{itemize}
+    \item \(B\) - number of \emph{batches},
+    \item \(P\) - bit-packs per batch,
+    \item \(\omega\!=\!8\cdot\mathrm{sizeof}(\text{bitpack\_t})\) - bits per pack.
+\end{itemize}
+Because the buffers are overwritten at the next iteration, a
+separate \emph{tally layer} accumulates summary statistics that persist for the
+entire simulation.  The present section formalises that process and outlines
+an implementation-agnostic, data-parallel algorithm that realises it on modern
+accelerators.
+
+\subsection{Statistical Objectives}
+\label{subsec:tally_objective}
+
+For every node \(v\) we wish to estimate, after \(T\) Monte-Carlo iterations,
+
+\[
+  \widehat{p}_v
+  \;=\;
+  \frac{1}{T\,N}
+  \sum_{t=1}^{T}\sum_{j=1}^{N} y_{v,j}^{(t)}
+  \;=\;
+  \frac{s_v}{T\,N},
+  \qquad
+  s_v \;=\; \text{total \# of one-bits observed for node \(v\)}.
+\]
+
+Under the usual independence assumptions, the sampling distribution of
+\(\widehat{p}_v\) is asymptotically
+\[
+\mathcal{N}\!\bigl(p_v,\,
+  \tfrac{p_v(1-p_v)}{T\,N}\bigr)
+\]
+Hence
+
+\[
+  \widehat{\sigma}_v
+  \;=\;
+  \sqrt{\frac{\widehat{p}_v\,(1-\widehat{p}_v)}{T\,N}}
+\]
+
+is an unbiased estimator of the standard error, giving the
+\((1-\alpha)\)\,--\,level normal confidence interval
+
+\[
+  \bigl[
+    \widehat{p}_v - z_{1-\alpha/2}\,\widehat{\sigma}_v,\;
+    \widehat{p}_v + z_{1-\alpha/2}\,\widehat{\sigma}_v
+  \bigr],
+  \qquad
+  z_{1-\alpha/2}\in\{1.96,\,2.58,\dots\}.
+\]
+
+The tally routine therefore needs to maintain only the scalar
+\(s_v\) while the simulation is running; the derived statistics can be updated
+in-place whenever a user requests intermediate results or at a fixed cadence.
+
+\subsection{Parallel Accumulation Algorithm}
+
+The accumulation kernel is invoked on a three-dimensional
+\texttt{nd\_range}, chosen such that
+\[
+  \begin{aligned}
+    \text{global}_x &\;\ge\; V,\\
+    \text{global}_y &\;\ge\; B,\\
+    \text{global}_z &\;\ge\; P.
+  \end{aligned}
+\]
+Work-item \((i_x,i_y,i_z)\) is responsible for \emph{exactly one} bit-pack:
+\[
+  \text{node  } v=i_x,\quad
+  \text{batch } b=i_y,\quad
+  \text{pack  } p=i_z.
+\]
+
+\vspace{4pt}
+\noindent
+\textbf{Local workflow of a work-item}
+\begin{enumerate}
+    \item Load the \(p^{\text{th}}\) bit-pack of batch \(b\) from
+          \texttt{buffer}.
+    \item Compute \(c=\mathrm{popcount}(\text{bitpack})\).
+    \item Reduce the \(c\)'s belonging to the same work-\emph{group} in
+          shared memory (tree reduction or \texttt{reduce\_over\_group}).
+    \item One designated leader performs
+          \(\texttt{atomic\_add}(\texttt{num\_one\_bits},\,\text{group\_sum})\).
+\end{enumerate}
+
+The reduction ensures only one atomic operation per group, greatly reducing
+contention when \(P\) is large.
+
+We present platform-neutral pseudocode that encapsulates the above logic while remaining agnostic to the underlying API. After each Monte-Carlo iteration the host enqueues \textsc{TallyKernel} with a
+fresh \texttt{iteration} counter.  When either (i)~a user requests
+intermediate statistics or (ii)~a pre-set reporting interval is reached,
+the host reads back \texttt{num\_one\_bits} and executes the purely
+serial routine shown in Algorithm~\ref{alg:update_stats}.
+
+\begin{algorithm}[H]
+\caption{Post-processing of a single node's tally}
+\label{alg:update_stats}
+\begin{algorithmic}[1]
+  \Require
+    \(s\) - total one-bits,
+    \(T\), \(B\), \(P\), \(\omega\) - run parameters
+  \Ensure
+    \(\widehat{p}\), \(\widehat{\sigma}\), two symmetric CIs
+  \State $N\gets B\cdot P\cdot\omega$
+  \State $\widehat{p}\gets s / (T\,N)$
+  \State $\widehat{\sigma}\gets
+          \sqrt{\widehat{p}(1-\widehat{p})/(T\,N)}$
+  \For{\textbf{each} $z\in\{1.96,\,2.58\}$}
+      \State $\text{CI}\gets
+        \bigl[\max(0,\widehat{p}-z\widehat{\sigma}),
+              \min(1,\widehat{p}+z\widehat{\sigma})\bigr]$
+  \EndFor
+\end{algorithmic}
+\end{algorithm}
+
+The above normal approximation is valid provided \(T\,N\widehat{p}\)
+and \(T\,N(1-\widehat{p})\) both exceed roughly 10; otherwise an exact
+Clopper-Pearson interval can be substituted with no change to the running
+sum logic.
+
+\subsection{Correctness and Complexity}
+
+\textbf{Work-item cost.}
+Each work-item performs one \(\mathrm{popcount}\) and
+participates in an \(O(\log L)\) intra-group reduction
+(\(L\!=\!\text{local\_range}\)), yielding an overall
+\(O(\log L)\) instruction count.
+
+\textbf{Global cost.}
+The total number of work-items launched per iteration is
+\(V\cdot B\cdot P\).  Because each bit-pack contains \(\omega\) Bernoulli
+trials, the cost \emph{per trial} shrinks as \(\omega^{-1}\).
+
+\textbf{Memory traffic.}
+Every work-item reads exactly one machine word and no writes occur except
+the single atomic addition per work-group.  Hence the algorithm is
+memory-bandwidth bound only at extremely low arithmetic intensity
+(\(P\approx 1\)).
+
+\textbf{Linear scalability.}
+All tally nodes are independent.  Increasing \(V\) therefore scales the total
+runtime linearly until either (i)~the device saturates its occupancy or
+(ii)~atomic contention becomes non-negligible; the group-level reduction
+mitigates the latter.

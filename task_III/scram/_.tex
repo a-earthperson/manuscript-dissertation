@@ -1,0 +1,39 @@
+\section{SCRAM Optimizations}
+
+The SCRAM tool underwent a series of targeted optimizations to address both algorithmic and implementation level inefficiencies, with the primary goal of improving runtime performance for large-scale \acrshort{pra} models. The optimizations focused on two main areas: (1) data structure modernization and (2) parallelization of computationally intensive routines.
+
+\paragraph{Data Structure Modernization}
+
+The first set of optimizations involved migrating internal data structures from custom, pointer-based representations to \acrfull{stl} containers. Specifically, \acrshort{zdd} container, which holds minimal cut sets, was refactored to utilize \acrshort{stl} containers. Similarly, containers responsible for storing processed minimal cut sets were also migrated to \acrshort{stl}. This transition was motivated by prior profiling, which indicated that a significant portion of solver time was consumed by postprocessing logic, particularly within the reporter module. By leveraging \acrshort{stl} containers the codebase benefits from improved memory management.
+ 
+\paragraph{Exploiting Parallelism with OpenMP}
+
+The second major optimization involved the introduction of parallelism using OpenMP. Parallelization was applied to several computationally expensive routines, including:
+
+\begin{itemize}
+    \item Probability calculation using the \acrshort{mcub} and \acrshort{rea} methods,
+    \item Importance analysis, and
+    \item Uncertainty quantification.
+\end{itemize}
+
+\paragraph{Performance Results and Interpretation}
+
+The computational gains achieved through these optimizations are summarized in the tables that follow. Table~\ref{tab:scram_prob_runtimes_aralia} presents probability calculation runtimes for the three most computationally demanding Aralia models, comparing serial (single-core) and OpenMP-enabled (eight-core) executions. The results show that parallelization of the probability calculation routine yields a speedup of approximately 3$\times$ for the probability computation step, while the overall total runtime speedup is more modest (about 1.04$\times$), indicating that other parts of the workflow remain serial or are less amenable to parallelization.
+
+\input{task_III/scram/tables/scram_prob_runtimes_aralia}
+
+Table~\ref{tab:reporter_improvements} summarizes the effect of data structure modernization and parallelization on the reporter module. Across the ARALIA models, the reporter's runtime is reduced by factors ranging from 1.44$\times$ to over 3.05$\times$, with corresponding overall speed-ups of 1.08$\times$ to 2.42$\times$ in total runtime. Notably, the largest models (e.g., \texttt{edfpa14b}, \texttt{edfpa14o}, \texttt{edfpa14q}) exhibit more pronounced gains than before, showing the benefits of the optimizations.
+
+\input{task_III/scram/tables/scram_reporter_runtimes_aralia}
+
+Table~\ref{tab:runtime_improvement_runs_summary} provides a detailed breakdown of runtimes for importance analysis, uncertainty quantification, and the reporter module, before and after optimization. The results consistently show reductions in execution time across all three categories, with total runtime speedups frequently exceeding 3$\times$ for large models. Table~\ref{tab:improvement_runs_summary} further distills these results into explicit speedup factors, highlighting the performance gains due to the implemented changes.
+
+\input{task_III/scram/tables/scram_all_runtimes_aralia}
+
+Collectively, these results confirm that the combination of data structure modernization and parallelization delivers significant performance improvements for SCRAM, particularly for large and complex PRA models. The observed speedups translate directly into increased throughput and reduced latency for risk quantification tasks, enabling more timely and responsive risk-informed decision-making.
+
+\input{task_III/scram/tables/scram_all_speedups_aralia}
+
+\paragraph{Limitations and Future Work}
+
+Despite these advances, certain limitations remain. The \acrshort{bdd} method still uses a custom data structure, and \acrshort{bdd}-based probability calculations are performed serially. This represents a bottleneck for models that rely heavily on \acrshort{bdd} representations. Future work should explore the integration of multi-core and GPU-accelerated \acrshort{bdd} solvers, which have the potential to reduce computation times and improve scalability for even larger models.

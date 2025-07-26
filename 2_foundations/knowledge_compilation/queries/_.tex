@@ -1,0 +1,14 @@
+\section{Queries}
+The primary choice that dictates the selection of target languages in \acrshort{pra} is availability of tractable/executable queries for a given language. The two most important query types that are of interest to \acrshort{pra} are Model Counting (CT) and Model Enumeration (ME).
+
+\subsection{Model Counting}
+Model Counting, a.k.a $\#$SAT-problem, is a classic problem in Computability Theory and VLSI (Very Large Scale Integration) analysis. It strive to answer the following question about a given boolean expression (theory): ``How many valid true/false variable assignments (models) satisfy the boolean expression?'' This problem is central to \acrshort{pra}, as it the compuation algorithm behind Weighted Model Counting approach used for computing probabilities of top events in Fault Trees and End States in Even Sequence Diagrams. 
+
+Importance of this query has largely determined the relative scarcity of underlying implementations of \acrshort{pra} software. Tractability of this query in OBDD family of target languages is primarily reason for popularity of this data structure among \acrshort{pra} software vendors. However, despite the its perceived NP-complexity, CNF-based $\#$SAT-solvers can also be used, due to their efficient implementations and long-running research. Finally, with new research showing still flowing, SDDs, identify themselves as a promising alternative due to their improved succinctness.
+
+\subsection{Model Enumeration}
+Model enumeration is arguably even more important query for \acrshort{pra}, as it responsible for implementations exhaustive Minimal Cutset search. This is one of the most intractable algorithms allowing for only polynomial-time delay between successive solution, as the primary determining complexity factor is exponential ``blow-up'' of the number of cutsets in the first place. Few implementations, offer truly efficient and tractable solutions, with CNFs and ROBDDs yet again taking the spotlight.
+
+
+% \input{2_foundations/knowledge_compilation/queries/expectation}
+% \subsection{Structural Enumeration}

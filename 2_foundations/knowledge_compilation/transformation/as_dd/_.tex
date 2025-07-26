@@ -1,0 +1,19 @@
+\subsection{Decision Diagrams}
+\label{sec:decision_diagrams}
+
+Decision diagrams provide a powerful, directed-graph-based representation of logical or Boolean functions. Their roots can be traced back to branching program ideas explored by Lee and Akers in the 1950s--1970s, but major refinement and widespread adoption occurred after Bryant's seminal work on \emph{Ordered Binary Decision Diagrams (OBDDs)} in 1986. In reliability analysis, formal verification, and combinational circuit design, decision diagrams frequently offer more computationally tractable methods than naïve enumeration of all input patterns.
+
+This section introduces the basic concepts of \emph{Binary Decision Diagrams (BDDs)} and \emph{Zero-Suppressed Decision Diagrams (ZDDs)}, along with the special class of \emph{Ordered} and \emph{Reduced} BDDs that guarantee a canonical (unique) form under fixed conditions. We emphasize:
+\begin{itemize}
+\item The structure and interpretation of BDDs as directed acyclic graphs (DAGs).
+\item The notion of an \emph{ordered} BDD, imposing a strict arrangement on variable testing.
+\item Techniques for \emph{reducing} BDDs into smaller yet equivalent graphs by merging or removing redundant parts.
+\item The main principles of Zero-Suppressed Decision Diagrams, designed for efficiently encoding sparse sets or combinatorial families.
+\end{itemize}
+
+Earlier, we saw that \emph{event trees} and \emph{fault trees} can be merged into a single directed acyclic graph to represent complex system dependencies. BDDs and ZDDs, by contrast, focus more narrowly on Boolean functions, providing specialized node-splitting and merging operations to systematically capture logical behavior. Despite differing motivations, both families of DAG-based representations benefit from the avoidance of cycles and the ability to encode large models in a structured form.
+
+
+\input{2_foundations/knowledge_compilation/transformation/as_dd/bdd}
+\input{2_foundations/knowledge_compilation/transformation/as_dd/zdd}
+\input{2_foundations/knowledge_compilation/transformation/as_dd/sdd}

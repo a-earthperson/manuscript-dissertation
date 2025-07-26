@@ -69,6 +69,8 @@
 \RequirePackage{tikz}
 \RequirePackage{circuitikz}
 \RequirePackage{xparse}
+\RequirePackage{environ}
+
 
 
 \usepackage{xparse}
@@ -79,6 +81,10 @@
   \makeglossaries
   \newacronym[see={[Glossary:]{gls-#3}},#2]{#3}{#4}{#5\glsadd{gls-#3}}
 }
+
+\usepackage{amsthm}
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
 
 %%----------------------------------------------------------------------------%%
 %%---------------------------- Formatting Options ----------------------------%%
@@ -113,6 +119,12 @@
 
 % January 2023 Update - Just set all margins to 1in
 \usepackage[margin=1in]{geometry}
+
+
+\usepackage[acronym]{glossaries}
+\makeglossaries
+\input{acronyms}
+\input{definitions}
 
 
 %% -------------------------------------------------------------------------- %%
@@ -255,6 +267,71 @@
    \pagestyle{empty}
 }%
 {\endtitlepage \pagestyle{plain}}
+
+% \newcommand{\makeversioncontrolpage}{%
+%     \begin{titlepage}
+%   \begin{center}
+%     {\large\normalfont\bfseries\MakeUppercase{Configuration Control}\par}
+%     \vspace{1em}
+%     {\parbox{0.66\linewidth}{
+%         \hrule
+%         \begin{flushleft}
+%           \ifdefined\docid
+%             \textbf{Document ID:} \docid\par
+%           \fi
+%           \ifdefined\docrev
+%             \textbf{Revision:} \docrev\par
+%           \fi
+%           \ifdefined\docsrc
+%               \ifdefined\docdoi
+%                 \textbf{Repo:} \href{\docsrc}{\docdoi}\par
+%               \fi
+%           \fi
+%         \end{flushleft}
+%         \hrule \vspace{1em}
+%         \footnotesize{
+%             This \texttt{git} version-controlled document was typeset using \TeX{}.
+%             \ifdefined\docdoi
+%                 A complete revision history, with sources, is available from the repository link.
+%             \fi
+%         }
+%     }}
+%   \end{center}
+%   \vspace*{\fill}
+%   \end{titlepage}
+% }
+
+% \newcommand{\makeversioncontrolpage}{%
+%     \begin{titlepage}
+%   \centering
+%     {\large\normalfont\bfseries\MakeUppercase{Configuration Control}\par}
+%     \vspace{1em}
+%     {\parbox{0.66\linewidth}{
+%         \hrule
+%         \begin{flushleft}
+%           \ifdefined\docid
+%             \textbf{Document ID:} \docid\par
+%           \fi
+%           \ifdefined\docrev
+%             \textbf{Revision:} \docrev\par
+%           \fi
+%           \ifdefined\docsrc
+%               \ifdefined\docdoi
+%                 \textbf{Repo:} \href{\docsrc}{\docdoi}\par
+%               \fi
+%           \fi
+%         \end{flushleft}
+%         \hrule \vspace{1em}
+%         \footnotesize{
+%             This \texttt{git} version-controlled document was typeset using \TeX{}.
+%             \ifdefined\docdoi
+%                 A complete revision history, with sources, is available from the repository link.
+%             \fi
+%         }
+%     }}
+%   \end{titlepage}
+% }
+
 
 %% -------------------------------------------------------------------------- %%
 %% Abstract page commands
@@ -456,6 +533,8 @@
 }
 
 \newcommand{\maketitlepage}{
+    \pagenumbering{roman}
+    \setcounter{page}{1}
      \thispagestyle{empty}
      \clearpage
      \singlespacing
@@ -478,6 +557,18 @@
       \end{center}
      \clearpage
      \ncsu@defaultspacing
+}
+
+\NewEnviron{aideclaration}{
+  \clearpage 
+  \vspace*{\fill}
+  \begin{center}
+    {\large\normalfont\bfseries\MakeUppercase{Declaration on the use of Artificial Intelligence}\par}
+    \vspace{1em}
+    \parbox{0.75\linewidth}{\small\BODY}
+  \end{center}
+  \vspace{\fill}
+  \clearpage
 }
 
 %% -------------------------------------------------------------------------- %%

@@ -1,0 +1,77 @@
+\chapter{Problem Statement}
+
+\section{Characteristics of a Good Monte Carlo Probability Estimator}
+
+\section{Defining Design Requirements}
+\label{ch:design-requirements}
+
+The persistent limitations of current \acrshort{pra} tools, as detailed in the preceding chapters, motivate a set of explicit design requirements for a comprehensive PRA platform. This chapter formalizes these requirements, providing a foundation for the architectural and implementation solutions described in subsequent chapters.
+
+\begin{itemize}
+    \item \textbf{Interoperability with Existing Formats:} The tool must support bidirectional import and export of multiple formats including CAFTA XML, FTREX FTP, SAPHSOLVE JSON, and OpenPSA XML, so users can leverage legacy models and collaborate across institutional boundaries.
+    \item \textbf{Translation Spanning Tree:} Rather than enforcing a single canonical intermediate representation, the tool should implement a translation spanning tree, enabling practical and maintainable conversion pathways among key formats. Model translation routines must be validated through round-trip testing to ensure that model semantics and data integrity are preserved across conversions.
+    \item \textbf{Extensible Open Schema:} The long-term solution should include the development and adoption of an openly licensed, extensible schema (e.g., OpenPRA JSON) that accommodates both general probabilistic modeling and nuclear-specific regulatory requirements. The schema must support hierarchical, human-readable structures and be amenable to future extensions.
+\end{itemize}
+
+\subsection{Solver / Quantifier Support}
+\label{subsec:solver-support}
+
+Given the wide range of quantification algorithms required for different model types and analysis scenarios, the following requirements are established:
+
+\begin{itemize}
+    \item \textbf{Pluggable Solver Architecture:} The platform must support integration with multiple quantification engines, including both open-source and proprietary solvers, via well-defined interfaces.
+    \item \textbf{Support for Multiple Quantification Methods:} The tool should enable users to select among exact, approximate, and Monte Carlo-based quantification methods, as appropriate for the model size and analysis objectives.
+    \item \textbf{Extensible Quantifier API:} The quantification interface must be extensible, allowing for the incorporation of new algorithms and optimization strategies without requiring disruptive changes to the core platform.
+    \item \textbf{Reproducibility:} Quantification results must be consistent across supported solvers, with clear documentation of any differences in algorithmic assumptions or numerical precision.
+\end{itemize}
+
+To overcome the computational bottlenecks and memory limitations of legacy PRA tools, the following scalability targets are defined:
+
+\subsection{Model Size Targets}
+\label{subsec:model-size-targets}
+
+\begin{itemize}
+    \item \textbf{Large-Scale Model Support:} The platform must efficiently handle PRA models of substantial size and complexity, including those with very wide or very deep tree structures, as well as models featuring extensive numbers of basic events and top-level gates, such as in multi-hazard and multi-unit scenarios.
+    \item \textbf{Memory Management:} The system should employ memory-efficient data structures and support out-of-core computation to accommodate models that may exceed the available system memory.
+    \item \textbf{Shared Subtree Optimization:} The tool must recognize and exploit shared subtrees to avoid redundant computation and storage, particularly in the context of multi-unit and multi-hazard models.
+\end{itemize}
+
+\subsection{Throughput Targets}
+\label{subsec:throughput-targets}
+
+\begin{itemize}
+    \item \textbf{High-Throughput Quantification:} The platform should support efficient quantification of large and complex PRA models, enabling high-throughput analysis by leveraging parallel and distributed computing resources.
+    \item \textbf{Batch and Real-Time Modes:} Both batch processing (for large scenario sweeps) and real-time quantification (for operational decision) must be supported.
+    \item \textbf{Scalable Task Scheduling:} The system must provide a dynamic, distributed queuing and worker-pool architecture that automatically allocates computational tasks across available resources.
+\end{itemize}
+
+\subsection{Latency / Response-Time Targets}
+\label{subsec:latency-targets}
+
+\begin{itemize}
+    \item \textbf{Interactive Response:} For typical operational queries (e.g., top event probability, minimal cut set calculation), the system should provide results within seconds to a few minutes, depending on model complexity.
+    \item \textbf{Predictable Latency:} The platform must provide responses within predictable timeframes under varying loads and include mechanisms to prioritize urgent analyses (e.g., during emergency response).
+    \item \textbf{Low-Latency User Interface:} The user interface must be optimized for low-latency interaction, supporting real-time updates and visualization.
+\end{itemize}
+
+\subsection{Accuracy Targets}
+\label{subsec:accuracy-targets}
+
+\begin{itemize}
+    \item \textbf{Numerical Precision:} Quantification algorithms must support user-configurable precision, with default settings sufficient to resolve probabilities as low as $10^{-9}$.
+    \item \textbf{Error Estimation:} For approximate and Monte Carlo methods, the system must provide error bounds and convergence diagnostics, utilizing the law of large numbers and the central limit theorem where applicable.
+    \item \textbf{Validation Against Benchmarks:} The platform's quantification engines must be validated against established benchmark models and reference results to ensure correctness and reliability.
+\end{itemize}
+
+\section{Considering Tradeoffs}
+\label{sec:tradeoffs}
+
+The design of a comprehensive platform inherently involves tradeoffs among compatibility, scalability, performance, and usability. Key considerations include:
+
+\begin{itemize}
+    \item \textbf{Interoperability vs. Innovation:} While broad compatibility with legacy formats and solvers is essential for adoption, excessive accommodation of outdated standards can impede the adoption of more efficient or expressive representations.
+    \item \textbf{Performance vs. Transparency:} Highly optimized, parallelized algorithms may introduce complexity that reduces transparency or reproducibility. The system should provide clear documentation to facilitate verification.
+    \item \textbf{Automation vs. User Control:} Automated model translation, quantification, and reporting can reduce manual effort and error, but must not obscure critical modeling assumptions or prevent expert intervention when needed.
+    \item \textbf{Resource Utilization vs. Accessibility:} Leveraging high-performance computing resources can dramatically improve throughput and scalability, but may limit accessibility for users without access to such infrastructure. The platform should support both local and distributed deployment modes.
+    \item \textbf{Extensibility vs. Stability:} The architecture must be sufficiently modular to accommodate new quantification methods, model types, and user interfaces, while maintaining stability and backward compatibility for existing workflows.
+\end{itemize}

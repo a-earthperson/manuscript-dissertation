@@ -1,0 +1,19 @@
+\subsection{The Generic Sodium Cooled Fast Reactor Model}
+
+The generic sodium cooled fast reactor (SFR) model developed in this study is based on the Experimental Breeder Reactor II (EBR-II), a pool-type reactor with a rated thermal power of 62.5~MW and an electrical output of approximately 20~MW \cite{chang_experimental_2018}. The model has been developed using SAPHIRE, with the dataset structured in MAR-D format. In addition, a parallel model has been constructed in Microsoft Excel to facilitate data review and manipulation. These models have not undergone formal validation or benchmarking yet. However, this model provides a foundation for future risk quantification, sensitivity studies, and benchmarking activities for sodium cooled fast reactor designs.
+
+Table~\ref{tbl:initiating_events} lists 38 distinct initiating events, each characterized by a unique event sequence and an associated frequency per reactor year. These initiating events encompass a broad spectrum of plant transients and faults, including loss of flow, loss of power, over-cooling, reactivity insertion, shutdowns, heat removal failures, tube ruptures, and local fuel faults. This set includes both high frequency operational transients and low-frequency, high-consequence events. The frequencies of these events span several orders of magnitude, from common operational occurrences (e.g., short shutdown at $6.00 \times 10^{0}$ per reactor year) to rare, potentially severe initiators (e.g., loss of circulation -- delayed at $1.10 \times 10^{-8}$ per reactor year).
+
+The initiating events analyzed in the model can be grouped according to their risk significance and associated damage categories as follows:
+
+\begin{itemize}
+    \item \textbf{Core damage (CD):} Initiating events and subsequent system failures that result in significant fuel melting or loss of core integrity.
+    \item \textbf{Core structural damage (CSD):} Events that lead to significant damage to core structural components without necessarily resulting in fuel melting.
+    \item \textbf{Minor core damage (MCD):} Scenarios that cause localized damage to the core, such as partial fuel degradation or localized overheating, but do not compromise core integrity.
+    \item \textbf{Potential experiment damage (PED):} Events that may result in damage to experimental assemblies within the reactor.
+    \item \textbf{No damage (ND):} Initiating events that, even when combined with certain system failures, do not result in fuel damage, but may still cause plant disruption or require recovery actions.
+\end{itemize}
+
+Accident sequence quantification is performed by integrating the system and accident progression models with the compiled data for basic events and initiating events. For each sequence, the dominant minimal cut sets are identified, and their frequencies are calculated as the product of the initiating event frequency and the probabilities of the relevant basic events. The sum of the sequence frequencies yields the point estimate of the overall frequency for each damage category, including core damage.
+
+\input{3_identifying_gaps/benchmarking/datasets/tables/g-scfr_ie-freq}

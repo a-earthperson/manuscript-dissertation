@@ -1,0 +1,35 @@
+\section{\color{blue}{Model Conversion from SAPHIRE to OpenPSA}}
+
+% \input{task_I/model_structure}
+
+Historically, the transfer of PRA models between tools has been full of challenges. Early efforts, such as the NRC's Models and Results Database (MAR-D), provided a centralized repository for PRA data, supporting the migration of models between mainframe and PC based tools (e.g., IRRAS, SARA, SETS, FRANTIC). While MAR-D enabled the exchange of event trees, fault trees, and associated data within the SAPHIRE ecosystem, it was not designed as a general purpose model exchange framework. Subsequent attempts to enable model exchange between tools such as CAFTA, RiskA, and RiskSpectrum have been limited in scope, often requiring significant manual intervention and lacking support for large or complex models. Notably, the import of SAPHIRE MAR-D files into CAFTA is restricted to logic files and is not scalable for large PRA models. Other efforts, such as the conversion of RiskSpectrum models to CAFTA or OpenPSA, have been either unsuccessful or undocumented.
+
+The MEF framework that has been developed for this study operates at the quantification engine level, enabling the conversion of SAPHIRE models to the OpenPSA format. To illustrate the model conversion process, a simple PRA model is used, consisting of a single event tree linked to four fault trees. The event tree models the release of gas on an offshore platform, with subsequent functional events representing the gas detection system, two isolation valve subsystems (A and B), and a blowdown valve subsystem. The endpoints of the event tree branches correspond to different consequence scenarios.
+
+Figure~\ref{fig:gas_leak_event_tree} shows the event tree used in the demonstration model.
+
+\input{3_identifying_gaps/benchmarking/datasets/plots/gas_leak_event_tree}
+
+Each functional event in the event tree is represented by corresponding fault trees, as shown in Figures~\ref{fig:gas_detection_fault_tree} through \ref{fig:blowdown_valve_fault_tree}.
+
+\input{3_identifying_gaps/benchmarking/datasets/plots/gas_detection_fault_tree}
+
+\input{3_identifying_gaps/benchmarking/datasets/plots/isolation_valve_a_fault_tree}
+
+\input{3_identifying_gaps/benchmarking/datasets/plots/isolation_valve_b_fault_tree}
+
+\input{3_identifying_gaps/benchmarking/datasets/plots/blowdown_valve_fault_tree}
+
+The overall model exchange workflow is depicted in Figure~\ref{fig:mef_workflow}. The process is as follows: first, the model is exported from SAPHSOLVE in JSON format. Next, a Python based model converter parses the exported file, mapping its elements to internal objects. The parsed model is then converted to the OpenPSA format, with both JSON and XML representations supported. Finally, the converted model is saved in a text based format suitable for import into other PRA tools.
+
+\input{3_identifying_gaps/benchmarking/datasets/plots/mef_workflow}
+
+The mapping of model elements between formats is summarized as follows: the \texttt{header} contains initiating event information, the \texttt{sysgatelist} contains functional event information, the \texttt{sequencelist} contains sequence information, the \texttt{faultreelist} contains fault tree logic, and the \texttt{eventlist} contains basic event failure data. Figure~\ref{fig:mef_demonstration} shows an overview of the mapping process.
+
+\input{3_identifying_gaps/benchmarking/datasets/plots/mef_demonstration}
+
+\subsection{Verification of Model Conversion}
+
+To verify the correctness of the conversion, the resulting OpenPSA model is quantified using the SCRAM engine. The results are compared against those obtained from SAPHSOLVE and the original SCRAM quantification. As shown in Table~\ref{tab:mef_results_comparison}, both the number of cut sets and the computed probabilities are identical across all engines, demonstrating the fidelity of the conversion process.
+
+\input{3_identifying_gaps/benchmarking/datasets/tables/mef_results_comparison}

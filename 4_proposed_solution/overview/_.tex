@@ -1,0 +1,62 @@
+\section*{High-Level System Components}
+
+The proposed \acrshort{hpc} architecture leverages three distinct computational strategies to improve the speed, efficiency, and throughput of \acrshort{pra} quantifications. These approaches address the computational demands of modern \acrshort{pra} by utilizing available hardware resources and parallel computation techniques.
+
+\begin{enumerate}
+
+    \item \textbf{Parallel Computation on Shared Memory:} Implemented primarily for importance measures and uncertainty quantification tasks, this approach utilizes multicore \acrshort{cpu} architectures (e.g., via \acrshort{openmp}) to parallelize computations.
+    
+    \item \textbf{Task-Parallel Distributed System on Distributed Memory:} This implementation is designed to horizontally scale \acrshort{pra} solvers. Computational tasks including probability estimation, uncertainty analysis, and importance measures are assigned as discrete tasks to independent computational nodes. Tasks are managed via REST \acrshort{api}s interfacing with a distributed task queue, facilitating concurrent task execution.
+    
+    \item \textbf{Data-Parallel Monte Carlo Probability Estimator:} Specifically developed for probability estimation, this solver turns fault trees into layered graphs that can be simulated in parallel on \acrshort{gpu}s or multicore \acrshort{cpu}s. Millions of random samples of each basic event are generated and bit-packed to reduce memory usage. \acrshort{sycl} kernels then work their way up the layers, combining the results in topological order and use hardware-accelerated pop-count instructions to evaluate the outcome of the gates on the fly.
+\end{enumerate}
+
+Collectively, these strategies enable the modernized \acrshort{pra} platform to handle much larger models, compute them faster, and process many more concurrent quantifications than was previously possible.
+
+% \subsection{Priority Queues and Active Queue Management Strategies}\label{subsec:priority-aqm}
+
+% \subsection{GPU Acceleration and CPU-Multicore Approaches}\label{subsec:gpu-accel}
+
+% \section{A Brief History of PRA Tools}
+% \label{sec:history_of_pra_tools}
+
+% Probabilistic Risk Assessment (PRA) has evolved dramatically since its inception in the 1970s, driven both by the growing complexity of nuclear power systems and by substantial leaps in computing technology. Early PRA efforts were primarily focused on relatively small reactor models, typically analyzed with mainframe computers or custom in-house codes. Over time, the field has shifted from batch-oriented, single-CPU environments to desktop-based tools and, more recently, to parallel and cloud-based software poised to exploit high-performance computing (HPC). This section first outlines the motivations for PRA software over the decades and then examines representative PRA tools, culminating in a contemporary view of how evolving hardware, licensing, and operational needs have given rise to the current landscape.
+
+% \subsection{Computing Landscape from the 1970s to the 2020s}
+
+% \paragraph{1970s: Mainframe Computing and Foundational PRA Studies.}
+% The seminal Reactor Safety Study (WASH-1400) in the mid-1970s introduced wide-ranging probabilistic techniques for assessing reactor safety. While this study provided a rigorous framework, it also underscored the limitations imposed by mainframe computing resources, which constrained the size of fault trees and event trees that could be analyzed. Early PRA codes, such as PREP and KITT~\cite{vesely_prep_1970,vesely_prep_1997}, operated in these mainframe environments and performed either Monte Carlo or deterministic methods to identify Minimal Cut Sets (MCS) and compute their probabilities.
+
+% \paragraph{1980s--1990s: Transition to Personal Computers.}
+% By the 1980s, the expansion of Light Water Reactor (LWR) licensing and the increasing complexity of PRA models led to the introduction of more advanced tools. MOCUS~\cite{Fussell1974MOCUS}, MODULE~\cite{module}, SIGPI~\cite{sigpi}, and RISKMAN~\cite{riskman1,riskman2} are examples of software developed to handle larger fault trees and event trees, shifting computational tasks onto personal computers rather than mainframes. While personal computers substantially reduced hardware costs, early desktop-based PRA tools often suffered from limited memory, slower processors, and rudimentary user interfaces. Nevertheless, this period saw the gradual shift toward stand-alone, desktop-centric PRA applications that offered more intuitive workflows.
+
+% \paragraph{2000s: Emergence of Distributed, Web-Based, and Parallel Solutions.}
+% With improving desktop performance and the emergence of web-based applications, more collaborative PRA tools began to appear. At the same time, parallel computing gained traction, particularly within the broader high-performance computing community. In the PRA world, large-scale event tree and fault tree evaluations were beginning to see benefits from multi-core processors and basic clustering. Tools such as SAPHIRE~\cite{saphire1,SAPHIRE,saphire_manual} (stemming from IRRAS~\cite{irras1,irras2}) expanded the usability of PRA for day-to-day licensing work, while CAFTA~\cite{cafta1,cafta2} and RiskSpectrum~\cite{riskspectrum1} catered to utility operators requiring detailed station-specific reliability calculations. While initial HPC-oriented attempts remained limited, the growing push toward distributed architectures signaled the community's recognition that next-generation PRA problems would benefit greatly from parallel computing paradigms.
+
+% \paragraph{2010s--2020s: Contemporary Large-Scale and GPU-Enabled Paradigms.}
+% Continued growth in model complexity--driven by non-LWR reactor designs, multi-hazard considerations, and real-time or near-real-time decision-support needs--further accelerated interest in HPC. During this period, open-source initiatives like SCRAM~\cite{scram} demonstrated how community-driven development could incorporate modern software practices: flexible input formats, automated build pipelines, and expansions for parallel or GPU-based computations. Commercial software packages, including FTREX~\cite{ftrex_manual}, RiskSpectrum, and others, have likewise adapted to multi-core, cluster, and cloud environments, though often in a closed-source manner. Additionally, specialized research frameworks, such as DeRisk~\cite{derisk1,derisk2}, Trilith~\cite{hcl_method}, and HCLA~\cite{hcla_cmd,hcla_web}, illustrate the quest for dynamic or "on-the-fly" risk calculations that can leverage large compute infrastructures.
+
+% \paragraph{Future Trends: Quantum and Fully Homomorphic Encryption.}
+% Looking ahead, the community's interest in real-time risk monitoring, coupled with confidentiality requirements for sensitive nuclear data, suggests that quantum computing and fully homomorphic encryption (FHE) could eventually play a role in PRA. Although these technologies remain at a relatively early research stage, their potential for massively parallel or secure distributed calculations could address future bottlenecks in handling multi-hazard complexities, intricate dependencies, or large multi-reactor sites.
+
+% \subsection{Representative PRA Tools and Their Evolution}
+
+% Over the decades, a multitude of PRA software tools have been created and refined, each representing an effort to address the specific computational and regulatory challenges of its time. Table~\ref{tab:pra_tools_overview} summarizes both legacy and contemporary tools, highlighting their licensing models and typical usage contexts. For example, CAFTA~\cite{cafta1,cafta2}, originally designed for DOS-based personal computers, now integrates with advanced Windows environments. SAPHIRE, supported by the U.S. Nuclear Regulatory Commission (NRC) and maintained by Idaho National Laboratory, evolved from earlier codes (IRRAS~\cite{irras1,irras2}), bridging desktop-based analysis and more recent cloud-deployment patterns.
+
+% Even with the proliferation of PRA tools, many remain proprietary, limiting the community's ability to incorporate specialized HPC features or novel algorithms. However, the open-source SCRAM~\cite{scram} suite under the GNU GPL and the MIT-licensed OpenPRA initiative mark a shift toward more collaborative development. These open frameworks foster deeper experimentation with parallel algorithms, advanced sampling methods, and dynamic event-tree evaluations--capabilities that can be critical when analyzing complex, multi-hazard scenarios. Through ongoing cross-institutional collaborations, new HPC extensions are regularly introduced, providing the PRA community with means to surmount performance bottlenecks and scale up to multi-million component analyses.
+
+% \subsection{Opportunities and Limitations in Existing Software}
+
+% Despite considerable efforts to modernize PRA tools, a number of core limitations persist:
+% \begin{itemize}
+% \item \textbf{Limited Parallelization:} Many legacy applications rely on serial or coarse-grained parallel workflows, insufficient for massive concurrency needs.
+% \item \textbf{Closed-Source Development:} Proprietary tools restrict user-driven feature enhancements or specialized HPC adaptations, limiting the scope for research innovation.
+% \item \textbf{Platform Dependence:} A heavy focus on Windows-based desktop environments can hamper the integration of containerization, cluster-based scheduling, or cloud-native solutions.
+% \item \textbf{Model Size Constraints:} Traditional data structures and memory usage patterns, designed for simpler fault trees and event trees, sometimes struggle with multi-hazard, large-scale models that require efficient parallel memory handling.
+% \end{itemize}
+
+% Nonetheless, the increasing availability of cloud resources, multi-node clusters, and GPU-accelerated libraries provides fertile ground for next-generation PRA solutions. By embracing these computational frameworks, practitioners can drastically reduce run times for time-sensitive applications, execute large-scale Monte Carlo or dynamic event-tree analyses, and more readily accommodate expansions into multi-hazard or real-time risk monitoring. This synergy between PRA tools and HPC technologies represents a vital frontier for modeling, regulatory oversight, and operational decision support.
+
+% \subsection{Concluding Remarks on Historical Context}
+
+% From the 1970s mainframe era to modern cloud and GPU-enabled paradigms, PRA software has mirrored the evolution of computing technology. Early codes focused on basic MCS extraction and probability evaluation, while current efforts aspire to large-scale, distributed, and fast-turnaround solutions. This trajectory underscores both the promise and the challenges in harnessing HPC for nuclear risk analysis. The subsequent sections will build upon this historical background, highlighting specific gaps in existing software (Section~\ref{sec:gaps_in_existing_software}) and detailing how contemporary developments in parallel architecture, load balancing, and data management can lead to more robust, accurate, and scalable PRA platforms.

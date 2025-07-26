@@ -1,0 +1,32 @@
+\section{Selected Benchmark Results}
+\label{sec:selected-benchmark-results}
+
+% one aggregated table showing quantification times for each tool for the one dataset.
+% one aggregated table showing memory for each tool for = one dataset.
+% \input{3_identifying_gaps/benchmarking/tools/overview_saphsolve}
+
+The benchmarking case study comprises 135 unique input files, each representing a synthetic fault tree model with varying numbers of basic events (100, 200, 500), average percentages of common basic events per gate (10\% to 90\% in 10\% increments), and a probability range from $1 \times 10^{-6}$ to $0.1$. Each input is named according to the convention ``number of basic events -- percentage of common basic events per gate'' (e.g., \texttt{100-01}, \texttt{200-05}, etc.). For FTREX, both ID and Name input formats are benchmarked, resulting in a total of 54 runs for FTREX and 27 runs for each of the other tools.
+
+\input{3_identifying_gaps/benchmarking/tables/benchmark_time}
+
+All benchmarks in this case study were executed on a dedicated hardware platform consisting of an Intel Xeon CPU E5-2630 v2 (2.60 GHz, 12 cores) and 135 GB of RAM, running a Linux operating system. Each benchmark run was restricted to a single CPU core, 16 GB of RAM, and a maximum wall-clock time of 900 seconds.
+
+Tables~\ref{tab:benchmark_time_full} and~\ref{tab:benchmark_memory_full} present the aggregated execution time and peak memory usage, respectively, for all tools across all benchmarked scenarios (100, 200, and 500 basic events). Each row corresponds to a specific input configuration. Execution times exceeding the 900 seconds limit are reported as \texttt{T/O} (timeout); memory usage above 16,000 MB is reported as \texttt{L/E} (limit exceeded); and runs that terminate unexpectedly for unidentified reasons are reported as \texttt{U/E} (unknown error). These notations clarify why certain benchmark results are missing or capped.
+
+% \begin{landscape}
+\input{3_identifying_gaps/benchmarking/tables/benchmark_memory}
+% \end{landscape}
+
+SAPHSOLVE was able to execute 14 scenarios with 100 and 200 basic events but was unable to process any scenarios with 500 basic events. Notably, SAPHSOLVE only prints an error message in the output file when it cannot quantify the input due to exceeding resource limits, so those cases are marked as \texttt{U/E}. Both XFTA and SCRAM completed and quantified all scenarios with 100 and 200 basic events; however, they were unsuccessful with scenarios containing 500 basic events, primarily due to timeouts (\texttt{T/O}). FTREX demonstrated a broader range of quantification, successfully quantifying 25 scenarios (at maximum) across the 100, 200, and 500 basic event categories. For the 500 basic event scenarios, only the BDD approach in FTREX was able to complete within the specified resource constraints, but it should be noted that the BDD option in FTREX does not obtain the minimal cut sets (MCSs), it only obtains the top event probability.
+
+Scenarios that were not quantified either exceeded the time constraints (\texttt{T/O}) or surpassed the memory limits (\texttt{L/E}), a result of the number of MCSs increasing exponentially with model complexity. In the context of scenarios involving 100 basic events, XFTA emerges as the most efficient algorithm in terms of execution time, followed by SCRAM and FTREX, while SAPHSOLVE exhibits comparatively slower performance.
+
+As the scenario complexity increases to 200 basic events, a similar pattern is observed, with all tools requiring more time due to increased complexity. XFTA maintains its efficiency, achieving the shortest execution time, followed by SCRAM and FTREX. Conversely, SAPHSOLVE experiences a significant increase in execution time, quantifying only a limited subset of the less complex scenarios and consequently ranking last.
+
+For scenarios involving 500 basic events, only FTREX-BDD manages to quantify these inputs within the specified resource constraints. FTREX-ZBDD cases generally require more time than FTREX-BDD in most instances. It is important to note that the Wine compatibility layer overhead for FTREX was not included in the reported execution times. Most of the cases for XFTA and SCRAM with 500 basic events were not quantifiable, mainly due to timeouts rather than memory limits.
+
+Regarding memory usage, XFTA consistently demonstrates superior memory management in scenarios with 100 basic events, followed by SAPHSOLVE, SCRAM, and FTREX. As the number of basic events increases to 200, both SCRAM and XFTA exhibit similarly efficient memory usage, effectively tying in performance, while FTREX performs less efficiently. Notably, FTREX’s BDD configuration consumes more memory than its ZBDD variant, as expected. In most cases, SCRAM and XFTA alternate in outperforming one another, but both consistently surpass FTREX, and all three outperform SAPHSOLVE in the 100 and 200 basic event scenarios. For the 500 basic event cases, SAPHSOLVE runs out of memory, and memory usage by XFTA and SCRAM often approaches or exceeds the imposed limit (\texttt{L/E}). Among the tools, only FTREX is able to quantify nearly all of the 500 basic event scenarios within the set resource constraints.
+
+Further analysis of FTREX output files reveals that the most resource-intensive functions for BDD quantification are ``exact probability'' and ``write cutsets'', while for ZBDD quantification, ``expand module'' and ``write cutsets'' are the most demanding. FTREX's ID format generally consumes more time than the Name format.
+
+A comparison of probability calculations across all tools indicates that REA and MCUB produce similar results, with negligible differences. FTREX REA tends to overestimate compared to FTREX BDD, with deviations up to 25\% in some configurations. When comparing BDD and REA approximations between FTREX and SCRAM, the relative percentage error is minimal, indicating strong agreement between the tools. 

@@ -1,0 +1,10 @@
+\subsection{The Aralia Fault Tree Data Set}
+\label{subsec:aralia_dataset}
+
+The Aralia dataset is a collection of 43 fault trees designed to exercise a wide array of logical features, problem sizes, and failure probability scales \cite{earthperson_generic_2021}. In Table~\ref{tab:aralia_dataset_summary}, each entry denotes a distinct fault tree with a different configuration of basic events, gates, and minimal cut sets, ultimately yielding broad diversity in both computational complexity and system reliability.
+
+A prominent feature of the Aralia dataset is its wide range of fault-tree sizes and structures. On the smaller side, some references list only a few dozen basic events (e.g., \texttt{chinese} with 25 BEs or \texttt{isp9605} with 32 BEs). Others, such as \texttt{nus9601}, contain over 1{,}500 basic events, reflecting the scale of complex engineered systems or composite subsystems. Moreover, each fault tree employs a varied mix of \texttt{AND}, \texttt{OR}, \texttt{K/N} (voting), and occasionally \texttt{XOR} or \texttt{NOT} gates. This diversity of logical constructs makes Aralia an effective testbed for evaluating algorithms that parse and solve fault trees beyond the typical AND/OR structure.
+
+Another key aspect of the Aralia models is the large spread in minimal cut set counts and top-event probabilities. Some trees report only a few hundred or a few thousand minimal cut sets, while others claim tens of millions or more (reaching up to \(8\times 10^{10}\) in the most expansive configurations). The top-event probabilities vary from very rare failures on the order of \(10^{-13}\) to moderately likely failure rates above 0.7. This variance is crucial when assessing numerical stability and runtime performance: methods employing rare-event approximations can dramatically underestimate probabilities for the more frequent events, while computational overhead grows rapidly for cut set expansions in highly interconnected models. All of the Aralia fault trees are provided in OpenPSA \acrfull{xml} format.
+
+\input{3_identifying_gaps/benchmarking/datasets/tables/aralia_dataset}

@@ -1,0 +1,65 @@
+% numeric columns in scientific or fixed notation
+\sisetup{
+  scientific-notation = true,
+  group-separator     = {,},
+  group-minimum-digits = 4
+}
+\begin{longtable}{@{}llrrrr@{}}
+\caption{Speed-up for SCRAM importance, uncertainty, \& reporter, benchmarked on Aralia.}
+\label{tab:improvement_runs_summary}\\
+\toprule
+\textbf{\#} & \textbf{Input} & \textbf{Importance Measures} & \textbf{\acrlong{uq}} & \textbf{Reporter} & \textbf{Total} \\
+\midrule
+\endfirsthead
+\multicolumn{6}{c}{\textit{Continued: Speed-up for SCRAM importance, uncertainty, \& reporter, benchmarked on Aralia.}}\\
+\toprule
+\textbf{\#} & \textbf{Input} & \textbf{Importance Measures} & \textbf{\acrlong{uq}} & \textbf{Reporter} & \textbf{Total} \\
+\midrule
+\endhead
+
+% ---------------------------------------------------------------------------
+1  & baobab1   & 3.07 & 2.34 & 3.16 & 2.44 \\
+2  & baobab2   & 1.60 & 1.42 & 1.81 & 1.71 \\
+3  & baobab3   & 4.41 & 2.03 & 5.00 & 3.94 \\
+4  & cea9601   &      &      &      &      \\
+5  & chinese   & 0.18 & 1.00 & 2.58 & 1.51 \\
+6  & das9201   & 3.73 & 1.42 & 3.63 & 3.47 \\
+7  & das9202   & 4.66 & 2.38 & 4.40 & 4.30 \\
+8  & das9203   & 3.77 & 1.61 & 4.40 & 4.13 \\
+9  & das9204   & 4.62 & 2.44 & 5.51 & 5.18 \\
+10 & das9205   & 2.67 & 0.68 & 3.15 & 2.75 \\
+11 & das9206   & 4.15 & 1.59 & 4.14 & 3.94 \\
+12 & das9207   & 4.82 & 1.42 & 4.54 & 4.39 \\
+13 & das9208   & 2.85 & 1.55 & 3.79 & 3.20 \\
+14 & das9209   &      &      &      &      \\
+15 & das9601   &      &      &      &      \\
+16 & das9701   &      &      &      &      \\
+17 & edf9201   & 4.23 & 1.57 & 4.14 & 3.97 \\
+18 & edf9202   & 4.49 & 1.94 & 4.37 & 4.34 \\
+19 & edf9203   & 3.95 & 1.96 & 3.92 & 3.69 \\
+20 & edf9204   & 4.87 & 2.11 & 4.93 & 4.67 \\
+21 & edf9205   & 5.21 & 1.70 & 5.10 & 4.81 \\
+22 & edf9206   &      &      &      &      \\
+23 & edfpa14b  & 4.66 & 2.10 & 4.74 & 4.50 \\
+24 & edfpa14o  & 4.78 & 4.66 & 4.75 & 4.73 \\
+25 & edfpa14p  & 5.09 & 2.53 & 4.73 & 2.98 \\
+26 & edfpa14q  & 4.39 & 2.04 & 4.51 & 4.25 \\
+27 & edfpa14r  & 5.98 & 2.52 & 5.90 & 2.31 \\
+28 & edfpa15b  & 4.89 & 2.01 & 4.84 & 4.62 \\
+29 & edfpa15o  & 5.10 & 2.05 & 5.11 & 4.83 \\
+30 & edfpa15p  & 4.45 & 2.25 & 4.74 & 3.21 \\
+31 & edfpa15q  & 5.21 & 1.97 & 5.18 & 4.84 \\
+32 & edfpa15r  & 3.68 & 2.27 & 3.69 & 2.36 \\
+33 & elf9601   & 3.98 & 2.15 & 3.96 & 3.84 \\
+34 & ftr10     & 2.20 & 0.90 & 2.66 & 2.22 \\
+35 & isp9601   & 4.32 & 1.93 & 4.45 & 4.26 \\
+36 & isp9602   & 4.56 & 2.49 & 4.55 & 4.41 \\
+37 & isp9603   & 2.79 & 1.42 & 3.57 & 3.23 \\
+38 & isp9604   & 4.47 & 1.79 & 4.29 & 4.20 \\
+39 & isp9605   & 1.88 & 1.96 & 2.16 & 2.06 \\
+40 & isp9606   & 3.90 & 1.28 & 3.85 & 3.59 \\
+41 & isp9607   & 4.50 & 2.66 & 4.43 & 4.33 \\
+42 & jbd9601   & 4.00 & 1.51 & 3.64 & 3.72 \\
+43 & nus9601   &      &      &      &      \\* \bottomrule
+\end{longtable}
+\
