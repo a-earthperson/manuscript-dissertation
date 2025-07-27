@@ -74,50 +74,64 @@ Our implementation follows the standard 10-round approach for generating one blo
 \end{algorithm}
 
 \subsection{Bitpacking for Probability Sampling}
-It takes exactly one bit to represent the outcome of a trial. If these If outcomes are stored naively, each one occupies a full 8-bit byte. Hence, only \( \tfrac{1}{8} \) of the allocated space is used for actual data. By instead packing up to \(w\) indicators into a \(w\)-bit machine word, the memory usage can be reduced by a factor of up to \(8\) (in the simplest scenario of 8-bit groupings). In more general terms:
+\label{sec:bitpack-prob-sampling}
+
+It takes exactly one bit to represent the outcome of a Bernoulli trial. When these outcomes are stored naively, each occupies an entire \(8\)-bit byte, so only a fraction \(\tfrac{1}{8}\) of the allocated space carries useful information. Packing indicators into the native machine word of width \(w\) therefore reduces memory consumption by up to a factor of eight. More precisely,
 \[
-  \text{Memory usage }M_{\text{naive}}
-  \;=\;
-  N \times 8\;\text{bits},
+  \text{Memory}_{\text{naive}} \;=\; N \times 8\,\text{bits},
   \qquad
-  \text{Memory usage }M_{\text{pack}}
-  \;=\;
-  \left\lceil\frac{N}{w}\right\rceil \,\times\,w\;\text{bits}.
+  \text{Memory}_{\text{packed}} \;=\;\Bigl\lceil\tfrac{N}{w}\Bigr\rceil \times w\,\text{bits},
 \]
-In our implementation, each call to Philox-4x32-10 yields 128 bits of randomness. We use those bits to draw exactly 128 Bernoulli outcomes at once, then combine them into a \(\mathrm{bitpack}\) of two 64-bit integers. For instance, if we choose a batch size of \(4\)-bits to represent four Bernoulli samples in a single chunk, we can:
+where \(N\) is the number of samples. In typical 64-bit environments we choose \(w = 64\), but the derivation is architecture-agnostic.
 
-\begin{enumerate}
-    \item Generate a block \(\{r_0, r_1, r_2, r_3\}\) of four 32-bit random integers from Philox.
-    \item Convert each \(r_i\) into a uniform \([0,1)\) floating-point value by dividing by \(2^{32}\).
-    \item Compare each to the target probability \(p\).
-    \item Form a 4-bit integer, each bit set to \(1\) if the corresponding comparison succeeded, or \(0\) otherwise.
-\end{enumerate}
+\subsubsection{Integer-threshold sampling.}  Instead of converting each 32-bit random word \(r\) produced by Philox into a floating-point variate, we compare it directly to an \emph{integer threshold}.  Let the target probability be \(p \in [0,1]\).  Define the threshold
+\[
+   T \;=\; \bigl\lfloor p \times 2^{32} \bigr\rfloor,\qquad 0 \le T \le 2^{32}-1.
+\]
+Because Philox delivers uniformly distributed 32-bit integers over \(\{0,\dots,2^{32}-1\}\), the event \(r < T\) occurs with probability exactly \(p\) (up to the discretisation of the 32-bit grid).  The comparison is therefore sufficient to draw a Bernoulli outcome while avoiding the cost of division and floating-point arithmetic.  Using integer thresholds also guarantees identical behaviour across heterogeneous hardware, an essential property for reproducible high-performance simulations.
 
-Repeating these steps for multiple rounds of 4 bits each can fill a 16-bit or 32-bit \(\mathrm{bitpack}\) variable with many Bernoulli indicators. Then it can be stored into an array at a single index, reducing memory overhead by constant factor of $N$. 
+\subsubsection{Grouping four comparisons.}  Each invocation of \(\mathrm{Philox\text{-}4\times32\text{-}10}\) yields the four words \(r_0, r_1, r_2, r_3\).  We evaluate the predicate \(r_j < T\) for every index \(j \in \{0,1,2,3\}\) and collect the four resulting bits into a 4-bit block.  The block is inserted into a wider accumulator using bitwise shifts.  Repeating the procedure fills the entire \(w\)-bit container.  If we denote by
+\[
+   g \;=\; \frac{w}{4}
+\]
+ the number of 4-bit generations required to populate the container, the overall cost is exactly \(g\) calls to the comparison–pack routine, or \(g\) additional increments of the counter component \(S_3\) in Philox.  No state other than the counter is maintained.
 
 \begin{algorithm}[H]
-  \caption{Bit-packing of four Bernoulli samples into a 4-bit block}
-  \label{alg:four_bit_pack}
+  \caption{Integer-threshold packing of four Bernoulli outcomes}
+  \label{alg:bernoulli_bitpack_int}
   \begin{algorithmic}[1]
     %------------------------------------------------------------
-    \Require Probability $p\in[0,1]$, random 32-bit words $(r_0,r_1,r_2,r_3)$
-    \Ensure  4-bit integer bits containing the four Bernoulli draws
+    \Require Probability $p\in[0,1]$; 32-bit words $(r_0,r_1,r_2,r_3)$
+    \Ensure 4-bit integer \texttt{bits} containing the four Bernoulli draws
     %------------------------------------------------------------
-    \Procedure{FourBitPack}{$p,(r_0,r_1,r_2,r_3)$}
-      \State bits $\gets 0$
-      \For{$i \gets 0$ \textbf{to} 3}
-        \State $u_i \gets r_i / 2^{32}$ \Comment{$u_i\in[0,1)$}
-        \If{$u_i < p$}
-            \State $b_i \gets 1$
-        \Else
-            \State $b_i \gets 0$
-        \EndIf
-        \State bits $\gets$ bits $\mid (b_i \ll i)$ 
-               \Comment{set bit $i$ to $b_i$}
-      \EndFor
-      \State \Return bits
-    \EndProcedure
+    \State $T \gets \lfloor p\,2^{32}\rfloor$ \Comment{pre-compute once}
+    \State \texttt{bits} $\gets 0$
+    \For{$j \gets 0$ \textbf{to} $3$}
+      \If{$r_j < T$}
+        \State $b_j \gets 1$
+      \Else
+        \State $b_j \gets 0$
+      \EndIf
+      \State \texttt{bits} $\gets$ \texttt{bits} $\mid\, (b_j \ll j)$
+    \EndFor
+    \State \Return \texttt{bits}
   \end{algorithmic}
 \end{algorithm}
 
-In this procedure, \(\Vert\) denotes a bitwise OR, and \(\ll\) denotes a left shift. One then repeats the above call to accumulate multiple 4-bit blocks (e.g., for a total of 16 bits, one calls FourBitPack four times and merges the results with the appropriate shifts).
+\subsubsection{Assembling a complete bitpack.}  Calling Algorithm~\ref{alg:bernoulli_bitpack_int} successively for $g$ generations yields a full \(w\)-bit word whose $k$-th bit encodes the outcome of the $k$-th Bernoulli trial, ordered least-significant first.  The procedure is branch-free except for the threshold comparison and operates in $\mathcal{O}(g)$ time.  Because $g$ is fixed by the word size, the complexity is effectively constant per stored word, and the memory savings are realised without sacrificing statistical quality or portability.
+
+% -----------------------------------------------------------------------------
+\subsection{Counter Assignment Across the ND-Range}
+\label{subsec:counter_assignment}
+
+Let $(i_x,i_y,i_z)\in[0,G_x)\times[0,G_y)\times[0,G_z)$ denote the global id of a work-item in the basic-event kernel and let $t\in\{0,\dots,T-1\}$ be the Monte-Carlo iteration index.  A collision-free family of Philox counters is obtained via
+\[
+   \mathbf{C}(i_x,i_y,i_z,t)
+   \;=\;
+   \bigl(i_{x}+1,\, i_{z}+1,\, i_{y}+1,\, (t+1)\ll 6\bigr),
+\]
+where the six vacated least-significant bits of the fourth word are reserved for intra-kernel increments.  The mapping is bijective onto
+\[
+   \{1,\dots,V\}\times\{1,\dots,P\}\times\{1,\dots,B\}\times\{1,\dots,2^{6}\},
+\]
+guaranteeing independent pseudo-random streams for every work-item without synchronisation or shared state.

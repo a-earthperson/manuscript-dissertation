@@ -19,8 +19,8 @@ per Monte-Carlo \emph{iteration}:
 \end{itemize}
 Because the buffers are overwritten at the next iteration, a
 separate \emph{tally layer} accumulates summary statistics that persist for the
-entire simulation.  The present section formalises that process and outlines
-an implementation-agnostic, data-parallel algorithm that realises it on modern
+entire simulation.  The present section formalizes that process and outlines
+an implementation-agnostic, data-parallel algorithm that realizes it on modern
 accelerators.
 
 \subsection{Statistical Objectives}
@@ -159,3 +159,132 @@ All tally nodes are independent.  Increasing \(V\) therefore scales the total
 runtime linearly until either (i)~the device saturates its occupancy or
 (ii)~atomic contention becomes non-negligible; the group-level reduction
 mitigates the latter.
+
+The design therefore provides a clear separation of concerns: depth--first
+analysis establishes the dependency structure; kernel generation translates
+that structure into homogeneous, vectorizable work; and a light--weight event
+system schedules the resulting kernels with minimal host intervention.
+
+% -----------------------------------------------------------------------------
+%  Extended implementation-oriented discussion (matches the realised kernel)
+% -----------------------------------------------------------------------------
+
+\subsection{Work--Group Geometry and Synchronization}
+\label{subsec:tally_geometry}
+
+The three--dimensional launch geometry \((v,\,b,\,p)\) outlined in
+Sec.~\ref{subsec:tally_objective} is refined in the implementation to minimize
+both occupancy loss and atomic contention.  A crucial design choice is to fix
+\emph{local}~\(x=1\), thereby dedicating one work--group to exactly one tally
+node~\(v\).  The remaining two dimensions then tile the \((b,p)\)--plane with a
+rectangular block of size
+\[
+  \bigl(1,\,l_y,\,l_z\bigr),
+  \qquad l_y\cdot l_z\le L_{\max},
+\]
+where \(L_{\max}\) is the device--specific upper bound on the total work--group
+size.  Provided \(l_y\!\ge\!B\) and \(l_z\!\ge\!P\), only \emph{one} group is
+dispatched per tally and per iteration, guaranteeing that the reduction of
+Step~3 and the atomic addition of Step~4 in
+Sec.~\ref{sec:tally_kernel} execute exactly once.  Should resource pressure
+force \(l_y< B\) or \(l_z< P\), multiple groups are launched and the atomic
+update is replicated; correctness is preserved by the commutativity of
+addition, but the repeated work incurs a small overhead.  The occupancy model
+therefore trades a moderate loss in parallelism for deterministic behavior and
+reduced synchronization cost.
+
+A relaxed memory order is sufficient for the atomic accumulator because the
+kernel guarantees \emph{program order} between the intra--group reduction and
+the atomic~\texttt{fetch\_add}.  No additional fences are required, and the
+resulting implementation maps efficiently to both discrete and integrated
+\acrshort{gpu}s.
+
+\subsection{Incremental Update of Derived Statistics}
+\label{subsec:tally_stats_refresh}
+
+While Monte--Carlo sampling proceeds, applications often request intermediate
+probability estimates~\(\widehat{p}_v^{(t)}\) before the total budget~\(T\) is
+exhausted.  Recomputing \(\widehat{p}_v\) and
+\(\widehat{\sigma}_v\) from scratch would require a host round--trip for every
+sampled bit.  Instead, the tally layer maintains two scalars per node:
+\(s_v\) (total one--bits) and \(n_v\) (total bits processed).  After each
+completed iteration the host merely increments \(n_v\gets n_v + N\) and leaves
+\(s_v\) to the device kernel.  Whenever a refresh is requested the statistics
+are updated via
+\[
+  \widehat{p}_v\;=\;\frac{s_v}{n_v},
+  \qquad
+  \widehat{\sigma}_v\;=\;\sqrt{\frac{\widehat{p}_v(1-\widehat{p}_v)}{n_v}},
+\]
+which costs \(\mathcal{O}(V)\) host--side arithmetic and no device work.  In
+practice the refresh cadence is set adaptively: frequent updates early in the
+run aid variance monitoring, whereas late--stage updates can be spaced further
+apart because the relative change in \(\widehat{p}_v\) diminishes as
+\(n_v\to T\,N\).
+
+\subsection{Convergence Diagnostics and Stopping Rules}
+\label{subsec:tally_convergence}
+
+Two families of diagnostics leverage the quantities already maintained by the
+tally kernel:
+\begin{enumerate}
+  \item\textbf{Relative half--width criterion.}  Define the
+        half--width of the \((1-\alpha)\)--level interval as
+        \(h_v= z_{1-\alpha/2}\,\widehat{\sigma}_v\).  The run may be terminated
+        for node~\(v\) once \(h_v/\widehat{p}_v\le \varepsilon\), where
+        \(\varepsilon\) is a user--supplied tolerance.  Because both
+        \(\widehat{\sigma}_v\) and \(\widehat{p}_v\) are inexpensive to update,
+        the test incurs negligible overhead.
+  \item\textbf{Sequential Wald test.}  When the goal is to decide whether
+        \(p_v\) exceeds a safety threshold~\(p_0\), one may adopt the
+        sequential probability ratio test with boundaries derived from
+        \(s_v\) and \(n_v\).  The tally structure already provides the minimal
+        sufficient statistics, so the host evaluates the Wald condition after
+        every refresh with no additional device interaction.
+\end{enumerate}
+Because the diagnostics rely solely on \(s_v\) and \(n_v\), no modification to
+the kernel is needed; all logic resides in a lightweight host callback.
+
+\subsection{Implementation Cost Model}
+\label{subsec:tally_cost_model}
+
+Let \(C_{\mathrm{pc}}\) denote the latency of a hardware popcount and
+\(C_{\mathrm{rd}}(l)\) the latency of a tree reduction over \(l\) work--items.
+The wall--clock time per iteration is approximated by
+\[
+  T_{\text{iter}} \;\approx\;
+  (C_{\mathrm{pc}} + C_{\mathrm{mem}})\,VBP +
+  C_{\mathrm{rd}}(l_y l_z)\,\frac{VBP}{l_y l_z}
+  + C_{\mathrm{atomic}}\,\frac{VBP}{l_y l_z},
+\]
+where \(C_{\mathrm{mem}}\) and \(C_{\mathrm{atomic}}\) are the per--word memory
+and atomic latencies, respectively.  The model highlights two regimes:
+\begin{itemize}
+  \item\emph{Arithmetic bound}: when \(P\gg 1\) and the popcount throughput
+        saturates the execution units, the first term dominates and scaling is
+        limited by instruction bandwidth.
+  \item\emph{Memory bound}: when \(P\approx 1\) the workload collapses to a
+        single read per work--item; the kernel becomes memory bandwidth--
+        limited as predicted in Sec.~\ref{subsec:tally_objective}.
+\end{itemize}
+
+
+\subsection{Numerical Robustness}
+\label{subsec:tally_numerics}
+
+All accumulators operate in integer arithmetic, thereby eliminating rounding
+error in \(s_v\).  Derived quantities computed in double precision satisfy
+\(\lvert\widehat{p}_v - s_v/n_v\rvert < 2^{-53}\), well below any practical
+error criterion for reliability analysis.  Clamping the confidence interval
+bounds to~\([0,1]\) prevents pathological estimates when either \(s_v=0\) or
+\(s_v=n_v\) in early iterations.
+
+% -----------------------------------------------------------------------------
+\subsection{Relation to the Global Execution Model}
+\label{subsec:tally_exec_relation}
+
+The specialised geometry adopted in Section~\ref{subsec:tally_geometry} is a direct instantiation of the rules formalised in Section~\ref{sec:kernel_execution_model}.  Choosing $L_x=1$ enforces the work\,–\,group invariant whereby a group owns exactly one tally node while still satisfying
+\[
+   G_x \;=\; \Bigl\lceil \frac{V}{L_x} \Bigr\rceil L_x \;=\; V ,
+\]
+so no over-provisioning occurs along the $x$-axis.  The remaining dimensions follow the generic rounding scheme with $(Q_y,Q_z)=(B,P)$, thus preserving the one-to-one correspondence between work-items and bit-packs established in Section~\ref{sec:kernel_execution_model}.

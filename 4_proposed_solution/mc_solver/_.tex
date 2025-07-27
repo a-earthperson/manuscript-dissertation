@@ -1,12 +1,19 @@
 \chapter{Building a Data-Parallel Monte Carlo Probability Estimator}
 
 To handle massively parallel Monte Carlo evaluations of large-scale Boolean functions, we have developed a preliminary layered architecture that organizes computation in a topological graph. At the lowest level, each Boolean variable/basic event (e.g., a component failure) is associated with a random number generator to sample its truth assignment. We bit-pack these outcome, storing multiple Monte Carlo samples in each machine word to maximize computational throughput and reduce memory footprint. Subsequent layers consist of logically higher gates or composite structures that receive the bit-packed results from previous layers and combine them in parallel using coalesced kernels. By traversing the computation graph topologically, dependencies between gates and events are naturally enforced, so kernels for each layer can run concurrently once all prerequisite layers finish, resulting in high kernel occupancy and predictable throughput.
+
+Section~\ref{sec:kernel_execution_model} formalizes how these kernels map the logical sampling workload onto a three–dimensional ND–range, introducing a consistent coordinate system $(i_x,i_y,i_z)$ and a rounding scheme that guarantees complete coverage without redundancy.  The remainder of this chapter adopts that notation.
+
 In practice, each layer is dispatched to an accelerator node using a data-parallel model implement using \acrshort{sycl}. The random number generation pipelines are counter-based, ensuring reproducibility and thread-safety even across millions or billions of samples. Gates that go beyond simple AND/OR logic--such as \acrshort{vot} operators--are handled by specialized routines that can exploit native popcount instructions for efficient threshold evaluations. As we progress upwards through the layered topology, each gate or sub-function writes out its bit-packed output, effectively acting as an input stream to the next layer.
 Throughout the simulation, online tallying kernels aggregate how often each node or gate evaluates to True. These tallies can then be turned into estimates of probabilities and sensitivity metrics on the fly. This approach also makes adaptive sampling feasible: if specific gates appear to dominate variance or are tied to particularly rare events, additional sampling can be allocated to their layer to refine estimates.
 
 \input{4_proposed_solution/mc_solver/kernel}
 \input{4_proposed_solution/mc_solver/prng}
 \input{4_proposed_solution/mc_solver/tally}
+
+\input{4_proposed_solution/mc_solver/backends}
+
+\input{4_proposed_solution/mc_solver/convergence}
 
 \input{4_proposed_solution/mc_solver/benchmarks/_}
 

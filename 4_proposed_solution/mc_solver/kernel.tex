@@ -85,3 +85,283 @@ Apply the layer decomposition to drive \emph{kernel building} and \emph{evaluati
 \end{enumerate}
 
 Once kernels for a given layer finish, move on to the next layer. Because of the topological guarantee, no node in layer \(d\) references memory or intermediate states from layer \(d\!+\!1\) or later, preventing cyclical references and ensuring correctness.
+
+% -----------------------------------------------------------------------------
+%  Extended algorithmic description of kernel generation and execution
+% -----------------------------------------------------------------------------
+
+\subsection{Basic--Event Sampling Kernels}
+\label{subsec:be_kernel}
+
+Each \texttt{Variable} node in layer~$d$ represents an i.i.d.~Bernoulli trial
+with success probability~$p\_v\in[0,1]$.  The evaluation of all variables in
+a layer is consolidated into 
+\emph{one} data--parallel kernel that generates a contiguous block of
+bit--packed outcomes:
+\begin{enumerate}
+  \item \textbf{Parameter staging.}  For every variable~$v$ the solver stores the
+        pair $(\text{idx}(v),\,p\_v)$ in host memory, where
+        $\text{idx}(v)$ is the global node index.  The list is stable across
+        Monte--Carlo iterations and is therefore transferred to device memory
+        only once.
+  \item \textbf{Contiguous layout.}  A device--side array of $N_{\!v}$
+        records, $N_{\!v}$ being the number of variables in the layer, is
+        allocated so that the probability field, the bit--packed result buffer
+        pointer, and any auxiliary counters are stored in
+        \emph{structure--of--arrays} (SoA) form.  The resulting stride--free
+        access pattern maximizes global--memory throughput.
+  \item \textbf{Kernel configuration.}  Let $T$ denote the total number of
+        Bernoulli draws requested by the host run--time (cf.
+        Sec.~\ref{sec:bitpack-prob-sampling}).  The global ND--range is chosen
+        as $\bigl(\lceil N_{\!v}\rceil,\,B,\,P\bigr)$, mapping each work--item
+        to a unique triple $(v,\,b,\,p)$ of variable~$v$, batch index~$b$, and
+        bit--pack index~$p$.  The local work--group shape is computed
+        adaptively to saturate the target device while respecting hardware
+        limits on registers and shared memory.
+  \item \textbf{Execution.}  Every work--item initializes a counter--based
+        generator (see the Philox discussion in
+        Sec.~\ref{sec:bitpack-prob-sampling}), converts the pseudo--random words
+        into $\omega$ Bernoulli outcomes via the integer--threshold technique,
+        and writes the resulting $w$--bit word to the pre--allocated buffer.
+        No inter--item synchronization is required beyond the implicit barrier
+        at kernel completion.
+\end{enumerate}
+The overall cost is $\mathcal{O}(T\,N_{\!v}/\omega)$ arithmetic operations and
+$\Theta(T\,N_{\!v}/\omega)$ global writes, making the routine
+memory--bandwidth bound only for extremely small~$P$.
+
+\subsection{Gate--Evaluation Kernels}
+\label{subsec:gate_kernel}
+
+Gate nodes are logically heterogeneous: AND, OR, XOR, NOT, NAND, NOR, XNOR, and
+at--least--$k$ (\texttt{VOT}) gates all feature distinct Boolean semantics yet
+share the same interface of reading one or more bit--packed input buffers and
+writing a bit--packed output.  To avoid divergent control flow, the solver
+instantiates \emph{one specialized kernel per connective type} present in the
+current layer.
+
+Consider a set $\mathcal{G}_{\mathrm{type}}$ containing all gates of a single
+connective.  Their evaluation proceeds as follows:
+\begin{enumerate}
+  \item \textbf{Input resolution.}  For every gate $g\in\mathcal{G}$ the lists
+        of positive inputs $\mathcal{I}^+(g)$ and negated inputs
+        $\mathcal{I}^-(g)$ are resolved to concrete device pointers.  Positive
+        and negative buffers are concatenated so that a simple offset marks the
+        first negated operand.  The construction is embarrassingly parallel on
+        the host and involves no device work.
+  \item \textbf{Contiguous block construction.}  Buffers and gate metadata are
+        packed into an SoA structure that is tile--aligned for
+        coalesced reads.  For at--least--$k$ gates the threshold~$k$ is stored
+        alongside the pointer list.
+  \item \textbf{Kernel launch geometry.}  Let $N_{\!g}$ be the number of gates
+        of the selected type.  An ND--range of
+        $\bigl(\lceil N_{\!g}\rceil,\,B,\,P\bigr)$ is created, identical in
+        shape to the basic--event kernel so that subsequent layers can reuse
+        the same scheduling heuristics.  Within each work--item, Boolean logic
+        is applied on a per--bitpack basis without branching:
+        \begin{itemize}
+          \item \textsc{And}, \textsc{Nand}:  multiple \texttt{\&} reductions
+                plus an optional complement.
+          \item \textsc{Or}, \textsc{Nor}:   multiple \texttt{|} reductions
+                plus an optional complement.
+          \item \textsc{Xor}, \textsc{Xnor}: accumulated parity via \texttt{\^{}} operations.
+          \item \textsc{Null}, \textsc{Not}: trivial one--input, output, with complement.
+          \item \textsc{At--least--$k$}: population counting of the aggregated
+                bit--wise sum followed by a threshold comparison implemented
+                through native \texttt{popcount} instructions.
+        \end{itemize}
+  \item \textbf{Dependency guarantees.}  Because all input buffers originate in
+        earlier layers, the run--time enforces an event dependency on every
+        producing kernel, ensuring visibility of the complete inputs before
+        gate evaluation begins.
+\end{enumerate}
+The bit--parallel operations ensure that the arithmetic intensity is high; the
+critical path is dominated by a handful of integer masks and, for
+at--least--$k$ gates, one integer addition plus a comparison per input.
+
+\subsection{Dependency--Aware Kernel Scheduling}
+\label{subsec:scheduling}
+
+Kernels are submitted to the device queue in strict layer order, yet the
+scheduler exploits two orthogonal forms of parallelism:
+\begin{enumerate}
+  \item \emph{Intra--layer concurrency} --- basic--event sampling and the
+        multiple gate kernels of the same layer depend exclusively on the
+        previous layer, \emph{not} on one another.  They are therefore eligible
+        for concurrent execution subject to device resources.
+  \item \emph{Iterative sampling} --- the bit--packed sample space is sliced
+        into $T\_\text{iter}$ iterations decided by the sample shaper.
+        Kernels capturing the same node repeat across iterations and are
+        expressed with an explicit iteration counter, enabling the run--time to
+        re--use the same compiled binary while varying the random counter seed
+        and output offsets.
+\end{enumerate}
+Dependencies are represented as light--weight events; the host never performs
+explicit synchronization inside a layer but relies on the queue to enforce the
+partial order.
+
+\subsection{Work--Group Optimization Heuristics}
+\label{subsec:wg_optim}
+
+Let $G$ denote the global item count of the kernel at hand and $L\_\max$ the
+maximum local size supported by the device along each axis.  The solver
+selects a local range $(l_x,l_y,l_z)$ according to
+\begin{align*}
+  l_x &= \min\bigl(\text{pow2\_ceil}(G),\,L\_\max\bigr),\\
+  l_y &= \min\bigl(B,\,L\_\max/l_x\bigr),\\
+  l_z &= \min\bigl(P,\,L\_\max/(l_x l_y)\bigr),
+\end{align*}
+which heuristically balances occupancy with register pressure while retaining a
+uniform work--item distribution.  The shape is re--evaluated independently for
+basic events and gate kernels because $G$ differs across those two categories.
+
+\subsection{Complexity and Scalability}
+\label{subsec:complexity}
+
+Assume $|\mathcal{V}|$ variables and $|\mathcal{G}|$ gates in the graph, with
+layer depths bounded by $D$.  Let $S=T\,B\,P\,\omega$ be the total number of
+Bernoulli trials.
+\begin{itemize}
+  \item \textbf{Kernel build time.}  All host--side preprocessing runs in
+        $\mathcal{O}(|\mathcal{V}|+|\mathcal{G}|)$ memory operations; no search
+        structure deeper than a hash map is required.
+  \item \textbf{Device execution time.}  Each basic--event kernel performs
+        $S$ integer comparisons.  Each gate kernel evaluates $S$ Boolean
+        operations whose count is proportional to the fan--in of the gate.
+        Hence the total arithmetic complexity is
+        $\mathcal{O}\bigl(S\,(1+\overline{\deg})\bigr)$, where
+        $\overline{\deg}$ is the average gate fan--in.
+  \item \textbf{Parallel scalability.}  Both kernel categories exhibit linear
+        speed--up with the number of compute units until either (i)~the global
+        launch size no longer saturates the device or (ii)~memory bandwidth
+        limits are reached.  Because all kernels are fully independent across
+        the $B$ and $P$ dimensions, they scale particularly well on
+        multi--tile accelerators.
+\end{itemize}
+
+The design therefore provides a clear separation of concerns: depth--first
+analysis establishes the dependency structure; kernel generation translates
+that structure into homogeneous, vectorizable work; and a light--weight event
+system schedules the resulting kernels with minimal host intervention.
+
+% -----------------------------------------------------------------------------
+\section{Kernel-Level Execution Model}
+\label{sec:kernel_execution_model}
+
+\subsection{Coordinate System and Notation}
+
+Let $(G_x,G_y,G_z)\in\mathbb{N}^3$ denote the \emph{global} range supplied to the device and $(L_x,L_y,L_z)$ the \emph{local} (work\,–\,group) range.  We further define
+\[
+  W_d \;=\; \frac{G_d}{L_d},\qquad d\in\{x,y,z\},
+  \quad\text{and}\quad
+  W \;=\; W_x W_y W_z ,
+\]
+where $W_d$ counts work-groups along axis~$d$ and $W$ is the total number of work-groups.  Every work-item within a group is identified by its local id $\ell=(\ell_x,\ell_y,\ell_z)$ with $0\le \ell_d<L_d$.
+
+Unless stated otherwise the following global symbols are used throughout the chapter
+\begin{center}
+\begin{tabular}{ll}
+$V$  & \# basic events (variables)\\
+$G$  & \# standard logic gates\\
+$A$  & \# at-least-$k$ gates\\
+$T$  & Monte-Carlo iterations\\
+$B$  & batches per iteration\\
+$P$  & bit-packs per batch\\
+$\omega$ & bits per pack $=8\cdot\mathrm{sizeof}(\texttt{bitpack\_t})$\\
+$N$  & trials per iteration $=B\,P\,\omega$
+\end{tabular}
+\end{center}
+
+\subsection{Generic Rounding Scheme}
+
+All kernels adopt the \emph{nearest-multiple} rule
+\[
+   G_d \;=\;
+   \Bigl\lceil \frac{Q_d}{L_d} \Bigr\rceil L_d ,\qquad
+   Q_d \in \{V,G+A,1\}\times\{B\}\times\{P\},
+\]
+where $Q_d$ is the problem-specific lower bound listed in Table~\ref{tab:kernel_dimensions}.  This rule guarantees that every logical task is scheduled while respecting the SYCL constraint $G_d\equiv 0 \; (\mathrm{mod}\,L_d)$.
+
+\subsection{Kernel-Specific Mappings}
+
+Each kernel instantiates a surjective mapping
+\[
+   \Phi : \{0,\dots,G_x-1\}\times\{0,\dots,G_y-1\}\times\{0,\dots,G_z-1\}
+          \;\twoheadrightarrow\; \mathcal{S},
+\]
+where $\mathcal{S}$ is the set of logical sub-tasks it must solve.  We list the mappings succinctly:
+
+\begin{itemize}
+  \item \textbf{Basic-event sampling} ($\#\mathcal{S}=VBP$):
+        $\,\Phi_{\mathrm{BE}}(i_x,i_y,i_z)=(v=i_x,\;b=i_y,\;p=i_z)$.
+
+  \item \textbf{Standard gate evaluation} ($\#\mathcal{S}=GBP$):
+        $\,\Phi_{\mathrm{G}}(i_x,i_y,i_z)=(g=i_x,\;b=i_y,\;p=i_z)$.
+
+  \item \textbf{At-least-$k$ gate evaluation}
+        ($\#\mathcal{S}=ABP\omega$):
+        $\,i_z = p\,\omega + \lambda$ with $\lambda\in\{0,\dots,\omega-1\}$.  The pair $(b,p)$ indexes the bit-pack, while $\lambda$ singles out a \emph{bit lane}.  One work-group therefore owns a unique triplet $(a,b,p)$ and folds the $\omega$ lanes with a group reduction.
+
+  \item \textbf{Tally accumulation} ($\#\mathcal{S}=VBP$):
+        identical to $\Phi_{\mathrm{BE}}$ but with $L_x=1$ such that each group covers exactly one tally node.
+\end{itemize}
+
+\subsection{Trial Coverage Guarantee}
+
+Let $\Xi$ be the set of Bernoulli trials processed by a kernel in one iteration.  By construction
+\[
+   |\Xi|
+   \;=\;
+   \underbrace{B P \omega}_{\text{trials/ node}}
+   \times
+   \begin{cases}
+     V, & \text{basic-event},\\[2pt]
+     G, & \text{standard gate},\\[2pt]
+     A, & \text{at-least gate},\\[2pt]
+     V, & \text{tally}.
+   \end{cases}
+\]
+Because $\omega$ divides $G_z$ in every case, each trial is owned by exactly one work-item and is executed precisely once.
+
+\begin{table}[t]
+  \centering
+  \caption{Minimum global dimensions $Q_d$ before round-up.}
+  \label{tab:kernel_dimensions}
+  \begin{tabular}{lccc}
+    \toprule
+    Kernel               & $Q_x$              & $Q_y$ & $Q_z$\\
+    \midrule
+    Basic-event          & $V$                & $B$   & $P$\\
+    Standard gate        & $G$                & $B$   & $P$\\
+    At-least-$k$ gate    & $A$                & $B$   & $P\omega$\\
+    Tally                & $V$                & $B$   & $P$\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Work-Group Invariants}
+
+Let $\Gamma$ be a work-group.  For every kernel the following invariant holds inside $\Gamma$:
+\[
+   \bigl[(\ell_x,\ell_y,\ell_z)\in\Gamma\bigr]
+   \;\Longrightarrow\;
+   \text{all work-items share the complete set of inputs required to produce one output literal}.
+\]
+Consequently intra-group communication (reductions, barriers) never crosses logical boundaries, enabling lock-free execution except for the single atomic update in the tally kernel.
+
+\subsection{Complexity per Work-Group}
+
+With $L=L_xL_yL_z$ the number of instructions executed by a group is
+\[
+  C_{\Gamma}
+  \;=\;
+  \begin{cases}
+    \Theta(1), & \text{basic-event (bit-packing)},\\
+    \Theta(\deg g), & \text{gate of fan-in }\deg g,\\
+    \Theta(\deg a + \log \omega), & \text{at-least-}k,\\
+    \Theta(L + \log L), & \text{tally popcount + reduction},
+  \end{cases}
+\]
+all independent of $T$ owing to the strict buffering between iterations.
+
+% -----------------------------------------------------------------------------

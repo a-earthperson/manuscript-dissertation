@@ -1,0 +1,205 @@
+% ============================================================================
+%  Convergence Diagnostics and Early-Stopping Policy
+% ============================================================================
+%  This file is manuscript-dissertation/4_proposed_solution/mc_solver/convergence.tex
+%  It is \\input{} from the parent chapter.
+% ----------------------------------------------------------------------------
+\section{Convergence Diagnostics and Early--Stopping Policy}
+\label{sec:convergence_criterion}
+
+Monte--Carlo probability estimators accrue sampling error that decays only at
+rate~$\mathcal{O}(1/\sqrt{n})$ with the number of Bernoulli trials $n$.
+Running indefinitely therefore yields diminishing returns.
+A principled \emph{convergence criterion} is required to decide when further
+sampling ceases to be cost--effective.  This section formalises the stopping
+rule adopted by the solver, combining classical confidence--interval analysis
+with information--theoretic diagnostics.  The notation introduced in
+Section~\ref{sec:kernel_execution_model} remains in force; in particular each
+node $v\!\in\!\mathcal{V}$ is evaluated over $T$ Monte--Carlo iterations with
+$N\!=\!B P \omega$ trials per iteration.
+
+% ----------------------------------------------------------------------------
+\subsection{Point Estimates and Sampling Variance}
+\label{subsec:conv_point_estimates}
+
+Let $s_v$ be the number of one--bits observed for node~$v$ after $T$ iterations
+(Section~\ref{sec:tally_kernel}).  The unbiased estimator and its standard
+error are
+\begin{equation}
+  \widehat{p}_v \;=\; \frac{s_v}{T N},
+  \qquad
+  \widehat{\sigma}_v \;=\;
+  \sqrt{\frac{\widehat{p}_v\bigl(1-\widehat{p}_v\bigr)}{T N}}.
+  \label{eq:p_hat_sigma_hat}
+\end{equation}
+Assuming $T N \widehat{p}_v$ and $T N\bigl(1-\widehat{p}_v\bigr)$ both exceed
+roughly~$10$, the Central Limit Theorem implies the \emph{half--width}
+\begin{equation}
+  h_v(z) \;=\; z\,\widehat{\sigma}_v
+  \label{eq:half_width}
+\end{equation}
+contains $\widehat{p}_v$ inside a two--sided normal confidence interval with
+probability $\operatorname{erf}(z/\sqrt{2})$.
+
+% ----------------------------------------------------------------------------
+\subsection{Linear--Space Margin--of--Error Criterion}
+\label{subsec:lin_margin}
+
+A user supplies a relative margin--of--error $\varepsilon_{\mathrm{rel}}\!\in\!(0,1)$
+(typical default 0.1\%).  Rewriting $h_v(z)$ as a \emph{fraction} of the point
+estimate yields the condition
+\begin{equation}
+  \frac{h_v(z)}{\widehat{p}_v} \;\le\; \varepsilon_{\mathrm{rel}}.
+  \label{eq:lin_conv}
+\end{equation}
+Inserting~\eqref{eq:half_width} gives the minimum sample budget
+\begin{equation}
+  N_{\varepsilon}^{(v)}
+  \;=\;
+  \biggl\lceil
+    \frac{z^{2}\,\widehat{p}_v\bigl(1-\widehat{p}_v\bigr)}
+         {\bigl(\varepsilon_{\mathrm{rel}}\,\widehat{p}_v\bigr)^{2}}
+  \biggr\rceil.
+  \label{eq:trials_required_lin}
+\end{equation}
+Hence additional trials are scheduled until $T N\ge N_{\varepsilon}^{(v)}$ for
+\emph{every} monitored node.
+
+% ----------------------------------------------------------------------------
+\subsection{Logarithmic--Space Refinement}
+\label{subsec:log_margin}
+
+Rare events ($p_v\ll 1$) admit improved diagnostics when the analysis is
+performed in the logarithmic domain.  Define $\ell_v = \log_{10} p_v$ and its
+estimate $\widehat{\ell}_v = \log_{10} \widehat{p}_v$.
+Propagating the variance from~\eqref{eq:p_hat_sigma_hat} via first--order
+Taylor expansion gives
+\begin{equation}
+  \operatorname{Var}\!\bigl(\widehat{\ell}_v\bigr)
+  \;\approx\;
+  \frac{\widehat{\sigma}_v^{2}}
+       {\widehat{p}_v^{2}\,(\ln 10)^{2}}.
+\end{equation}
+Accordingly the logarithmic half--width is
+\begin{equation}
+  h^{\log}_{v}(z)
+  \;=\;
+  \frac{z\,\widehat{\sigma}_v}{\widehat{p}_v\,\ln 10}.
+\end{equation}
+A \emph{fixed} absolute tolerance $\varepsilon^{\log}$ (expressed in decades)
+produces the criterion
+\begin{equation}
+  h^{\log}_{v}(z) \;\le\; \varepsilon^{\log},
+  \label{eq:log_conv}
+\end{equation}
+which translates into a second sample--size forecast
+\begin{equation}
+  N^{(v)}_{\log}
+  \;=\;
+  \biggl\lceil
+    \frac{z^{2}\,\bigl(1-\widehat{p}_v\bigr)}
+         {\widehat{p}_v\,(\varepsilon^{\log}\,\ln 10)^{2}}
+  \biggr\rceil.
+  \label{eq:trials_required_log}
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\subsection{Information--Theoretic Progress Monitor}
+\label{subsec:info_gain}
+
+The preceding criteria are variance--based and symmetric around
+$\widehat{p}_v$.  To guard against stalls where the point estimate barely
+changes yet the variance decays slowly we track the \emph{Shannon information
+gain} of a Beta($\alpha,\beta$) posterior (cf.
+Eq.~(11)~in Section~\ref{sec:bitpack-prob-sampling}).  After a batch with
+$s$ successes and $f$ failures the reduction in entropy is
+\begin{equation}
+  I_{\text{batch}}
+  \;=\;
+  H\bigl(\operatorname{Beta}(\alpha,\beta)\bigr)
+  - H\bigl(\operatorname{Beta}(\alpha+s,\beta+f)\bigr)
+  \quad\text{[bits]}.
+  \label{eq:info_gain}
+\end{equation}
+Sampling is considered \emph{saturated} once
+\begin{equation}
+  I_{\text{batch}} \;<\; I_{\min},
+  \label{eq:info_stop}
+\end{equation}
+for a user--defined threshold $I_{\min}$ (default $\approx 10^{-4}$ bits).
+
+% ----------------------------------------------------------------------------
+\subsection{Composite Stopping Rule}
+\label{subsec:composite_rule}
+
+Define the per--node forecasts
+\begin{equation}
+  N^{(v)}_{\text{req}} \;=\; \max\Bigl(N_{\varepsilon}^{(v)},\;N^{(v)}_{\log}\Bigr).
+  \label{eq:n_req_node}
+\end{equation}
+Let $N_{\text{req}}=\max_{v\in\mathcal{V}}N^{(v)}_{\text{req}}$.  The run
+terminates the first time both conditions hold:
+\begin{enumerate}
+  \item \textbf{Precision achieved:} $T N \ge N_{\text{req}}$.  Every monitored
+        node meets \eqref{eq:lin_conv} \emph{and}\,\eqref{eq:log_conv} at the
+        requested confidence level.
+  \item \textbf{Diminishing returns:} the most recent batch satisfies
+        \eqref{eq:info_stop}, signalling that further sampling conveys less
+        than~$I_{\min}$ bits of new information.
+\end{enumerate}
+The second clause rarely triggers before the first but provides robustness
+when variance estimates are noisy during early burn--in.
+
+% ----------------------------------------------------------------------------
+\subsection{Algorithmic Workflow}
+\label{subsec:workflow}
+
+\begin{algorithm}[H]
+  \caption{Adaptive early--stopping procedure per node $v$}
+  \label{alg:convergence}
+  \begin{algorithmic}[1]
+    \Require Target $\varepsilon_{\mathrm{rel}},\varepsilon^{\log}$; confidence $z$; \vspace{1pt}
+    \State Initialise $s_v\gets 0$, $f_v\gets 0$, $(\alpha,\beta)\gets(\tfrac12,\tfrac12)$
+    \While{not converged}
+      \State Run one Monte--Carlo iteration and tally $(\Delta s,\Delta f)$
+      \State $s_v\mathrel{+}=\Delta s$, \quad $f_v\mathrel{+}=\Delta f$
+      \State Update $(\alpha,\beta)$ and compute $I_{\text{batch}}$ via~\eqref{eq:info_gain}
+      \State Evaluate $\widehat{p}_v$, $\widehat{\sigma}_v$ from~\eqref{eq:p_hat_sigma_hat}
+      \State Compute $N_{\varepsilon}^{(v)}$, $N^{(v)}_{\log}$
+      \State \textbf{Converged} $\Leftarrow$ \eqref{eq:n_req_node} and~\eqref{eq:info_stop}
+    \EndWhile
+    \State \Return $\widehat{p}_v$, CI, diagnostics
+  \end{algorithmic}
+\end{algorithm}
+Algorithm~\ref{alg:convergence} runs in amortised $\mathcal{O}(1)$ time per
+iteration: all statistics derive from constant--time updates of $(s_v,f_v)$
+and the digamma evaluations in~\eqref{eq:info_gain} are scalar.
+
+% ----------------------------------------------------------------------------
+\subsection{Computational Complexity and Scalability}
+\label{subsec:conv_complexity}
+
+The computational overhead of convergence monitoring is negligible relative to
+the sampling kernels.  Each tally update costs one integer addition and a
+handful of floating--point operations per node, i.e.
+\begin{equation}
+  \mathcal{O}\bigl(|\mathcal{V}|\bigr) \text{ host FLOPs per iteration.}
+\end{equation}
+Because these calculations are batched on the CPU and overlap with device
+kernels, the wall--clock impact stays below~1\,\% even for graphs with
+$|\mathcal{V}|>10^{4}$.
+
+% ----------------------------------------------------------------------------
+\subsection{Interaction with Fixed Iteration Budgets}
+\label{subsec:conv_budget}
+
+When an \emph{a priori} iteration budget $T_{\max}$ is imposed (e.g., due to
+wall--time constraints) the stopping rule collapses to
+\begin{equation}
+  T \;=\; \min\!\bigl\{T_{\max},\;\lceil N_{\text{req}}/N \rceil\bigr\}.
+\end{equation}
+If $T_{\max}$ is reached before the precision targets, the solver returns the
+current estimates along with their realised half--widths so that the user can
+assess residual uncertainty.
+
+% ============================================================================ 
