@@ -1,31 +1,6 @@
 \subsection{Common-Cause Failures}
 
-A \acrfull{ccf} is defined as the failure of multiple components due to a shared cause within a specified time interval. Unlike independent failures, \acrshort{ccf}s can defeat redundancy-based safety systems, potentially leading to severe consequences in critical applications.
-
-Common cause failures stem from three main categories of coupling factors \cite{NUREG5485}:
-
-\paragraph{Hardware-based factors}
-\begin{itemize}
-    \item Hardware design (system layout, component internal parts)
-    \item Manufacturing attributes
-    \item Construction/installation characteristics
-\end{itemize}
-
-\paragraph{Operation-based factors}
-\begin{itemize}
-    \item Same operating staff
-    \item Same operating procedures
-    \item Same maintenance/test/calibration schedule or staff
-\end{itemize}
-
-\paragraph{Environment-based factors}
-\begin{itemize}
-    \item Same plant location exposing components to identical environmental stresses
-    \item Same component location
-    \item Same internal environment/working medium
-\end{itemize}
-
-Several parametric models have been developed to quantify \acrshort{ccf} probabilities:
+A \acrfull{ccf} is defined as the failure of multiple components due to a shared cause within a specified time interval. Unlike independent failures, \acrshort{ccf}s can defeat redundancy-based safety systems, potentially leading to severe consequences in critical applications. Several parametric models have been developed to quantify \acrshort{ccf} probabilities:
 
 \subsubsection{Basic Parameter Model (BPM)}
 \acrfull{cccg} are sets of components susceptible to the same \acrshort{ccf} mechanisms. Basic parameter model decomposes the failure probability of a component in a \acrshort{cccg} into terms involving independent failure of the component and combinations of \acrshort{ccf}s with the other components in the \acrshort{cccg} \cite{rasmuson_kelly_2008}. For a group of $m$ components, the parameter $Q_k$ represents the probability of a specific $k$-component failure combination. The total failure probability is then calculated as:

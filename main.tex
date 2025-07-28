@@ -102,6 +102,16 @@
 %%                    sans serif, so this is a good option. 
 %%     +  \rmfamily - serif fonts
 %%     +  \bfseries - bold face
+%\dispositionformat{\sffamily\bfseries}   % bold and sans serif
+\dispositionformat{\bfseries}            % bold and serif
+
+%% -------------------------------------------------------------------------- %%
+%% Formatting for centered headings - Abstract, Dedication, etc. headings
+%%  This is where one might put a sizing command.
+%%  \MakeUppercase can be used to typeset all headings in uppercase.
+\headingformat{\large\MakeUppercase}   % All letters uppercase
+%\headingformat{\large}                % Not all uppercase
+%\headingformat{\Large\scshape}        % Small Caps, used with serif fonts.
 
 %% Typographers recommend using a normal inter-word space after
 %% sentences. TeX's default is to add an wider space, but \frenchspacing

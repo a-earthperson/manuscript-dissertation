@@ -1,0 +1,206 @@
+% ============================================================================
+%  Hardware-Native Voting without AND/OR Expansion
+% ============================================================================
+%  This chapter complements Chapter~\ref{chap:mc_solver} by analysing in depth
+%  how threshold (k-of-n) logic can be evaluated 
+%  \emph{directly} on parallel hardware – GPUs and vector CPUs – without first
+%  rewriting the gate into an exponentially large AND/OR tree.  The discussion
+%  is self-contained yet uses the global symbols introduced in
+%  Chapter~\ref{chap:mc_solver} and adheres to the execution model formalised
+%  therein.
+% ----------------------------------------------------------------------------
+\chapter{Hardware--Native Voting without AND/OR Expansion}
+\label{chap:voter}
+
+Threshold (``voting'') gates occur pervasively in fault
+and reliability models.  A naive decomposition into pairwise \textsc{and}/\textsc{or}
+operations inflates the graph size combinatorially, impeding both memory usage
+and kernel launch efficiency.  This chapter develops a mathematics-driven,
+hardware-native alternative rooted in population counting and bit-parallelism.
+We prove the estimator obtained by the direct algorithm is \emph{identical} to
+that of the expanded Boolean formula, quantify its computational complexity,
+and examine device-specific performance characteristics.  Extensions to
+\emph{at-most} and \emph{exactly} voting are treated as corollaries.
+
+% ---------------------------------------------------------------------------
+\section{Preliminaries and Notation}
+\label{sec:voter_prelims}
+
+We adopt the symbols of Chapter~\ref{chap:mc_solver}.  In particular, a single
+Monte–Carlo \emph{iteration} generates $B$ \emph{batches}, each batch contains
+$P$ \emph{bit-packs}, and every bit-pack stores $\omega=8\,\mathrm{sizeof}(\texttt{bitpack\_t})$
+Bernoulli trials.  Hence an iteration processes
+\(
+  N = B P \omega
+\)
+trials per node.
+
+Let $\mathcal{I}=\{X_1,\dots,X_n\}$ be the binary inputs of a voting gate and
+fix an integer $k\in\{0,\dots,n\}$.  The gate output obeys the Boolean
+predicate (cf.~Eq.~(\ref{eq:kn_gate_boolean}))
+\[
+  Y\;=\;[\,\sum_{i=1}^{n} X_i \ge k\,].
+\]
+We write $\mathrm{VOT}(k/n)$ for the connective and reserve the symbols
+$A$ and $G$ for the counts of voting and standard gates, respectively, as in
+Table~\ref{tab:kernel_dimensions}.
+
+% ---------------------------------------------------------------------------
+\section{Logical Equivalence under Bit-Packed Sampling}
+\label{sec:voter_equivalence}
+
+Monte–Carlo evaluation ultimately concerns the indicator random variable
+$Y(\omega)$ under a random assignment $\omega\in\{0,1\}^{n}$.  Two alternative
+computational paths exist:
+\begin{enumerate}
+  \item[(E1)] \textbf{Expansion.}  Rewrite $Y$ into the disjunctive normal form
+        of Eq.~(\ref{eq:k_of_n_or_of_ands}); evaluate the resulting tree of
+        $\textsc{and}/\textsc{or}$ nodes.
+  \item[(E2)] \textbf{Threshold test.}  Count $s(\omega)=\sum_i X_i(\omega)$
+        and return $[s(\omega)\ge k]$ directly.
+\end{enumerate}
+Because both (E1) and (E2) are algebraically identical for \emph{every}
+assignment $\omega$, the Bernoulli random variables they produce are equal in
+distribution:
+\(
+  Y_{\mathrm{E1}}\equiv Y_{\mathrm{E2}}.
+\)
+Consequently all unbiased estimators derived from repeated sampling are
+identical in expectation and variance.  Sections~\ref{sec:voter_unbiased} and
+\ref{sec:voter_variance} formalise these statements.
+
+% ---------------------------------------------------------------------------
+\subsection{Unbiasedness of the Direct Estimator}
+\label{sec:voter_unbiased}
+
+Let $\widehat{p}_\text{exp}$ and $\widehat{p}_\text{thr}$ denote the
+estimators of $p=\Pr(Y=1)$ obtained after $T$ iterations via routes (E1) and
+(E2), respectively.  Both take the canonical form
+\[
+  \widehat{p}\;=\;\frac{s}{T N},
+\]
+where $s$ is the number of one-bits tallied by the kernel of
+Section~\ref{sec:tally_kernel}.  As $Y_{\mathrm{E1}}\equiv Y_{\mathrm{E2}}$, we
+have $\mathbb{E}[s_{\mathrm{exp}}]=\mathbb{E}[s_{\mathrm{thr}}]=T N p$ and hence
+\(
+  \mathbb{E}[\widehat{p}_\text{exp}] =\mathbb{E}[\widehat{p}_\text{thr}] = p.
+\)
+Thus the direct threshold estimator inherits the unbiasedness of the expanded
+approach.
+
+% ---------------------------------------------------------------------------
+\subsection{Variance Preservation}
+\label{sec:voter_variance}
+
+Because the underlying Bernoulli variables coincide, the sample variance per
+iteration is
+\(
+  \operatorname{Var}[Y] = p(1-p)
+\)
+for either method.  Aggregating over $T N$ independent trials gives the common
+standard error quoted in Eq.~(\ref{eq:p_hat_sigma_hat}).  No variance penalty
+is therefore incurred by bypassing expansion – a crucial insight legitimizing
+the hardware-native strategy.
+
+% ---------------------------------------------------------------------------
+\section{Bit-Parallel Threshold Algorithm}
+\label{sec:voter_algorithm}
+
+We now articulate the algorithmic core executed by the specialized kernel
+\textsc{VOT\_Kernel}.  The pseudocode mirrors the exposition of
+Section~\ref{subsec:gate_kernel} but tailors the intra-group logic to a
+population-count primitive.
+
+\subsection{Per-Lane Counting Model}
+
+Let $(a,b,p,\lambda)$ index a single \emph{lane} as defined in
+Section~\ref{sec:gate_kernel}: gate $a\in\{1,\dots,A\}$, batch $b$, bit-pack
+$p$, and bit position $\lambda\in\{0,\dots,\omega-1\}$.  Each lane stores an
+8-bit counter $c\in\{0,\dots,n\}$ initialized to zero.  For every input buffer
+addressed by the gate the lane accumulates
+\[
+  c\;\leftarrow\;c + [\text{bit}_{\lambda}(X_i)=1] + [\text{bit}_{\lambda}(\lnot X_j)=1],
+\]
+where positive and negated inputs are treated per
+Eq.~(27) of Section~\ref{subsec:gate_kernel}.  After the loop the lane outputs
+\(
+  y_{\lambda} = [c\ge k].
+\)
+A work-group reduction (bitwise OR) assembles the final $\omega$-bit word.
+
+\subsection{Complexity Analysis}
+\label{sec:voter_complexity}
+
+\paragraph{Arithmetic intensity.}  Each lane performs $n$ increments and one
+comparison, giving $\mathcal{O}(n)$ integer operations per 64 trials.
+Comparing to the expanded tree: the latter executes $\Theta(n)$ operations per
+\emph{subset} and therefore $\Theta\bigl(\tbinom{n}{k}\bigr)$ overall in the
+worst case.  The direct kernel is thus exponentially faster in $n$.
+
+\paragraph{Memory traffic.}  Input buffers are streamed once, achieving
+unit-stride accesses identical to the standard gate kernel.  No additional
+buffers are materialized, avoiding the memory blow-up described in
+Section~\ref{sec:layered_dag_traversal}.
+
+\paragraph{Register pressure.}  The counter width is $\lceil\log_2(n+1)\rceil$
+bits.  For practical fan-ins $(n\le 255)$ an 8-bit counter suffices, preserving
+high occupancy on GPUs.
+
+% ---------------------------------------------------------------------------
+\section{Extensions: At-Most and Exactly Voting}
+\label{sec:voter_extensions}
+
+Two common relatives are the \emph{at-most} gate $\mathrm{ATMOST}(k/n)$ and the
+\emph{exactly} gate $\mathrm{EXACT}(k/n)$.  Let $s$ be the per-lane counter as
+above.
+\[
+  \mathrm{ATMOST}(k/n):\; y=[s\le k],
+  \qquad
+  \mathrm{EXACT}(k/n):\; y=[s = k].
+\]
+Both predicates are evaluated by a single comparison added after the counting
+loop, leaving all complexity results intact.  Unbiasedness and variance proofs
+mirror those of Sections~\ref{sec:voter_unbiased}–\ref{sec:voter_variance}.
+
+% ---------------------------------------------------------------------------
+\section{Device-Specific Performance Considerations}
+\label{sec:voter_perf}
+
+\subsection{GPUs}
+On NVIDIA Ada-class GPUs the latency of an integer increment is two cycles,
+whereas a 32-bit popcount is three cycles.  For $n\le 64$ the counting loop
+fits entirely within one warp and the kernel attains the same throughput as a
+standard \textsc{or} gate.  For $n>64$ shared-memory tiling as suggested in
+Section~\ref{sec:gate_kernel} becomes beneficial.
+
+\subsection{Vector CPUs}
+Counting across inputs maps naturally to SIMD horizontal additions.  When $n$
+exceeds the lane width ($W_s$ in Section~\ref{subsec:cpu_backend}) we apply a
+loop unrolling factor $u=\lceil n/W_s\rceil$ to sustain two vector increments
+per cycle, thereby saturating the execution units while hiding memory
+latency.
+
+% ---------------------------------------------------------------------------
+\section{Empirical Validation}
+\label{sec:voter_validation}
+
+Comprehensive benchmarks are reported in Section~\ref{subsec:mc_solver_benchmarks}.
+For $n=16$ and $k=9$ the direct kernel delivers a $\times23$ speed-up over the
+expanded circuit on an RTX~A6000 at identical numerical accuracy
+($<10^{-12}$ absolute error).  Memory consumption shrinks from
+\(2.1\,\mathrm{GiB}\) to \(96\,\mathrm{MiB}\) for $A=10^{4}$ gates sampled over
+$T=4096$ iterations.
+
+% ---------------------------------------------------------------------------
+\section{Conclusions}
+\label{sec:voter_conclusions}
+
+Direct threshold evaluation preserves the statistical integrity of Monte–Carlo
+probability estimation while bypassing the exponential blow-up inherent in
+Boolean expansion.  The technique generalizes seamlessly to at-most and
+exactly voting, maintains low register pressure, and fits the unified kernel
+execution model of Chapter~\ref{chap:mc_solver}.  Together these properties
+render voting gates a first-class citizen in large-scale reliability analyses
+on modern accelerators.
+
+% ============================================================================

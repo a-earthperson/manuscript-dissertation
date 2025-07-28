@@ -215,23 +215,23 @@
 % guard below provides bare-bones formats only when \HCode is defined, i.e.
 % during an HTML build, leaving the original behaviour unchanged for PDF.
 
-\ifdefined\HCode
-  \titleclass{\chapter}{top}
-  \titleformat{\chapter}[display]{\huge\bfseries}{}{0pt}{}
-  \titlespacing*{\chapter}{0pt}{20pt}{10pt}
+% \ifdefined\HCode
+%   \titleclass{\chapter}{top}
+%   \titleformat{\chapter}[display]{\huge\bfseries}{}{0pt}{}
+%   \titlespacing*{\chapter}{0pt}{20pt}{10pt}
 
-  \titleclass{\section}{straight}
-  \titleformat{\section}[hang]{\Large\bfseries}{\thesection}{1em}{}
-  \titlespacing*{\section}{0pt}{12pt}{6pt}
+%   \titleclass{\section}{straight}
+%   \titleformat{\section}[hang]{\Large\bfseries}{\thesection}{1em}{}
+%   \titlespacing*{\section}{0pt}{12pt}{6pt}
 
-  \titleclass{\subsection}{straight}
-  \titleformat{\subsection}[hang]{\large\bfseries}{\thesubsection}{1em}{}
-  \titlespacing*{\subsection}{0pt}{10pt}{5pt}
+%   \titleclass{\subsection}{straight}
+%   \titleformat{\subsection}[hang]{\large\bfseries}{\thesubsection}{1em}{}
+%   \titlespacing*{\subsection}{0pt}{10pt}{5pt}
 
-  \titleclass{\subsubsection}{straight}
-  \titleformat{\subsubsection}[hang]{\normalsize\bfseries}{\thesubsubsection}{1em}{}
-  \titlespacing*{\subsubsection}{0pt}{8pt}{4pt}
-\fi
+%   \titleclass{\subsubsection}{straight}
+%   \titleformat{\subsubsection}[hang]{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+%   \titlespacing*{\subsubsection}{0pt}{8pt}{4pt}
+% \fi
 
 
 %% -------------------------------------------------------------------------- %%
