@@ -25,12 +25,18 @@ if command -v latexmk >/dev/null 2>&1; then
   latexmk -r "$CONFIG_FILE" -C -outdir="$OUTDIR" "$MAIN_TEX" || true
 fi
 
-# Remove additional artefacts / directories
+# Remove additional LaTeX auxilliary files
 rm -rf "$OUTDIR" \
        "${MAIN_TEX%.tex}.pdf" \
        *.acn *.acr *.alg *.aux *.bbl *.blg \
        *.fls *.fdb_latexmk *.glo *.gls *.ist *.log *.lof *.lot *.toc *.out \
        *.xdy
+
+# Remove TeX4ht / make4ht intermediate artefacts
+rm -f  *.html *.css *.idv *.lg *.dvi *.run.xml *.tmp *.xref *x.svg 20*-main* || true
+
+# Remove HTML output dir created by make4ht
+rm -rf output
 
 # Remove folder created by svg package / inkscape CLI
 rm -rf svg-inkscape

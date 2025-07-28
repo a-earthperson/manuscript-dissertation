@@ -22,4 +22,25 @@ main.run.xml
 main.toc
 main.xdy
 
+# ---------------------------------------------------------------------------
+# TeX4ht / make4ht HTML build artefacts
+# ---------------------------------------------------------------------------
+# Timestamp-prefixed job names (e.g. 2025-07-27-main*)
+20*-main*
+# Generic HTML/CSS/aux generated during HTML builds
+*.html
+*.css
+*.idv
+*.lg
+*.dvi
+*.run.xml
+*.tmp
+*.xref
+# SVGs generated from DVI images
+*x.svg
+
+# Final site output directory (can be regenerated)
+output/
+
 svg-inkscape/
+main.published

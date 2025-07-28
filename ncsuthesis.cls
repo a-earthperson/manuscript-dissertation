@@ -202,11 +202,37 @@
 \titleclass{\part}{top}
 \titleformat{\part}[display]
   {\normalfont\huge\bfseries}{\centering\partname\ \thepart}{80pt}{\Huge\centering}
-% \titlespacing*{\part}{0pt}{50pt}{40pt}
-% \titleclass{\chapter}{straight}
-% \titleformat{\chapter}[display]
-%   {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
-% \titlespacing*{\chapter} {0pt}{50pt}{40pt}
+\titlespacing*{\part}{0pt}{50pt}{40pt}
+
+% ---------------------------------------------------------------------------
+% TeX4ht (make4ht/htlatex) compatibility: titlesec needs formats defined for
+% every standard sectioning command *before* they are encountered in the
+% various auxiliary compilation passes that TeX4ht performs.  When these
+% formats are missing LaTeX halts with:
+%   "Package titlesec Error: No format for this command."
+% The PDF workflow works because ncsuthesis never calls \chapter/\section
+% before it sets its own headers, but TeX4ht touches them very early.  The
+% guard below provides bare-bones formats only when \HCode is defined, i.e.
+% during an HTML build, leaving the original behaviour unchanged for PDF.
+
+\ifdefined\HCode
+  \titleclass{\chapter}{top}
+  \titleformat{\chapter}[display]{\huge\bfseries}{}{0pt}{}
+  \titlespacing*{\chapter}{0pt}{20pt}{10pt}
+
+  \titleclass{\section}{straight}
+  \titleformat{\section}[hang]{\Large\bfseries}{\thesection}{1em}{}
+  \titlespacing*{\section}{0pt}{12pt}{6pt}
+
+  \titleclass{\subsection}{straight}
+  \titleformat{\subsection}[hang]{\large\bfseries}{\thesubsection}{1em}{}
+  \titlespacing*{\subsection}{0pt}{10pt}{5pt}
+
+  \titleclass{\subsubsection}{straight}
+  \titleformat{\subsubsection}[hang]{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+  \titlespacing*{\subsubsection}{0pt}{8pt}{4pt}
+\fi
+
 
 %% -------------------------------------------------------------------------- %%
 %% ---------------------  Chapter Commands ---------------------------------- %%
