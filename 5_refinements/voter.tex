@@ -128,20 +128,44 @@ A work-group reduction (bitwise OR) assembles the final $\omega$-bit word.
 \subsection{Complexity Analysis}
 \label{sec:voter_complexity}
 
-\paragraph{Arithmetic intensity.}  Each lane performs $n$ increments and one
+\subsubsection{Arithmetic intensity.}  Each lane performs $n$ increments and one
 comparison, giving $\mathcal{O}(n)$ integer operations per 64 trials.
 Comparing to the expanded tree: the latter executes $\Theta(n)$ operations per
 \emph{subset} and therefore $\Theta\bigl(\tbinom{n}{k}\bigr)$ overall in the
 worst case.  The direct kernel is thus exponentially faster in $n$.
 
-\paragraph{Memory traffic.}  Input buffers are streamed once, achieving
+\subsubsection{Memory traffic.}  Input buffers are streamed once, achieving
 unit-stride accesses identical to the standard gate kernel.  No additional
 buffers are materialized, avoiding the memory blow-up described in
 Section~\ref{sec:layered_dag_traversal}.
 
-\paragraph{Register pressure.}  The counter width is $\lceil\log_2(n+1)\rceil$
+\subsubsection{Register pressure.}  The counter width is $\lceil\log_2(n+1)\rceil$
 bits.  For practical fan-ins $(n\le 255)$ an 8-bit counter suffices, preserving
 high occupancy on GPUs.
+
+\subsubsection{Graph-size savings.}  Let one $\mathrm{VOT}(k/n)$ gate be
+replaced by its DNF of Eq.~(\ref{eq:k_of_n_or_of_ands}).  The expansion
+introduces
+\[
+  M(n,k) \;=\; \sum_{j=k}^{n} \binom{n}{j}
+\]
+conjunction clauses plus $M(n,k)-1$ internal $\textsc{or}$ nodes when lowered
+onto a binary tree.
+Each clause itself maps to one $j$-input $\textsc{and}$ node.  The total
+\emph{additional} gate count therefore grows as
+\[
+  G_{\text{exp}}(n,k) \;=\; \sum_{j=k}^{n} \binom{n}{j}\;\Bigl(1 + (j-1)\Bigr)
+  \;\approx\; \Theta\!\bigl(M(n,k)\,n\bigr),
+\]
+which is maximized at $k\approx\lceil n/2\rceil$ with the asymptotic
+behavior $G_{\text{exp}}=\Theta\!\bigl(2^{n}/\sqrt{n}\bigr)$ by Stirling’s
+formula.  The direct threshold kernel replaces this entire sub-tree with a
+\emph{single} node—yielding an exponential reduction in graph size, memory
+footprint, and kernel launch overhead.  For instance, a 3-of-5 gate (cf.
+Listing~\ref{sec:3_of_5_voting_logic_example}) collapses from
+$G_{\text{exp}}=\binom{5}{3}+\binom{5}{4}+\binom{5}{5}=26$ logic gates to
+one, a $26\times$ reduction.  At $n=15$ and $k=8$ the saving increases to
+$(2^{15}-1)/2 \approx 16\,383$:1.
 
 % ---------------------------------------------------------------------------
 \section{Extensions: At-Most and Exact Voting}

@@ -1,0 +1,157 @@
+% ============================================================================
+%  Gate Kernels for Bit-Packed Boolean Evaluation
+% ============================================================================
+%  This file is manuscript-dissertation/4_proposed_solution/mc_solver/gate_kernels.tex
+%  It is included from the parent chapter via \input{}.
+% ----------------------------------------------------------------------------
+\chapter{Gate Kernels for Bit\hyp{}Packed Boolean Evaluation}
+\label{chap:gate_kernels}
+
+\section{Connective Taxonomy}
+\label{sec:gate_taxonomy}
+
+Let $\mathcal{G}$ be the set of Boolean gates obtained from the topological
+analysis of Section~\ref{sec:layered_dag_traversal}.  Each gate
+$g\in\mathcal{G}$ is represented by the triplet
+\[
+  g = \bigl(\,\text{type}(g),\; \mathcal{I}^{+}(g),\; \mathcal{I}^{-}(g)\bigr),
+\]
+where $\mathcal{I}^{+}(g)$ and $\mathcal{I}^{-}(g)$ denote its positive and
+negated inputs.  We partition $\mathcal{G}$ into disjoint subsets
+$\mathcal{G}_{\mathrm{type}}$ according to
+\[
+  \text{type}(g)\in\bigl\{\textsc{Null},\textsc{Not},\textsc{And},\textsc{Or},
+                   \textsc{Xor},\textsc{Nand},\textsc{Nor},\textsc{Xnor},\textsc{Atleast}\bigr\}.
+\]
+The subsequent sections analyze one subset at a time so that device kernels
+remain branch\hyp{}free and resource usage is homogeneous.
+
+\section{Launch Geometry}
+\label{sec:gate_launch_geometry}
+
+For every connective type we schedule one kernel with global range
+\[
+  (G_x,G_y,G_z)=\bigl(\lceil N_g\rceil,\;B,\;P\bigr),\qquad
+  N_g = |\mathcal{G}_{\mathrm{type}}|,
+\]
+rounded by the nearest\hyp{}multiple rule of
+Section~\ref{sec:kernel_execution_model}.  A work\hyp{}item with global id
+$(i_x,i_y,i_z)$ therefore processes the unique triplet
+\((g,b,p)\in\mathcal{G}_{\mathrm{type}}\times\{0,\dots,B-1\}\times\{0,\dots,P-1\}\).
+Local ranges $(L_x,L_y,L_z)$ are chosen by the heuristic of
+Section~\ref{subsec:wg_optim} and refined in
+Section~\ref{subsec:gate_opt}.
+
+\section{Bit\hyp{}Parallel Reduction Schemes}
+\label{sec:gate_bitparallel}
+
+\subsection{Idempotent Connectives: AND/OR Families}
+\label{subsec:idempotent_connectives}
+
+For $\textsc{And}$, $\textsc{Or}$ and their complements the kernel performs a
+word\hyp{}wise left fold over the input list.  The accumulator is initialized
+as
+\[
+  R_0 = \begin{cases}
+           \texttt{AllOnes}, & \textsc{And}/\textsc{Nand},\\[4pt]
+           \texttt{Zero},    & \textsc{Or}/\textsc{Nor}.
+         \end{cases}
+\]
+Positive inputs use $R\gets R\otimes v$ with $\otimes\in\{\&,|\}$; negated
+inputs substitute $\lnot v$.
+
+\begin{lemma}[Bit\hyp{}wise Idempotence]
+For any word size $\omega$ and any assignment of the input bits,
+\[
+  R_{\mathrm{final}}
+  = \bigotimes_{u\in\mathcal{I}^{+}(g)} u\;
+    \bigotimes_{v\in\mathcal{I}^{-}(g)} \lnot v
+\]
+yields a correct bit\hyp{}packed representation of gate $g$.
+\end{lemma}
+
+\begin{proof}
+Idempotence of $\land$ and $\lor$ ensures order\hyp{}independent accumulation.
+Per\hyp{}bit complement commutes with both operators, preserving semantics.
+\end{proof}
+
+The instruction count is $C_{\text{idemp}}=(\deg g)\,\Theta(1)$, one mask
+operation per input, independent of $\omega$.
+
+\subsection{Parity Connectives: \textsc{Xor}/\textsc{Xnor}}
+\label{subsec:parity_connectives}
+
+The fold operator becomes $\oplus$.  Associativity allows work\hyp{}groups to
+split the input list and apply warp\hyp{}level reductions, lowering register
+pressure for large fan\hyp{}ins (Section~\ref{subsec:gate_opt}).
+A final complement realizes $\textsc{Xnor}$.
+
+\subsection{Threshold Connectives: At\hyp{}Least\,$k$}
+\label{subsec:threshold_connectives}
+
+Let $n=\deg g$ and $k\in\{0,\dots,n\}$.  Fix the word width
+$\omega=8\,\mathrm{sizeof}(\texttt{bitpack\_t})$ and launch each work\hyp{}group
+with $L_z=\omega$ so that lane $\lambda\in\{0,\dots,\omega-1\}$ owns one bit
+position.
+\begin{enumerate}
+  \item \emph{Per\hyp{}lane counting}: initialise $c_\lambda\gets0$; stream
+        through the inputs, incrementing $c_\lambda$ whenever the masked bit is
+        set (positive input) or cleared (negated input).
+  \item \emph{Threshold test}: $r_\lambda\gets[c_\lambda\ge k]$.
+  \item \emph{Group reduction}: a lane\hyp{}wise OR assembles the word
+        $R=\sum_{\lambda} r_\lambda 2^{\lambda}$.
+\end{enumerate}
+
+\begin{theorem}[Work\hyp{}Group Correctness]
+With the above geometry each work\hyp{}group writes exactly one valid output
+word per iteration.
+\end{theorem}
+
+\begin{proof}
+Bijectivity of the mapping $(\text{group},\text{lane})\mapsto(p,\lambda)$
+guarantees single\hyp{}writer semantics; Steps~1–3 implement the at\hyp{}least\,$k$
+predicate bit\hyp{}wise.
+\end{proof}
+
+The per\hyp{}lane cost is $n$ conditional increments plus one comparison;
+adding the $\log_2\omega$\hyp{}step OR tree yields
+$C_{\text{thr}}=\Theta(n+\log\omega)$.
+
+\section{Performance Models}
+\label{sec:gate_performance_models}
+
+For idempotent and parity families let $I=n$ and memory traffic $M=n$.  Using
+$B_{\text{mem}}$ and $\lambda$ from
+Sections~\ref{subsec:cuda_backend}--\ref{subsec:cpu_backend},
+\[
+  \text{IPS}\;\le\;\min\Bigl(\frac{B_{\text{mem}}}{M w},\;\frac{C\,\lambda f}{I}\Bigr),
+\] where $w$ is word size in bytes.  Threshold gates replace
+$I\gets n+\log\omega$.
+
+\section{Work\hyp{}Group Optimization Heuristics}
+\label{subsec:gate_opt}
+
+Empirically, gates with $\deg g>64$ profit from lane\hyp{}parallel counting
+whereas smaller fan\hyp{}ins prefer maximal $l_y,l_z$ to saturate memory
+bandwidth:
+\[
+  (l_x,l_y,l_z)=
+  \begin{cases}
+    (1,\,B,\,P), & \deg g>64,\\[4pt]
+    (1,\,\min(B,L_{\max}),\,\min(P,L_{\max}/B)), & \text{otherwise}.
+  \end{cases}
+\]
+
+\section{Complexity}
+\label{sec:gate_complexity}
+
+\[
+  C_{\Gamma}=\begin{cases}
+    \Theta(n), & \text{idempotent/parity},\\[4pt]
+    \Theta(n+\log\omega), & \text{at\hyp{}least\,$k$}.
+  \end{cases}
+\]
+Aggregated over all gates the arithmetic cost is
+$\mathcal{O}\bigl(G\,n_{\mathrm{avg}} B P\bigr)$.
+
+% ============================================================================ 
