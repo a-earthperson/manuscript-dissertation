@@ -1,4 +1,4 @@
-\section{Tallying Layer Outputs}
+\chapter{Tallying Layer Outputs}
 \label{sec:tally_kernel}
 
 At every Monte-Carlo iteration the simulator produces, for each logic node
@@ -23,7 +23,7 @@ entire simulation.  The present section formalizes that process and outlines
 an implementation-agnostic, data-parallel algorithm that realizes it on modern
 accelerators.
 
-\subsection{Statistical Objectives}
+\section{Statistical Objectives}
 \label{subsec:tally_objective}
 
 For every node \(v\) we wish to estimate, after \(T\) Monte-Carlo iterations,
@@ -69,7 +69,7 @@ The tally routine therefore needs to maintain only the scalar
 \(s_v\) while the simulation is running; the derived statistics can be updated
 in-place whenever a user requests intermediate results or at a fixed cadence.
 
-\subsection{Parallel Accumulation Algorithm}
+\section{Parallel Accumulation Algorithm}
 
 The accumulation kernel is invoked on a three-dimensional
 \texttt{nd\_range}, chosen such that
@@ -135,7 +135,7 @@ and \(T\,N(1-\widehat{p})\) both exceed roughly 10; otherwise an exact
 Clopper-Pearson interval can be substituted with no change to the running
 sum logic.
 
-\subsection{Correctness and Complexity}
+\section{Correctness and Complexity}
 
 \textbf{Work-item cost.}
 Each work-item performs one \(\mathrm{popcount}\) and
@@ -169,7 +169,7 @@ system schedules the resulting kernels with minimal host intervention.
 %  Extended implementation-oriented discussion (matches the realised kernel)
 % -----------------------------------------------------------------------------
 
-\subsection{Work--Group Geometry and Synchronization}
+\section{Work--Group Geometry and Synchronization}
 \label{subsec:tally_geometry}
 
 The three--dimensional launch geometry \((v,\,b,\,p)\) outlined in
@@ -199,7 +199,7 @@ the atomic~\texttt{fetch\_add}.  No additional fences are required, and the
 resulting implementation maps efficiently to both discrete and integrated
 \acrshort{gpu}s.
 
-\subsection{Incremental Update of Derived Statistics}
+\section{Incremental Update of Derived Statistics}
 \label{subsec:tally_stats_refresh}
 
 While Monte--Carlo sampling proceeds, applications often request intermediate
@@ -222,7 +222,7 @@ run aid variance monitoring, whereas late--stage updates can be spaced further
 apart because the relative change in \(\widehat{p}_v\) diminishes as
 \(n_v\to T\,N\).
 
-\subsection{Convergence Diagnostics and Stopping Rules}
+\section{Convergence Diagnostics and Stopping Rules}
 \label{subsec:tally_convergence}
 
 Two families of diagnostics leverage the quantities already maintained by the
@@ -245,7 +245,7 @@ tally kernel:
 Because the diagnostics rely solely on \(s_v\) and \(n_v\), no modification to
 the kernel is needed; all logic resides in a lightweight host callback.
 
-\subsection{Implementation Cost Model}
+\section{Implementation Cost Model}
 \label{subsec:tally_cost_model}
 
 Let \(C_{\mathrm{pc}}\) denote the latency of a hardware popcount and
@@ -269,7 +269,7 @@ and atomic latencies, respectively.  The model highlights two regimes:
 \end{itemize}
 
 
-\subsection{Numerical Robustness}
+\section{Numerical Robustness}
 \label{subsec:tally_numerics}
 
 All accumulators operate in integer arithmetic, thereby eliminating rounding
@@ -280,7 +280,7 @@ bounds to~\([0,1]\) prevents pathological estimates when either \(s_v=0\) or
 \(s_v=n_v\) in early iterations.
 
 % -----------------------------------------------------------------------------
-\subsection{Relation to the Global Execution Model}
+\section{Relation to the Global Execution Model}
 \label{subsec:tally_exec_relation}
 
 The specialised geometry adopted in Section~\ref{subsec:tally_geometry} is a direct instantiation of the rules formalised in Section~\ref{sec:kernel_execution_model}.  Choosing $L_x=1$ enforces the work\,–\,group invariant whereby a group owns exactly one tally node while still satisfying

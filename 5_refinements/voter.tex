@@ -15,16 +15,14 @@
 Threshold (``voting'') gates occur pervasively in fault
 and reliability models.  A naive decomposition into pairwise \textsc{and}/\textsc{or}
 operations inflates the graph size combinatorially, impeding both memory usage
-and kernel launch efficiency.  This chapter develops a mathematics-driven,
-hardware-native alternative rooted in population counting and bit-parallelism.
-We prove the estimator obtained by the direct algorithm is \emph{identical} to
+and kernel launch efficiency.  This chapter develops a hardware-native alternative
+rooted in population counting and bit-parallelism. We prove the estimator obtained 
+by the direct algorithm is \emph{identical} to
 that of the expanded Boolean formula, quantify its computational complexity,
 and examine device-specific performance characteristics.  Extensions to
 \emph{at-most} and \emph{exactly} voting are treated as corollaries.
 
 % ---------------------------------------------------------------------------
-\section{Preliminaries and Notation}
-\label{sec:voter_prelims}
 
 We adopt the symbols of Chapter~\ref{chap:mc_solver}.  In particular, a single
 Monte–Carlo \emph{iteration} generates $B$ \emph{batches}, each batch contains
@@ -67,7 +65,7 @@ distribution:
 \)
 Consequently all unbiased estimators derived from repeated sampling are
 identical in expectation and variance.  Sections~\ref{sec:voter_unbiased} and
-\ref{sec:voter_variance} formalise these statements.
+\ref{sec:voter_variance} formalize these statements.
 
 % ---------------------------------------------------------------------------
 \subsection{Unbiasedness of the Direct Estimator}
@@ -99,8 +97,7 @@ iteration is
 \)
 for either method.  Aggregating over $T N$ independent trials gives the common
 standard error quoted in Eq.~(\ref{eq:p_hat_sigma_hat}).  No variance penalty
-is therefore incurred by bypassing expansion – a crucial insight legitimizing
-the hardware-native strategy.
+is therefore incurred by bypassing expansion.
 
 % ---------------------------------------------------------------------------
 \section{Bit-Parallel Threshold Algorithm}
@@ -147,7 +144,7 @@ bits.  For practical fan-ins $(n\le 255)$ an 8-bit counter suffices, preserving
 high occupancy on GPUs.
 
 % ---------------------------------------------------------------------------
-\section{Extensions: At-Most and Exactly Voting}
+\section{Extensions: At-Most and Exact Voting}
 \label{sec:voter_extensions}
 
 Two common relatives are the \emph{at-most} gate $\mathrm{ATMOST}(k/n)$ and the
@@ -179,28 +176,5 @@ exceeds the lane width ($W_s$ in Section~\ref{subsec:cpu_backend}) we apply a
 loop unrolling factor $u=\lceil n/W_s\rceil$ to sustain two vector increments
 per cycle, thereby saturating the execution units while hiding memory
 latency.
-
-% ---------------------------------------------------------------------------
-\section{Empirical Validation}
-\label{sec:voter_validation}
-
-Comprehensive benchmarks are reported in Section~\ref{subsec:mc_solver_benchmarks}.
-For $n=16$ and $k=9$ the direct kernel delivers a $\times23$ speed-up over the
-expanded circuit on an RTX~A6000 at identical numerical accuracy
-($<10^{-12}$ absolute error).  Memory consumption shrinks from
-\(2.1\,\mathrm{GiB}\) to \(96\,\mathrm{MiB}\) for $A=10^{4}$ gates sampled over
-$T=4096$ iterations.
-
-% ---------------------------------------------------------------------------
-\section{Conclusions}
-\label{sec:voter_conclusions}
-
-Direct threshold evaluation preserves the statistical integrity of Monte–Carlo
-probability estimation while bypassing the exponential blow-up inherent in
-Boolean expansion.  The technique generalizes seamlessly to at-most and
-exactly voting, maintains low register pressure, and fits the unified kernel
-execution model of Chapter~\ref{chap:mc_solver}.  Together these properties
-render voting gates a first-class citizen in large-scale reliability analyses
-on modern accelerators.
 
 % ============================================================================

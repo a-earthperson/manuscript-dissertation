@@ -1,17 +1,15 @@
 % ============================================================================
 %  Convergence Diagnostics and Early-Stopping Policy
 % ============================================================================
-%  This file is manuscript-dissertation/4_proposed_solution/mc_solver/convergence.tex
-%  It is \\input{} from the parent chapter.
 % ----------------------------------------------------------------------------
-\section{Convergence Diagnostics and Early--Stopping Policy}
+\chapter{On-the-Fly Updates to Convergence Policy}
 \label{sec:convergence_criterion}
 
 Monte--Carlo probability estimators accrue sampling error that decays only at
 rate~$\mathcal{O}(1/\sqrt{n})$ with the number of Bernoulli trials $n$.
 Running indefinitely therefore yields diminishing returns.
 A principled \emph{convergence criterion} is required to decide when further
-sampling ceases to be cost--effective.  This section formalises the stopping
+sampling ceases to be cost--effective.  This section formalizes the stopping
 rule adopted by the solver, combining classical confidence--interval analysis
 with information--theoretic diagnostics.  The notation introduced in
 Section~\ref{sec:kernel_execution_model} remains in force; in particular each
@@ -19,7 +17,7 @@ node $v\!\in\!\mathcal{V}$ is evaluated over $T$ Monte--Carlo iterations with
 $N\!=\!B P \omega$ trials per iteration.
 
 % ----------------------------------------------------------------------------
-\subsection{Point Estimates and Sampling Variance}
+\section{Point Estimates, Sampling Variance}
 \label{subsec:conv_point_estimates}
 
 Let $s_v$ be the number of one--bits observed for node~$v$ after $T$ iterations
@@ -42,7 +40,7 @@ contains $\widehat{p}_v$ inside a two--sided normal confidence interval with
 probability $\operatorname{erf}(z/\sqrt{2})$.
 
 % ----------------------------------------------------------------------------
-\subsection{Linear--Space Margin--of--Error Criterion}
+\section{Linear--Space Margin--of--Error Criterion}
 \label{subsec:lin_margin}
 
 A user supplies a relative margin--of--error $\varepsilon_{\mathrm{rel}}\!\in\!(0,1)$
@@ -66,7 +64,7 @@ Hence additional trials are scheduled until $T N\ge N_{\varepsilon}^{(v)}$ for
 \emph{every} monitored node.
 
 % ----------------------------------------------------------------------------
-\subsection{Logarithmic--Space Refinement}
+\section{Logarithmic--Space Refinement}
 \label{subsec:log_margin}
 
 Rare events ($p_v\ll 1$) admit improved diagnostics when the analysis is
@@ -104,7 +102,7 @@ which translates into a second sample--size forecast
 \end{equation}
 
 % ----------------------------------------------------------------------------
-\subsection{Information--Theoretic Progress Monitor}
+\section{Information--Theoretic Progress Monitor}
 \label{subsec:info_gain}
 
 The preceding criteria are variance--based and symmetric around
@@ -129,7 +127,7 @@ Sampling is considered \emph{saturated} once
 for a user--defined threshold $I_{\min}$ (default $\approx 10^{-4}$ bits).
 
 % ----------------------------------------------------------------------------
-\subsection{Composite Stopping Rule}
+\section{Composite Stopping Rule}
 \label{subsec:composite_rule}
 
 Define the per--node forecasts
@@ -144,14 +142,14 @@ terminates the first time both conditions hold:
         node meets \eqref{eq:lin_conv} \emph{and}\,\eqref{eq:log_conv} at the
         requested confidence level.
   \item \textbf{Diminishing returns:} the most recent batch satisfies
-        \eqref{eq:info_stop}, signalling that further sampling conveys less
+        \eqref{eq:info_stop}, signaling that further sampling conveys less
         than~$I_{\min}$ bits of new information.
 \end{enumerate}
 The second clause rarely triggers before the first but provides robustness
 when variance estimates are noisy during early burn--in.
 
 % ----------------------------------------------------------------------------
-\subsection{Algorithmic Workflow}
+\section{Algorithmic Workflow}
 \label{subsec:workflow}
 
 \begin{algorithm}[H]
@@ -159,7 +157,7 @@ when variance estimates are noisy during early burn--in.
   \label{alg:convergence}
   \begin{algorithmic}[1]
     \Require Target $\varepsilon_{\mathrm{rel}},\varepsilon^{\log}$; confidence $z$; \vspace{1pt}
-    \State Initialise $s_v\gets 0$, $f_v\gets 0$, $(\alpha,\beta)\gets(\tfrac12,\tfrac12)$
+    \State Initialize $s_v\gets 0$, $f_v\gets 0$, $(\alpha,\beta)\gets(\tfrac12,\tfrac12)$
     \While{not converged}
       \State Run one Monte--Carlo iteration and tally $(\Delta s,\Delta f)$
       \State $s_v\mathrel{+}=\Delta s$, \quad $f_v\mathrel{+}=\Delta f$
@@ -171,12 +169,12 @@ when variance estimates are noisy during early burn--in.
     \State \Return $\widehat{p}_v$, CI, diagnostics
   \end{algorithmic}
 \end{algorithm}
-Algorithm~\ref{alg:convergence} runs in amortised $\mathcal{O}(1)$ time per
+Algorithm~\ref{alg:convergence} runs in amortized $\mathcal{O}(1)$ time per
 iteration: all statistics derive from constant--time updates of $(s_v,f_v)$
 and the digamma evaluations in~\eqref{eq:info_gain} are scalar.
 
 % ----------------------------------------------------------------------------
-\subsection{Computational Complexity and Scalability}
+\section{Computational Complexity}
 \label{subsec:conv_complexity}
 
 The computational overhead of convergence monitoring is negligible relative to
@@ -190,7 +188,7 @@ kernels, the wall--clock impact stays below~1\,\% even for graphs with
 $|\mathcal{V}|>10^{4}$.
 
 % ----------------------------------------------------------------------------
-\subsection{Interaction with Fixed Iteration Budgets}
+\section{Interaction with Fixed Iteration Budgets}
 \label{subsec:conv_budget}
 
 When an \emph{a priori} iteration budget $T_{\max}$ is imposed (e.g., due to
@@ -199,7 +197,7 @@ wall--time constraints) the stopping rule collapses to
   T \;=\; \min\!\bigl\{T_{\max},\;\lceil N_{\text{req}}/N \rceil\bigr\}.
 \end{equation}
 If $T_{\max}$ is reached before the precision targets, the solver returns the
-current estimates along with their realised half--widths so that the user can
+current estimates along with their realized half--widths so that the user can
 assess residual uncertainty.
 
 % ============================================================================ 

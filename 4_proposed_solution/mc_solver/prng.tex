@@ -1,4 +1,4 @@
-\section{Bitpacked Random Number Generator}
+\chapter{Bitpacked Random Number Generator}
 
 Monte Carlo simulations, probability evaluations, and other sampling-based procedures benefit greatly from efficient, high-quality \acrfull{rng}s. A large class of modern \acrshort{rng}s are known as \textit{counter-based \acrfull{prng}s}, because they use integer counters (e.g., 32-bit or 64-bit) along with a stateless transformation to produce random outputs. The \emph{Philox} family of counter-based \acrshort{prng}s is a well-known example, featuring fast generation, high period, and good statistical properties. In this section, we discuss the general principles of counter-based \acrshort{prng}s, explain how Philox fits into this paradigm, analyze its complexity, and present a concise pseudocode version of the \(\text{Philox }4\times32\text{-10}\) variant. Subsequently, we detail the bitpacking scheme used to reduce memory consumption when storing large numbers of Bernoulli samples.
 
@@ -37,7 +37,7 @@ After ten rounds, the final \((S_0, S_1, S_2, S_3)\) is returned as the pseudo-r
 \]
 and there are \(\mathrm{R} = 10\) rounds. Thus, each Philox invocation is asymptotically constant time \(\mathcal{O}(\mathrm{R}) = \mathcal{O}(1)\). The total cost to generate 128 bits (4 words \(\times\) 32 bits) is therefore constant time per call.
 
-\subsection{The 10-round Philox-4x32}
+\section{The 10-round Philox-4x32}
 Our implementation follows the standard 10-round approach for generating one block of four 32-bit random words, also called Philox-4x32-10. Let \(M_{\mathrm{A}}=0xD2511F53\), \(M_{\mathrm{B}}=0xCD9E8D57\) be the multipliers, and let \((K_0, K_1)\) be the key which is updated each round by \(\mathrm{W32A}=0x9E3779B9\) and \(\mathrm{W32B}=0xBB67AE85\). The function \(\text{Hi}(\cdot)\) returns the high 32 bits of a 64-bit product, and \(\text{Lo}(\cdot)\) returns the low 32 bits. Because each call produces four 32-bit pseudo-random words, Philox-4x32-10 is particularly convenient for batched sampling. If only a single 32-bit word is needed, one can still call the function and discard the excess words; however, many applications consume all four outputs (e.g., to produce four floating-point variates).
 
 \begin{algorithm}[ht]
@@ -73,7 +73,7 @@ Our implementation follows the standard 10-round approach for generating one blo
   \end{algorithmic}
 \end{algorithm}
 
-\subsection{Bitpacking for Probability Sampling}
+\section{Bitpacking for Probability Sampling}
 \label{sec:bitpack-prob-sampling}
 
 It takes exactly one bit to represent the outcome of a Bernoulli trial. When these outcomes are stored naively, each occupies an entire \(8\)-bit byte, so only a fraction \(\tfrac{1}{8}\) of the allocated space carries useful information. Packing indicators into the native machine word of width \(w\) therefore reduces memory consumption by up to a factor of eight. More precisely,
@@ -84,13 +84,13 @@ It takes exactly one bit to represent the outcome of a Bernoulli trial. When the
 \]
 where \(N\) is the number of samples. In typical 64-bit environments we choose \(w = 64\), but the derivation is architecture-agnostic.
 
-\subsubsection{Integer-threshold sampling.}  Instead of converting each 32-bit random word \(r\) produced by Philox into a floating-point variate, we compare it directly to an \emph{integer threshold}.  Let the target probability be \(p \in [0,1]\).  Define the threshold
+\subsection{Integer-threshold sampling.}  Instead of converting each 32-bit random word \(r\) produced by Philox into a floating-point variate, we compare it directly to an \emph{integer threshold}.  Let the target probability be \(p \in [0,1]\).  Define the threshold
 \[
    T \;=\; \bigl\lfloor p \times 2^{32} \bigr\rfloor,\qquad 0 \le T \le 2^{32}-1.
 \]
 Because Philox delivers uniformly distributed 32-bit integers over \(\{0,\dots,2^{32}-1\}\), the event \(r < T\) occurs with probability exactly \(p\) (up to the discretisation of the 32-bit grid).  The comparison is therefore sufficient to draw a Bernoulli outcome while avoiding the cost of division and floating-point arithmetic.  Using integer thresholds also guarantees identical behaviour across heterogeneous hardware, an essential property for reproducible high-performance simulations.
 
-\subsubsection{Grouping four comparisons.}  Each invocation of \(\mathrm{Philox\text{-}4\times32\text{-}10}\) yields the four words \(r_0, r_1, r_2, r_3\).  We evaluate the predicate \(r_j < T\) for every index \(j \in \{0,1,2,3\}\) and collect the four resulting bits into a 4-bit block.  The block is inserted into a wider accumulator using bitwise shifts.  Repeating the procedure fills the entire \(w\)-bit container.  If we denote by
+\subsection{Grouping four comparisons.}  Each invocation of \(\mathrm{Philox\text{-}4\times32\text{-}10}\) yields the four words \(r_0, r_1, r_2, r_3\).  We evaluate the predicate \(r_j < T\) for every index \(j \in \{0,1,2,3\}\) and collect the four resulting bits into a 4-bit block.  The block is inserted into a wider accumulator using bitwise shifts.  Repeating the procedure fills the entire \(w\)-bit container.  If we denote by
 \[
    g \;=\; \frac{w}{4}
 \]
@@ -118,10 +118,10 @@ Because Philox delivers uniformly distributed 32-bit integers over \(\{0,\dots,2
   \end{algorithmic}
 \end{algorithm}
 
-\subsubsection{Assembling a complete bitpack.}  Calling Algorithm~\ref{alg:bernoulli_bitpack_int} successively for $g$ generations yields a full \(w\)-bit word whose $k$-th bit encodes the outcome of the $k$-th Bernoulli trial, ordered least-significant first.  The procedure is branch-free except for the threshold comparison and operates in $\mathcal{O}(g)$ time.  Because $g$ is fixed by the word size, the complexity is effectively constant per stored word, and the memory savings are realised without sacrificing statistical quality or portability.
+\subsection{Assembling a complete bitpack.}  Calling Algorithm~\ref{alg:bernoulli_bitpack_int} successively for $g$ generations yields a full \(w\)-bit word whose $k$-th bit encodes the outcome of the $k$-th Bernoulli trial, ordered least-significant first.  The procedure is branch-free except for the threshold comparison and operates in $\mathcal{O}(g)$ time.  Because $g$ is fixed by the word size, the complexity is effectively constant per stored word, and the memory savings are realised without sacrificing statistical quality or portability.
 
 % -----------------------------------------------------------------------------
-\subsection{Counter Assignment Across the ND-Range}
+\section{Counter Assignment Across the ND-Range}
 \label{subsec:counter_assignment}
 
 Let $(i_x,i_y,i_z)\in[0,G_x)\times[0,G_y)\times[0,G_z)$ denote the global id of a work-item in the basic-event kernel and let $t\in\{0,\dots,T-1\}$ be the Monte-Carlo iteration index.  A collision-free family of Philox counters is obtained via

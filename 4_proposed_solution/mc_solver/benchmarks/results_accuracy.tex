@@ -1,4 +1,4 @@
-\subsection{Comparative Accuracy \& Runtime}
+\section{Comparative Accuracy \& Runtime}
 
 Table~\ref{tab:canopy-logp-mae} and Figure~\ref{fig:canopy_rel_error_plot} summarize the accuracy of three approximate quantification methods \acrfull{rea}, \acrfull{mcub}, and our \acrshort{gpu}-accelerated Monte Carlo by listing each approach's mean relative error in the log-probability (\(\log p\)) domain, alongside the total MC samples and runtime. Although each fault tree exhibits its own complexities, several broad trends emerge:
 
@@ -38,7 +38,7 @@ These results affirm that Monte Carlo methods, when equipped with high throughpu
 
 \input{task_III/canopy/tables/canopy_rel_error}
 
-\subsection{Memory Consumption}
+\section{Memory Consumption}
 
 As mentioned previously, the memory was set to the maximum allocatable 6\acrshort{gb}, constrained by the NVIDIA GTX 1660 SUPER \acrshort{gpu}'s \acrshort{vram}. Figure \ref{fig:canopy_rel_error_plot_1} plots the actual consumed memory, as a function of \acrshort{pdag} input size and total number of bits sampled per node (gate or basic-event) per pass. Since there are multiple types of preprocessing steps, all of which affect the final size of the pruned \acrshort{pdag}, those have been plotted in Figure \ref{fig:canopy_rel_error_plot_2} for completeness. Since the nature of the actual pruning logic is not being benchmarked here, we named these v1, v2, v3 respectively. The key takeaways are that while some trees are more compressible than others, nearly all computations were performed by saturating available \acrshort{vram}. As a zoomed out version of Figure \ref{fig:canopy_rel_error_plot_1} , Figure \ref{fig:sampled_bits_mem} projects trends for the sampled bits count, as a function of model size, for varying amounts of available \acrshort{ram}.
 \begin{landscape}

@@ -3,7 +3,7 @@
 % ============================================================================
 %  This file is manuscript-dissertation/5_refinements/ccf.tex and is \chapter{}-level.
 % ----------------------------------------------------------------------------
-\chapter{Integrating Common-Cause Failures into the Unified PDAG}
+\chapter{Monte--Carlo Estimation of Common-Cause Failures}
 \label{chap:ccf_in_pdag}
 
 \noindent\textbf{Scope.}\;Section~\ref{sec:unified_pra_dag} introduced the
@@ -32,7 +32,7 @@ Three structural requirements ensure compatibility with the PDAG:
   \item No two CCFGs overlap: \(\mathcal{C}_i\cap\mathcal{C}_j=\varnothing\) for
         \(i\ne j\).  Overlaps are merged before analysis.
   \item Every basic event belongs to \emph{at most} one CCFG; components that
-        are demonstrably independent stay outside any CCF modelling.
+        are demonstrably independent stay outside any CCF modeling.
   \item The PDAG remains acyclic after inserting the CCF structures (see
         Section~\ref{subsec:ccf_insertion}).
 \end{enumerate}
@@ -198,8 +198,8 @@ $S_{\mathcal{C}}$ and the shadow nodes does not violate this assumption:
         double counting.
   \item Convergence diagnostics (Chapter~\ref{sec:convergence_criterion})
         operate on the empirical proportion of top-level node failures.  The
-        presence of CCF nodes merely changes those proportions; the maths of
-        Section~\ref{sec:convergence_criterion} is untouched.
+        presence of CCF nodes merely changes those proportions; the equations from
+        Chapter~\ref{sec:convergence_criterion} is untouched.
 \end{itemize}
 Consequently, \textbf{no specialized sampling algorithm is required}; the
 existing Monte-Carlo pipeline seamlessly handles CCFs once the PDAG has been
@@ -214,16 +214,16 @@ Consider a two-pump parallel cooling loop where either pump suffices
 failure probabilities be \(p_A=3.0\times10^{-3}\) and \(p_B=3.0\times10^{-3}\),
 with a Beta-Factor \(\beta=0.15\) for the common lubricant leak.
 
-\paragraph{Mapping.}  The CCFG is \(\mathcal{C}=\{A,B\}\) (size $m=2$).  The
+\subsection*{Mapping.}  The CCFG is \(\mathcal{C}=\{A,B\}\) (size $m=2$).  The
 shock variable probability is $\lambda_{\text{ccf}}=\beta=0.15$; the
 independent portions become $(1-\beta)p_A$ and $(1-\beta)p_B$.
 
-\paragraph{PDAG augmentation.}  Following the procedure, we create nodes
+\subsection*{PDAG augmentation.}  Following the procedure, we create nodes
 $S_{\mathcal{C}}$ and $G_{\!\mathcal{C}}$; $G_{\!\mathcal{C}}$ feeds into the
 existing OR-gate that models pump redundancy.  No other structural changes are
 necessary.
 
-\paragraph{Numerical impact.}  The top event ‘‘cooling loop fails’’ now has
+\subsection*{Numerical impact.}  The top event ‘‘cooling loop fails’’ now has
 probability
 \[
   \Pr[\text{fail}] = \underbrace{\beta(1-(1-p_A)(1-p_B))}_{\text{CCF term}}
@@ -234,7 +234,6 @@ $\Pr[\text{fail}]=0.15\times 6\!\times10^{-3} + 0.85\times 9\!\times10^{-6}
   \approx 9.1\times10^{-4}$, which is dominated by the CCF term.
 
 % ----------------------------------------------------------------------------
-\section{Summary}
 
 Common-cause failure groups are incorporated into the unified PDAG by
 introducing auxiliary shock and shadow nodes whose probabilities encode any of
@@ -291,7 +290,6 @@ By Kolmogorov's Strong Law of Large Numbers applied to bounded i.i.d.
 variables, we have almost sure convergence:
 \[\widehat{p}_T \;\xrightarrow{\text{a.s.}}\; p\qquad (T\to\infty).\]
 
-\subsection{Variance and CLT}
 Because $Y^{(t)}$ are i.i.d.
 with finite variance $\sigma^2$, the classical Central Limit Theorem yields
 \[\sqrt{T}\,(\widehat{p}_T-p)
@@ -312,7 +310,6 @@ operates on inter-iteration independence.  The proof therefore remains valid
 under any Boolean post-processing of the leaves, including complex mixtures of
 independent and common–cause failures.
 
-\subsection{Conclusion}
 Under the stated assumptions the Monte–Carlo estimator for any PDAG node,
 whether or not it participates in common-cause groups, enjoys the same
 unbiasedness, strong consistency, and $\mathcal{O}(1/\sqrt{T})$ confidence–

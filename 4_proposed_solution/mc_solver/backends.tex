@@ -6,7 +6,7 @@
 %  and should be \input{} from the parent chapter when fine–tuning the final
 %  compilation order.
 % ----------------------------------------------------------------------------
-\section{Backend–Specific Mapping and Scalability}
+\chapter{Backend–Specific Scalability Analysis}
 \label{sec:backend_scaling}
 
 This section translates the abstract execution model of
@@ -24,10 +24,10 @@ $B_{\max}$ & maximum concurrent blocks per compute unit\\
 The first two are architectural constants; the latter two are subject to
 register, shared-memory and scheduling constraints.
 
-\subsection{CUDA GPU Backend}
+\section{CUDA GPU Backend}
 \label{subsec:cuda_backend}
 
-\subsubsection{Mapping.}  Each SYCL work-group translates to a CUDA \emph{thread
+\subsection{Mapping.}  Each SYCL work-group translates to a CUDA \emph{thread
 block}.  Let $L=L_xL_yL_z$ and define
 \[
   L_\text{CUDA} \;=\; \min(L,\,T_{\max}).
@@ -36,7 +36,7 @@ The grid dimensions are $(W_x,W_y,W_z)$ as in
 Sec.~\ref{sec:kernel_execution_model}.  A block launches $\lceil L/W_s\rceil$
 warps.
 
-\subsubsection{Occupancy.}  The theoretical occupancy per compute unit is
+\subsection{Occupancy.}  The theoretical occupancy per compute unit is
 \[
   \mathcal{O}_\text{theory} \;=\; \min\Bigl(1,\;\frac{L_\text{CUDA}
                                          \cdot W}{T_{\max}\,C\,B_{\max}}\Bigr).
@@ -48,7 +48,7 @@ $T_{\max}$, the condition $\mathcal{O}_\text{theory}=1$ is met whenever
 \]
 which holds for typical Monte-Carlo problem sizes ($W_x\gg C$).
 
-\subsubsection{Latency Hiding Model.}  With $R$ registers per thread and
+\subsection{Latency Hiding Model.}  With $R$ registers per thread and
 $R_{\max}$ the architectural register file size per SM, the register limit on
 resident warps is
 \[
@@ -61,7 +61,7 @@ The effective latency hiding factor obeys
 and the kernel attains full throughput once $\lambda_\text{CUDA}\ge 4$, a
 rule-of-thumb empirically validated on NVIDIA Ampere and Ada architectures.
 
-\subsubsection{Throughput Scaling.}  Let $I$ denote the instruction count per
+\subsection{Throughput Scaling.}  Let $I$ denote the instruction count per
 thread derived in Sec.~\ref{sec:kernel_execution_model}.  The aggregated \acrfull{ips} scale as
 \[
   \text{IPS}_{\text{CUDA}} \;\approx\; \frac{C\,\lambda_\text{CUDA}\,f}{I},
@@ -69,20 +69,20 @@ thread derived in Sec.~\ref{sec:kernel_execution_model}.  The aggregated \acrful
 where $f$ is the core clock.  For fixed $I$ the IPS is linear in $C$ and
 $\lambda_\text{CUDA}$ until the memory bandwidth ceiling is reached.
 
-\subsection{Shared-Memory Multicore CPU Backend}
+\section{Shared-Memory Multicore CPU Backend}
 \label{subsec:cpu_backend}
 
-\subsubsection{Mapping.}  A work-group becomes an OpenMP \verb|parallel for|
+\subsection{Mapping.}  A work-group becomes an OpenMP \verb|parallel for|
 \emph{team} whose size defaults to $L$ but is clipped to $T_{\max}=W_s$.  The
 outermost loop distributes the $W$ work-groups evenly across $C$ hardware
 threads (cores × SMT).
 
-\subsubsection{Vectorization.}  Within each team the innermost dimension (global
+\subsection{Vectorization.}  Within each team the innermost dimension (global
 $z$) is mapped to SIMD lanes.  Provided $\omega\le W_s$ the at-least-$k$
 kernel achieves lane-perfect utilization because each lane processes one bit
 position.
 
-\subsubsection{Roofline Estimate.}  Let $B_{\text{mem}}$ denote attainable memory
+\subsection{Roofline Estimate.}  Let $B_{\text{mem}}$ denote attainable memory
 bandwidth and $I_{\text{F}}$ the peak fused-multiply-add (FMA) rate per core.
 The attainable performance in trials/s obeys the classic roofline bound
 \[
@@ -94,7 +94,7 @@ where $b$ and $i$ are the bytes and arithmetic instructions consumed per trial
 respectively.  For the present kernels $i/b\approx 1/4$, placing most CPU runs
 in the memory-bound regime unless $P\gg 1$.
 
-\subsubsection{Strong-Scaling Limit.}  Holding the problem size fixed and growing
+\subsection{Strong-Scaling Limit.}  Holding the problem size fixed and growing
 $C$ yields a speed-up
 \[
   S(C) = \frac{T_1}{T_C} \;\approx\; \frac{C}{1 + \alpha(C-1)},
@@ -103,7 +103,7 @@ with serial fraction $\alpha \le 0.05$ measured on a 64-core Zen4 host.  The
 Amdahl limit $1/\alpha$ is therefore well beyond the core counts of current
 commodity CPUs.
 
-\subsubsection{Practical Guidance.}  Optimal settings observed empirically are
+\subsection{Practical Guidance.}  Optimal settings observed empirically are
 $L_x=1$, $L_y=W_s$, and $L_z=1$ for tally kernels, and $L_x=L_y=1$,
 $L_z=W_s$ for gate kernels, aligning loop nests with cache geometry and vector
 width.
