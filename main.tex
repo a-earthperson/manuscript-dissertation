@@ -76,7 +76,13 @@
 
 % \setmainlanguage{english}
 % \setotherlanguages{hindi,sanskrit} %% or other languages
-\newfontfamily\devanagarifont[Script=Devanagari]{Noto Serif Devanagari}
+% Use Noto Serif Devanagari when available; otherwise fall back to the
+% macOS-bundled Devanagari Sangam MN so local compiles succeed without installing extra fonts.
+% \IfFontExistsTF{Noto Serif Devanagari}{%
+%   \newfontfamily\devanagarifont[Script=Devanagari]{Noto Serif Devanagari}%
+% }{%
+%   \newfontfamily\devanagarifont[Script=Devanagari]{Devanagari Sangam MN}%
+% }
 
 
 %Citations should be of the form ``author year''  not ``author, year''
