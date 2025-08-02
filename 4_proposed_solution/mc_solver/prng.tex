@@ -1,4 +1,5 @@
 \chapter{Bitpacked Basic--Event Sampling Kernels}
+\label{ch:prng-kernels}
 
 Monte Carlo simulations, probability evaluations, and other sampling-based procedures benefit greatly from efficient, high-quality \acrfull{rng}s. A large class of modern \acrshort{rng}s are known as \textit{counter-based \acrfull{prng}s}, because they use integer counters (e.g., 32-bit or 64-bit) along with a stateless transformation to produce random outputs. The \emph{Philox} family of counter-based \acrshort{prng}s is a well-known example, featuring fast generation, high period, and good statistical properties. In this section, we discuss the general principles of counter-based \acrshort{prng}s, explain how Philox fits into this paradigm, analyze its complexity, and present a concise pseudocode version of the \(\text{Philox }4\times32\text{-10}\) variant. Subsequently, we detail the bitpacking scheme used to reduce memory consumption when storing large numbers of Bernoulli samples.
 
@@ -18,7 +19,7 @@ is a key vector, then a counter-based \acrshort{prng} defines a transformation
 \]
 where each \(\rho_j\) is typically a 32-bit or 64-bit output. Different increments of the counter \(\mathbf{x}\) produce different pseudo-random outputs \(\rho_j\). The process is stateless in the sense that advancing the RNG amounts to incrementing the counter (e.g., \(\mathbf{x}\mapsto \mathbf{x} + 1\)).
 
-Compared to older recurrence-based \acrshort{rng}s such as linear congruential generators or the Mersenne Twister, counter-based methods offer more straightforward parallelization, reproducibility across multiple streams, and strong structural simplicity: no internal state must be updated or maintained. This is particularly valuable in distributed Monte Carlo simulations or \acrshort{gpu}-based sampling, where each thread or work-item can be assigned a different counter. Philox constructs its pseudo-random outputs by applying a small set of mixed arithmetic (multiplication/bitwise) rounds to an input \emph{counter} plus \emph{key}. In particular, \(\mathrm{Philox}\,4\times32\text{-10}\) (often shortened to "Philox-4x32-10”) works on four 32-bit integers at a time:
+Compared to recurrence-based \acrshort{rng}s such as linear congruential generators or the Mersenne Twister, counter-based methods offer more straightforward parallelization, reproducibility across multiple streams, and strong structural simplicity: no internal state must be updated or maintained. This is particularly valuable in distributed Monte Carlo simulations or \acrshort{gpu}-based sampling, where each thread or work-item can be assigned a different counter. Philox constructs its pseudo-random outputs by applying a small set of mixed arithmetic (multiplication/bitwise) rounds to an input \emph{counter} plus \emph{key}. In particular, \(\mathrm{Philox}\,4\times32\text{-10}\) (often shortened to "Philox-4x32-10”) works on four 32-bit integers at a time:
 \[
   \mathbf{S} = (S_0, S_1, S_2, S_3),
   \qquad
@@ -88,7 +89,7 @@ where \(N\) is the number of samples. In typical 64-bit environments we choose \
 \[
    T \;=\; \bigl\lfloor p \times 2^{32} \bigr\rfloor,\qquad 0 \le T \le 2^{32}-1.
 \]
-Because Philox delivers uniformly distributed 32-bit integers over \(\{0,\dots,2^{32}-1\}\), the event \(r < T\) occurs with probability exactly \(p\) (up to the discretisation of the 32-bit grid).  The comparison is therefore sufficient to draw a Bernoulli outcome while avoiding the cost of division and floating-point arithmetic.  Using integer thresholds also guarantees identical behaviour across heterogeneous hardware, an essential property for reproducible high-performance simulations.
+Because Philox delivers uniformly distributed 32-bit integers over \(\{0,\dots,2^{32}-1\}\), the event \(r < T\) occurs with probability exactly \(p\) (up to the discretization of the 32-bit grid).  The comparison is therefore sufficient to draw a Bernoulli outcome while avoiding the cost of division and floating-point arithmetic.  Using integer thresholds also guarantees identical behavior across heterogeneous hardware, an essential property for reproducible high-performance simulations.
 
 \subsection{Grouping four comparisons.}  Each invocation of \(\mathrm{Philox\text{-}4\times32\text{-}10}\) yields the four words \(r_0, r_1, r_2, r_3\).  We evaluate the predicate \(r_j < T\) for every index \(j \in \{0,1,2,3\}\) and collect the four resulting bits into a 4-bit block.  The block is inserted into a wider accumulator using bitwise shifts.  Repeating the procedure fills the entire \(w\)-bit container.  If we denote by
 \[
@@ -118,7 +119,7 @@ Because Philox delivers uniformly distributed 32-bit integers over \(\{0,\dots,2
   \end{algorithmic}
 \end{algorithm}
 
-\subsection{Assembling a complete bitpack.}  Calling Algorithm~\ref{alg:bernoulli_bitpack_int} successively for $g$ generations yields a full \(w\)-bit word whose $k$-th bit encodes the outcome of the $k$-th Bernoulli trial, ordered least-significant first.  The procedure is branch-free except for the threshold comparison and operates in $\mathcal{O}(g)$ time.  Because $g$ is fixed by the word size, the complexity is effectively constant per stored word, and the memory savings are realised without sacrificing statistical quality or portability.
+\subsection{Assembling a complete bitpack.}  Calling Algorithm~\ref{alg:bernoulli_bitpack_int} successively for $g$ generations yields a full \(w\)-bit word whose $k$-th bit encodes the outcome of the $k$-th Bernoulli trial, ordered least-significant first.  The procedure is branch-free except for the threshold comparison and operates in $\mathcal{O}(g)$ time.  Because $g$ is fixed by the word size, the complexity is effectively constant per stored word, and the memory savings are realized without sacrificing statistical quality or portability.
 
 % -----------------------------------------------------------------------------
 \section{Counter Assignment Across the ND-Range}
@@ -134,4 +135,4 @@ where the six vacated least-significant bits of the fourth word are reserved for
 \[
    \{1,\dots,V\}\times\{1,\dots,P\}\times\{1,\dots,B\}\times\{1,\dots,2^{6}\},
 \]
-guaranteeing independent pseudo-random streams for every work-item without synchronisation or shared state.
+guaranteeing independent pseudo-random streams for every work-item without synchronization or shared state.

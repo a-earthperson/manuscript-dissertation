@@ -23,51 +23,92 @@ entire simulation.  The present section formalizes that process and outlines
 an implementation-agnostic, data-parallel algorithm that realizes it on modern
 accelerators.
 
+% ---------------------------------------------
+%  New section: Notation and Problem Setting
+% ---------------------------------------------
+\section{Notation and Problem Setting}
+\label{subsec:tally_notation}
+
+We inherit the global symbols $(T,B,P,\omega)$ from
+Section~\ref{sec:kernel_execution_model}.  Recall that one Monte--Carlo
+\emph{iteration} generates $N\!=\!B\,P\,\omega$ Bernoulli trials per logic
+node.  Index those trials as
+\[
+  \Xi \;=\; \bigl\{(t,b,p,\lambda) \mid t\!\in\![T],\; b\!\in\![B],\;
+      p\!\in\![P],\; \lambda\!\in\![\omega]\bigr\},
+\]
+where $[n]\equiv\{0,\dots,n-1\}$.  For every node $v\in\mathcal{V}$ the
+kernel produced in Section~\ref{subsec:gate_kernel} writes a bit--packed
+vector
+\[
+  \mathbf{Y}_v : \Xi\longrightarrow \{0,1\}, \quad
+  (t,b,p,\lambda) \mapsto y_{v,t,b,p,\lambda}.
+\]
+Grouping by iteration we recover the notation
+\(\mathbf{Y}_v^{(t)}\in\{0,1\}^{N}\) used earlier.  The tally routine
+operates on the scalar summaries
+\[
+  s_v \;=\; \sum_{(t,b,p,\lambda)\,\in\,\Xi} y_{v,t,b,p,\lambda},
+  \qquad v\in\mathcal{V},
+\]
+which are accumulated in $64$--bit integers to avoid overflow even for
+trillion--sample runs.
+
 \section{Statistical Objectives}
 \label{subsec:tally_objective}
 
-For every node \(v\) we wish to estimate, after \(T\) Monte-Carlo iterations,
-
+The goal is to estimate the Bernoulli success probability
+$\displaystyle p_v \!=\! \mathbb{P}[Y_v\!=\!1]$ for every node
+$v\in\mathcal{V}$.  Denote by
 \[
-  \widehat{p}_v
-  \;=\;
-  \frac{1}{T\,N}
-  \sum_{t=1}^{T}\sum_{j=1}^{N} y_{v,j}^{(t)}
-  \;=\;
-  \frac{s_v}{T\,N},
-  \qquad
-  s_v \;=\; \text{total \# of one-bits observed for node \(v\)}.
+  \widehat{p}_v \;=\; \frac{s_v}{T\,N}
 \]
+its empirical frequency after $T$ iterations.
 
-Under the usual independence assumptions, the sampling distribution of
-\(\widehat{p}_v\) is asymptotically
+\begin{lemma}[Unbiasedness]\label{lem:tally_unbiased}
+$\mathbb{E}[\widehat{p}_v]=p_v$ and
+$\operatorname{Var}(\widehat{p}_v)=\dfrac{p_v(1-p_v)}{T\,N}$.
+\end{lemma}
+
+\begin{proof}
+Because distinct trials in $\Xi$ are independent and identically distributed
+Bernoulli$(p_v)$ variables, linearity of expectation and the variance--additive
+property of independent sums yield the stated expressions.
+\end{proof}
+
+\begin{theorem}[Asymptotic Normality]\label{thm:tally_clt}
+If $T\,N\to\infty$ then
 \[
-\mathcal{N}\!\bigl(p_v,\,
-  \tfrac{p_v(1-p_v)}{T\,N}\bigr)
+  \sqrt{T\,N}\,(\widehat{p}_v-p_v)
+  \;\xrightarrow{\;\mathcal{D}\;}\;
+  \mathcal{N}\bigl(0,\,p_v(1-p_v)\bigr).
 \]
-Hence
+\end{theorem}
 
+\begin{proof}
+The Lyapunov condition of the Central Limit Theorem holds for bounded
+Bernoulli variables; see, e.g.,~\cite[Th.~27.4]{billingsley1995}.  The scaled
+sum therefore converges in distribution to the stated normal law.
+\end{proof}
+
+\noindent
+Define the plug--in variance estimator
 \[
-  \widehat{\sigma}_v
-  \;=\;
-  \sqrt{\frac{\widehat{p}_v\,(1-\widehat{p}_v)}{T\,N}}
+  \widehat{\sigma}_v^2 \;=\; \frac{\widehat{p}_v(1-\widehat{p}_v)}{T\,N}.
 \]
-
-is an unbiased estimator of the standard error, giving the
-\((1-\alpha)\)\,--\,level normal confidence interval
-
+Combining Theorem~\ref{thm:tally_clt} with Slutsky's theorem yields the
+$(1-\alpha)$ confidence interval
 \[
-  \bigl[
-    \widehat{p}_v - z_{1-\alpha/2}\,\widehat{\sigma}_v,\;
-    \widehat{p}_v + z_{1-\alpha/2}\,\widehat{\sigma}_v
-  \bigr],
-  \qquad
-  z_{1-\alpha/2}\in\{1.96,\,2.58,\dots\}.
+  C_{v,\alpha} \;=\;
+  \bigl[\widehat{p}_v - z_{1-\alpha/2}\,\widehat{\sigma}_v,\;
+        \widehat{p}_v + z_{1-\alpha/2}\,\widehat{\sigma}_v\bigr].
 \]
+Clamping the bounds to $[0,1]$ ensures numerical stability when $s_v$ is very
+small or very close to $T\,N$.
 
-The tally routine therefore needs to maintain only the scalar
-\(s_v\) while the simulation is running; the derived statistics can be updated
-in-place whenever a user requests intermediate results or at a fixed cadence.
+In practice the kernel therefore stores only the integer accumulator $s_v$;
+all higher--level statistics are derived \'a\,posteriori on demand, incurring
+$\mathcal{O}(|\mathcal{V}|)$ host--side work.
 
 \section{Parallel Accumulation Algorithm}
 
@@ -283,7 +324,7 @@ bounds to~\([0,1]\) prevents pathological estimates when either \(s_v=0\) or
 \section{Relation to the Global Execution Model}
 \label{subsec:tally_exec_relation}
 
-The specialised geometry adopted in Section~\ref{subsec:tally_geometry} is a direct instantiation of the rules formalised in Section~\ref{sec:kernel_execution_model}.  Choosing $L_x=1$ enforces the work\,–\,group invariant whereby a group owns exactly one tally node while still satisfying
+The specialized geometry adopted in Section~\ref{subsec:tally_geometry} is a direct instantiation of the rules formalized in Section~\ref{sec:kernel_execution_model}.  Choosing $L_x=1$ enforces the work\,–\,group invariant whereby a group owns exactly one tally node while still satisfying
 \[
    G_x \;=\; \Bigl\lceil \frac{V}{L_x} \Bigr\rceil L_x \;=\; V ,
 \]

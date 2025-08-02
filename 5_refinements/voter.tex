@@ -1,26 +1,67 @@
-% ============================================================================
-%  Hardware-Native Voting without AND/OR Expansion
-% ============================================================================
-%  This chapter complements Chapter~\ref{chap:mc_solver} by analysing in depth
-%  how threshold (k-of-n) logic can be evaluated 
-%  \emph{directly} on parallel hardware – GPUs and vector CPUs – without first
-%  rewriting the gate into an exponentially large AND/OR tree.  The discussion
-%  is self-contained yet uses the global symbols introduced in
-%  Chapter~\ref{chap:mc_solver} and adheres to the execution model formalised
-%  therein.
-% ----------------------------------------------------------------------------
-\chapter{Hardware--Native Voting without AND/OR Expansion}
-\label{chap:voter}
+\chapter{Knowledge Compilation for Monte Carlo Operations}
+\label{chap:kc}
+
+Monte–Carlo evaluation relies on compiling the system model into intermediate data structures amenable to bit-parallel traversal. This chapter presents additional algorithmic and data-structure refinements to the PDAG that underpins \textsc{McScram}'s solver and shows how these advances enable specialized kernels for composite gates.
+
+% ---------------------------------------------------------------------------
+\section{Hardware--Native Voting without AND/OR Expansion}
+\label{sec:voter}\label{chap:voter}
 
 Threshold (``voting'') gates occur pervasively in fault
 and reliability models.  A naive decomposition into pairwise \textsc{and}/\textsc{or}
 operations inflates the graph size combinatorially, impeding both memory usage
-and kernel launch efficiency.  This chapter develops a hardware-native alternative
+and kernel launch efficiency.  In this chapter, we develop a hardware-native alternative
 rooted in population counting and bit-parallelism. We prove the estimator obtained 
 by the direct algorithm is \emph{identical} to
 that of the expanded Boolean formula, quantify its computational complexity,
-and examine device-specific performance characteristics.  Extensions to
-\emph{at-most} and \emph{exactly} voting are treated as corollaries.
+and examine device-specific performance characteristics.  Extensions to other population-based gates, such as \emph{at-most}, \emph{cardinality}, and \emph{exact} voting are treated as corollaries.
+
+% ---------------------------------------------------------------------------
+\subsection{Fundamental Voting Predicates}
+\label{sec:voter_predicates}
+
+Let $\mathcal{I}=\{X_1,\dots,X_n\}$ denote $n$ Bernoulli inputs and
+write
+\[
+  S(\omega) \;=\; \sum_{i=1}^{n} X_i(\omega)
+\]
+for the \emph{population count} under an assignment
+$\omega \in \{0,1\}^{n}$.  Four Boolean predicates will be of interest:
+\begin{enumerate}
+  \item \textbf{At-Least (Threshold).}
+        \[
+          \mathrm{ATLEAST}(k/n):\quad
+          Y = [\,S \ge k\,].
+        \]
+  \item \textbf{At-Most.}
+        \[
+          \mathrm{ATMOST}(k/n):\quad
+          Y = [\,S \le k\,].
+        \]
+  \item \textbf{Exact.}
+        \[
+          \mathrm{EXACT}(k/n):\quad
+          Y = [\,S = k\,].
+        \]
+  \item \textbf{Cardinality.}
+        Given $0 \le \ell \le h \le n$,
+        \[
+          \mathrm{CARD}(\ell,h/n):\quad
+          Y = [\,\ell \le S \le h\,].
+        \]
+\end{enumerate}
+The predicates satisfy
+\begin{align}
+  \mathrm{ATMOST}(k/n)
+    &= \lnot \mathrm{ATLEAST}\bigl((k+1)/n\bigr),\label{eq:atm_alt}\\
+  \mathrm{ATLEAST}(k/n)
+    &= \lnot \mathrm{ATMOST}\bigl((k-1)/n\bigr),\label{eq:alt_atm}\\
+  \mathrm{CARD}(\ell,h/n)
+    &= \mathrm{ATLEAST}(\ell/n) \land \mathrm{ATMOST}(h/n).
+    \label{eq:card_identity}
+\end{align}
+
+% ---------------------------------------------------------------------------
 
 % ---------------------------------------------------------------------------
 
@@ -44,7 +85,7 @@ $A$ and $G$ for the counts of voting and standard gates, respectively, as in
 Table~\ref{tab:kernel_dimensions}.
 
 % ---------------------------------------------------------------------------
-\section{Logical Equivalence under Bit-Packed Sampling}
+\subsection{Logical Equivalence under Bit-Packed Sampling}
 \label{sec:voter_equivalence}
 
 Monte–Carlo evaluation ultimately concerns the indicator random variable
@@ -64,12 +105,11 @@ distribution:
   Y_{\mathrm{E1}}\equiv Y_{\mathrm{E2}}.
 \)
 Consequently all unbiased estimators derived from repeated sampling are
-identical in expectation and variance.  Sections~\ref{sec:voter_unbiased} and
-\ref{sec:voter_variance} formalize these statements.
+identical in expectation and variance.  Section~\ref{sec:voter_unbiased_variance} formalizes these statements.
 
 % ---------------------------------------------------------------------------
-\subsection{Unbiasedness of the Direct Estimator}
-\label{sec:voter_unbiased}
+\subsection{Unbiasedness and Variance Preservation}
+\label{sec:voter_unbiased_variance}
 
 Let $\widehat{p}_\text{exp}$ and $\widehat{p}_\text{thr}$ denote the
 estimators of $p=\Pr(Y=1)$ obtained after $T$ iterations via routes (E1) and
@@ -87,8 +127,6 @@ Thus the direct threshold estimator inherits the unbiasedness of the expanded
 approach.
 
 % ---------------------------------------------------------------------------
-\subsection{Variance Preservation}
-\label{sec:voter_variance}
 
 Because the underlying Bernoulli variables coincide, the sample variance per
 iteration is
@@ -100,8 +138,8 @@ standard error quoted in Eq.~(\ref{eq:p_hat_sigma_hat}).  No variance penalty
 is therefore incurred by bypassing expansion.
 
 % ---------------------------------------------------------------------------
-\section{Bit-Parallel Threshold Algorithm}
-\label{sec:voter_algorithm}
+\subsection{Bit-Parallel Cardinality Algorithm}
+\label{sec:card_algorithm}
 
 We now articulate the algorithmic core executed by the specialized kernel
 \textsc{VOT\_Kernel}.  The pseudocode mirrors the exposition of
@@ -111,7 +149,7 @@ population-count primitive.
 \subsection{Per-Lane Counting Model}
 
 Let $(a,b,p,\lambda)$ index a single \emph{lane} as defined in
-Section~\ref{sec:gate_kernel}: gate $a\in\{1,\dots,A\}$, batch $b$, bit-pack
+Section~\ref{subsec:gate_kernel}: gate $a\in\{1,\dots,A\}$, batch $b$, bit-pack
 $p$, and bit position $\lambda\in\{0,\dots,\omega-1\}$.  Each lane stores an
 8-bit counter $c\in\{0,\dots,n\}$ initialized to zero.  For every input buffer
 addressed by the gate the lane accumulates
@@ -120,9 +158,15 @@ addressed by the gate the lane accumulates
 \]
 where positive and negated inputs are treated per
 Eq.~(27) of Section~\ref{subsec:gate_kernel}.  After the loop the lane outputs
-\(
-  y_{\lambda} = [c\ge k].
-\)
+\[
+  y_{\lambda} =
+    \begin{cases}
+      [\,c \ge k\,], & \text{at-least},\\
+      [\,c \le k\,], & \text{at-most},\\
+      [\,c = k\,],   & \text{exact},\\[4pt]
+      [\,\ell \le c \le h\,], & \text{cardinality}.
+    \end{cases}
+\]
 A work-group reduction (bitwise OR) assembles the final $\omega$-bit word.
 
 \subsection{Complexity Analysis}
@@ -168,37 +212,279 @@ one, a $26\times$ reduction.  At $n=15$ and $k=8$ the saving increases to
 $(2^{15}-1)/2 \approx 16\,383$:1.
 
 % ---------------------------------------------------------------------------
-\section{Extensions: At-Most and Exact Voting}
-\label{sec:voter_extensions}
+% ---------------------------------------------------------------------------
+\subsection{Graph-Size Savings: General Case}
+\label{sec:card_graph_savings}
 
-Two common relatives are the \emph{at-most} gate $\mathrm{ATMOST}(k/n)$ and the
-\emph{exactly} gate $\mathrm{EXACT}(k/n)$.  Let $s$ be the per-lane counter as
-above.
+Replacing a single $\mathrm{CARD}(\ell,h/n)$ gate by its
+DNF introduces
 \[
-  \mathrm{ATMOST}(k/n):\; y=[s\le k],
-  \qquad
-  \mathrm{EXACT}(k/n):\; y=[s = k].
+  M_{\mathrm{card}}(n,\ell,h) \;=\;
+  \sum_{j=\ell}^{h} \binom{n}{j}
 \]
-Both predicates are evaluated by a single comparison added after the counting
-loop, leaving all complexity results intact.  Unbiasedness and variance proofs
-mirror those of Sections~\ref{sec:voter_unbiased}–\ref{sec:voter_variance}.
+conjunction clauses and therefore
+\[
+  G_{\text{exp}}(n,\ell,h)
+    \;=\;
+  \sum_{j=\ell}^{h} \binom{n}{j}\bigl(1 + (j-1)\bigr)
+    = \Theta\!\bigl(M_{\mathrm{card}}\,n\bigr).
+\]
+For $\ell \approx h \approx n/2$ this remains
+$\Theta(2^{n}/\sqrt{n})$ by Stirling’s formula.
+The direct bit-parallel kernel collapses the entire sub-tree into one
+node, preserving the exponential advantage shown in
+Section~\ref{sec:voter_complexity}.
+
+
 
 % ---------------------------------------------------------------------------
-\section{Device-Specific Performance Considerations}
-\label{sec:voter_perf}
+\section{Algorithmic and Data-Structure Refinements}
+\label{sec:kc_refinements}
 
-\subsection{GPUs}
-On NVIDIA Ada-class GPUs the latency of an integer increment is two cycles,
-whereas a 32-bit popcount is three cycles.  For $n\le 64$ the counting loop
-fits entirely within one warp and the kernel attains the same throughput as a
-standard \textsc{or} gate.  For $n>64$ shared-memory tiling as suggested in
-Section~\ref{sec:gate_kernel} becomes beneficial.
+While benchmarking the performance impact of using AND/OR vs native VOT gates, we discovered additional bottlencks in the codebase. Recent profiling of the solver revealed two dominant hotspots in the knowledge–compilation pipeline: the linear–time associative container \texttt{ext::linear\_map} and the deeply recursive normalization routine for $k$-of-$n$ (``at-least'') gates.  Both proved amenable to principled, complexity-driven refactoring.  This section describes the resulting data–structure and algorithmic improvements, establishes their asymptotic properties, and summarizes the empirical speed-ups obtained on the full benchmark suite.
 
-\subsection{Vector CPUs}
-Counting across inputs maps naturally to SIMD horizontal additions.  When $n$
-exceeds the lane width ($W_s$ in Section~\ref{subsec:cpu_backend}) we apply a
-loop unrolling factor $u=\lceil n/W_s\rceil$ to sustain two vector increments
-per cycle, thereby saturating the execution units while hiding memory
-latency.
+\subsection{Indexed Linear Map}
+\label{sec:kc_linear_map}
 
-% ============================================================================
+The container \texttt{linear\_map} stores key–value pairs contiguously so as to retain spatial locality, yet historically performed all searches by a linear scan.  Let $N$ be the number of stored elements.  The original design therefore incurred $\Theta(N)$ time for \emph{every} \textsc{find}, \textsc{insert}, and \textsc{erase} operation, while equality comparison required $\Theta(N^{2})$ pairwise checks.
+
+We introduce an auxiliary hash index $\mathcal{H}: K \to \{0,\dots,N-1\}$ maintained lazily.  All look-ups first consult $\mathcal{H}$ (expected $\Theta(1)$).  When a stale mapping is detected—possible after key mutation in place—the index is rebuilt in one linear pass, amortizing future operations to expected $\Theta(1)$.  Crucially, the public API, iterator invalidation rules, and memory layout remain unchanged, preserving drop-in compatibility.
+
+\subsection{Iterative Normalization of At-Least Gates}
+\label{sec:kc_iterative_normalise}
+
+The pre-existing routine \textsc{NormalizeAtleastGate} was mutually recursive on the gate’s two largest arguments.  For a fan-in of $m$ literals the call stack grew to depth $\mathcal{O}(m)$, and each level executed its own \textsc{max\_element} scan, yielding $\mathcal{O}(m^{2})$ work overall.  Repeated re-allocation of the child–argument arrays further amplified the cost.
+
+The new implementation replaces recursion with an explicit stack and reserves memory for child gates \emph{a priori} via a helper \textsc{ReserveArgs} method.  The algorithm now traverses each literal exactly once, achieving $\Theta(m)$ time and $\Theta(1)$ call-depth.
+
+\subsection{Complexity Summary}
+\label{sec:kc_complexity}
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Component & Before & After \\\midrule
+\texttt{linear\_map} look-ups & $\Theta(N)$ & $\Theta(1)$ (amort.) \\
+\texttt{linear\_map} equality & $\Theta(N^{2})$ & $\Theta(N)$ \\
+Normalize~$k$-of-$n$ gate & $\Theta(m^{2})$ & $\Theta(m)$ \\
+Call-stack depth & $\mathcal{O}(m)$ & $\mathcal{O}(1)$ \\\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Empirical Evaluation - Micobenchmark}
+\label{sec:kc_empirical}
+
+On a single-threaded Intel i7-10700 (3.70 GHz, clocks locked) the
+normalization of a representative
+$\mathrm{ATLEAST}(6/32)$ gate—producing 197\,315 AND and
+312\,416 OR nodes—now completes in
+\(
+  5.8\,\text{s}
+\)
+versus
+\(
+  1\,080\,\text{s}
+\)
+before the refactor, a {\bf 186×} improvement that aligns with the
+theoretical reduction from quadratic to linear work.  Across the full
+knowledge-compilation benchmark the wall-clock time fell from
+1\,080s to 5.8s (–99.5\%).
+
+% ---------------------------------------------------------------------------
+\section{Compilation Pipeline for Monte Carlo--Aware Kernels}
+\label{sec:kc_pipeline}
+
+Let $G_0$ denote the input graph and let $G_{\ell}$ be the graph after compilation level $\ell$ with $0\le \ell\le8$.  Each level applies a well-defined transformation $T_{\ell}$ so that
+\[
+  G_{\ell} \;=\; T_{\ell}\bigl(G_{\ell-1}\bigr),
+  \qquad G_{0}=\text{PDAG}(\mathcal{M}),
+\]
+where $\mathcal{M}$ is the original unified PRA model.  Table~\ref{tab:compilation_levels} summarizes the objectives of every stage and contrasts the classical five-phase recipe of Rakhimov with the streamlined variant adopted in this work.
+
+\begin{table}[t]
+  \centering
+  \caption{Compilation levels for \acrshort{pdag}s; $k$-of-$n$ gates are written $\mathrm{ATLEAST}(k/n)$.  Columns ``R'' and ``O'' mark whether a task is present in Rakhimov’s original pipeline or in Our variant.}
+  \label{tab:compilation_levels}
+  \begin{tabular}{clp{5.7cm}cc}
+    \toprule
+    Level $\ell$ & Stage name & Principal transformation $T_{\ell}$ & R & O \\
+    \midrule
+    0 & Baseline & Skip expansion of $\mathrm{ATLEAST}$ / XOR as requested & — & \checkmark \\
+    1 & Null / Negation & Eliminate null gates; absorb single negations & \checkmark & \checkmark \\
+    2 & Definition Coalescing & Merge multiple definitions, detect modules, coalesce non-shared gates, merge common args & \checkmark & \checkmark \\
+    3 & Boolean Optimization & Distributivity detection and Shannon expansion; decompose common nodes & \checkmark & \checkmark \\
+    4 & Phase~I (Rakhimov) & Remove nulls, normalize negations if non-coherent & \checkmark & — \\
+    5 & Phase~II (Rakhimov) & Re-run coalescing and module detection & \checkmark & — \\
+    6 & Phase~III & Full normalization (Part A): expand $k$-of-$n$, XOR; re-run Phase~II & \checkmark & \checkmark (iterative) \\
+    7 & Phase~IV & Push negations downward; re-run Phase~II & \checkmark & \checkmark (on-demand) \\
+    8 & Phase~V & Final coalescing pass; fixed-point NNF is reached & \checkmark & \checkmark \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Comparison with the Five–Phase Paradigm}
+\label{sec:kc_comparison}
+
+Rakhimov’s framework executes the five phases sequentially, repeating
+costly coalescing passes between them.  In contrast, our pipeline
+incorporates two key departures:
+\begin{enumerate}[label=(\arabic*)]
+  \item \textbf{Early specialization.}  Rather than fully expanding
+        $k$-of-$n$ gates into AND/OR trees at Level~6, we map them to
+        the hardware-native voting kernel of
+        Section~\ref{sec:voter}.  The transformation preserves logical
+        semantics but avoids the combinatorial blow-up quantified in
+        Section~\ref{sec:card_graph_savings}.
+  \item \textbf{Iterative fixed-points.}  Many transformations (e.g.,
+        gate coalescing) are applied until convergence inside a single
+        level, eliminating the inter–phase duplication present in the
+        original schedule.  Formally, if $U$ is an idempotent
+        contraction operator, we compute
+        $G^{\ast}=\lim\_{i\to\infty} U^{i}(G)$ within one level rather
+        than scattering $U$ across multiple passes.
+\end{enumerate}
+
+\subsection{Complexity Implications}
+\label{sec:kc_complexity_pipeline}
+
+Let $|G|$ be the number of gates and $m$ the maximal gate fan-in.
+Under Rakhimov’s regimen the worst-case complexity of reaching negation
+normal form (NNF) is
+\[
+  \mathcal{O}\bigl(|G|\,m^{2}\bigr),
+\]
+due to repeated quadratic scans over argument lists.  The optimized
+pipeline removes duplicate scans and adopts the linear algorithms of
+Section~\ref{sec:kc_refinements}, yielding
+\[
+  \mathcal{O}\bigl(|G|\,m\bigr)
+\]
+in theory and the two-order-of-magnitude wall-clock reduction reported
+in Section~\ref{sec:kc_empirical}.
+
+\subsection{Monte–Carlo Sampling After Compilation}
+\label{sec:kc_sampling}
+
+After Level~8 the compiled graph $G_{8}$ satisfies three properties vital for efficient sampling:
+\begin{enumerate}[label=(\alph*)]
+  \item {Acyclic layering} ensures breadth-first evaluation across
+        batches.
+  \item {Negation normal form} confines complements to literals,
+        enabling bitwise polarity control without extra nodes.
+  \item {Hardware-native composites} such as voting kernels reduce
+        per-sample arithmetic intensity from
+        $\Theta\!\bigl(\binom{m}{\lceil m/2 \rceil}\bigr)$ to
+        $\Theta(m)$, cf. Eq.~(\ref{eq:card_identity}).
+\end{enumerate}
+Consequently the cost of one Monte–Carlo iteration becomes
+\[
+  C_{\mathrm{iter}} \;=\; |G_{8}|\,c_{\text{std}}\;+
+  |A|\,c_{\text{vot}},
+\]
+where $c_{\text{std}}$ and $c_{\text{vot}}$ are the average per-gate
+latencies for standard and voting gates, and $|A|$ is the number of
+specialized composites.  Because $c_{\text{vot}}\approx c_{\text{std}}$
+(Section~\ref{sec:voter_complexity}), the leading factor is the
+\emph{graph size} rather than gate heterogeneity, underscoring the
+importance of the exponential savings demonstrated earlier.
+
+
+% ---------------------------------------------------------------------------
+\subsection{Micro-Benchmark: Structural Compression Achieved by Compilation}
+\label{sec:kc_microbenchmark}
+
+To quantify how each compilation level reduces graph size, we measure
+the \emph{compression factor}
+\[
+  \gamma(\ell)\;=\;
+  \frac{|G_0|}{|G_\ell|},
+\]
+where $|G|$ counts all gates in the PDAG.\footnote{%
+  A value $\gamma>1$ indicates net compression;
+  $\gamma<1$ means expansion.}
+The statistics in Table~\ref{tab:micro_compilation_flags}
+summarize $2{,}987$ model builds that survived the data-quality
+filters described in Section~\ref{sec:kc_empirical}.
+
+\begin{figure}[hb]
+    \centering
+    \includegraphics[width=1\textwidth]{figs/compiler/compiler_compression_vs_flag.png}
+    \caption{Structural compression factor $\gamma$ (ratio of original to compiled gate count) for each compilation flag $C\ell$.  Grey circles denote individual models; the orange line traces the median and the shaded band covers the 5\,--\,95\,\% quantile range.}
+    \label{fig:compiler_compression_levels}
+\end{figure}
+
+\begin{table}[t]
+  \centering
+  \caption{Compression factor $\gamma$ by compilation level $C\ell$.
+           Medians are reported together with the $5^{\mathrm{th}}$
+           and $95^{\mathrm{th}}$ percentiles.
+           Levels $C5$–$C7$ are omitted because no models were compiled
+           at those settings in the current benchmark.}
+  \label{tab:micro_compilation_flags}
+  \begin{tabular}{cccc}
+    \toprule
+    Compilation flag & Median $\gamma$ & $P_{5}$ & $P_{95}$ \\
+    \midrule
+    $C0$ & $0.996$ & $0.918$ & $1.096$ \\
+    $C1$ & $1.002$ & $0.918$ & $1.100$ \\
+    $C2$ & $1.344$ & $0.909$ & $2.204$ \\
+    $C3$ & $1.243$ & $0.789$ & $1.844$ \\
+    $C4$ & $1.243$ & $0.789$ & $1.844$ \\
+    $C8$ & $1.220$ & $0.702$ & $1.820$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\paragraph{Key findings.}
+\begin{itemize}
+  \item Levels $C2$–$C4$ already yield a median $\gamma>1$, confirming
+        that early coalescing and Boolean simplification shrink most
+        models without full normalization.
+  \item Level~$C8$ maintains the compression despite additional passes
+        to reach NNF, indicating that late-phase expansions (e.g.,
+        DeMorgan pushes) are offset by more aggressive gate
+        sharing.
+\end{itemize}
+
+% ---------------------------------------------------------------------------
+\subsubsection{Compression vs. Average Fan-in}
+\label{sec:kc_micro_fanin}
+\begin{landscape}
+\begin{figure}[hb]
+    \centering
+    \includegraphics[width=1.15\textwidth]{figs/compiler/compiler_fanin_vs_compression.png}
+    \caption{Relationship between average gate fan-in $f$ in the compiled PDAG and structural compression factor $\gamma$.  Points are colored by compilation flag; dashed lines show ordinary least–squares fits on log--log axes with slopes indicated in the legend.}
+    \label{fig:compiler_fanin_compression}
+\end{figure}
+\end{landscape}
+
+Pooling all compilation levels, the relationship between compression
+and average gate fan-in $f$ is well described by the log–log regression
+
+\[
+  \log_{10}\gamma \;=\; 0.370\,\log_{10}f \; - \; 0.128,
+  \qquad R^{2}=0.17\;(n=2064).
+\]
+Equivalently
+$\gamma\approx0.75\,f^{0.37}$, indicating sub-linear returns: doubling
+average fan-in improves compression by only $29\%$.
+
+\begin{table}[t]
+  \centering
+  \caption{Global regression of compression factor on average fan-in.}
+  \label{tab:micro_fanin_global}
+  \begin{tabular}{lcccc}
+    \toprule
+    Dataset & Slope $a$ & Intercept $b$ & $R^{2}$ & $n$ \\
+    \midrule
+    All models & 0.370 & $-0.128$ & 0.17 & 2064 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The modest $R^{2}$ reflects structural heterogeneity among models: in
+series–parallel fragments compression saturates regardless of $f$,
+whereas highly redundant safety logic with large voting constructs
+exhibits super-linear sharing potential.  A finer taxonomy of these
+architectures remains future work.

@@ -1,8 +1,8 @@
 \begin{figure}[ht!]
 \centering
 \begin{tikzpicture}
-\tikzset{canonical/.style={fill=blue!30},myedges/.style={-, >={Stealth[reversed]}, thick},anchored/.style={draw=none, opacity=0, font=\tiny}}
-\graph [layered layout, nodes=draw, edges=rounded corners,edge=myedges] {
+\tikzset{canonical/.style={fill=blue!30},myedges/.style={-, >={Stealth[reversed]}, thick},anchored/.style={draw=none, nodes=draw, opacity=0, font=\tiny}}
+\graph [layered layout, edges=rounded corners,edge=myedges] {
 {[edge={draw=none},nodes=anchored]
 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10;
 };

@@ -15,6 +15,18 @@ Ensuring accurate estimates for extremely low-probability events demands careful
 \subsubsection*{Sampling Correlated or Dependent Events}
 A related concern is the treatment of common-cause failures (CCFs) and component dependencies. Characterizing CCF related failures or performing dependency analysis are important PRA activities. Future extensions of this framework thus require sampling from joint distributions, where correlated events are generated as a block. Integrating such dependent draws into bitpacked logic operations is feasible in principle but will require additional data-processing layers to ensure that correlated assignments remain both realistic and efficient to evaluate in large batches.
 
+\subsection*{When to use this Approach}
+- You want to estimate the probabilites/frequencies of very complex systems without computing minimal cut sets or essential prime implicants.
+- You tried computing the exact probabilities/frequencies using BDDs or ZBDDs and failed.
+- You want an approximate method that converges to the exact solution.
+- You want a streamble solution - you can't wait for an inordinate amount of time to get an answer.
+
+\subsection*{When to *not* to use this Approach}
+- Your tolerance for the error on a approximate solution is lower than your tolerance for waiting for convergence.
+
+We have conceptualized this work by taking an unabashedly stochastic-computing stance: every 64-bit unsigned word is treated as 64 independent Bernoulli samples evaluated in parallel. We make no attempt to interpret the word as a multi-bit integer, nor to exploit correlations across bits. This is a deliberate trade between information density for embarrassingly parallel throughput. Each physical bit therefore contributes one Shannon bit of information. Keep that constraint in mind when weighing the solver’s performance claims against its unavoidable precision limits.
+
+
 % \subsubsection*{Scaling Studies}
 % Not all systems benefit from full-scale parallel sampling. For smaller PRA models (fewer components or simpler logic), existing approximate or event exact methods may remain faster and more transparent. A threshold likely exists at which the overhead of distributing computation across GPUs or multi-core CPUs outweighs the parallel advantages. Determining this floor for model size is an important empirical question.
  

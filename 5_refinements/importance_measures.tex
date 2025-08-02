@@ -10,7 +10,7 @@ been quantified, the next natural question is
 \emph{``which basic events matter the most?''}.  Importance measures translate
 raw probabilities into actionable rankings that drive maintenance decisions,
 design improvements, and risk communication.  Classical definitions dating back
-to Birnbaum, Fussell--Vesely and Vesely are revisited in
+to Birnbaum, Fussell--Vesely, are revisited in
 \S\ref{sec:foundations_importance} of this dissertation.  The present section
 extends those definitions to the Monte-Carlo solver introduced in
 Chapter~\ref{chap:mc_solver} and details how the required statistics are
@@ -72,19 +72,26 @@ added to avoid numerical blow‐up.
 
 \subsection{Critical importance (CIF).}
 CIF normalizes MIF by the top–event probability
-\[ \operatorname{CIF}_i \;=\; \frac{\operatorname{MIF}_i\,\widehat{p}_i}
-                                     {\widehat{p}_0}.\]
+\begin{equation}
+\operatorname{CIF}_i \;=\; \frac{\operatorname{MIF}_i\,\widehat{p}_i}
+                                     {\widehat{p}_0}.
+\label{eq:cif_estimator}
+\end{equation}
 \subsection{Diagnostic importance (DIF).}
-\[ \operatorname{DIF}_i \;=\;
-   \frac{\widehat{p}_{0,i}}{\widehat{p}_0\,\widehat{p}_i}.\]
+\begin{equation}
+\operatorname{DIF}_i \;=\;
+   \frac{\widehat{p}_{0,i}}{\widehat{p}_0\,\widehat{p}_i}.
+\label{eq:dif_estimator}   
+\end{equation}   
 \subsection{Risk achievement (RAW) \&\ reduction worth (RRW).}
 Set $p_0^{(i=1)} = \widehat{p}_{0,i}/\widehat{p}_i$ and
 $p_0^{(i=0)} = \bigl(\widehat{p}_0 - \widehat{p}_{0,i}\bigr)/(1-\widehat{p}_i)$.
 Then
-\begin{align*}
+\begin{align}
   \operatorname{RAW}_i &= \frac{p_0^{(i=1)}}{\widehat{p}_0}, &
   \operatorname{RRW}_i &= \frac{\widehat{p}_0}{p_0^{(i=0)}}.
-\end{align*}
+  \label{eq:rrw_estimator}
+\end{align}
 All numerators and denominators derive directly from the counters in
 Eq.~\eqref{eq:basic_counters}.
 
@@ -101,10 +108,7 @@ The first‐order Taylor expansion around the expectation yields
   \nabla g^T \!\,\Sigma\, \nabla g,
 \]
 where $\Sigma$ is the $3\!\times\!3$ covariance matrix of $(s_0,s_i,s_{0,i})$.
-Closed‐form expressions are lengthy but straightforward; Appendix
-\ref{app:importance_ci} lists them and the Monte‐Carlo implementation evaluates
-those formulas on the host side whenever intermediate confidence bands are
-requested.
+Closed‐form expressions are lengthy but straightforward.
 
 %--------------------------------------------------------------------------
 \section{Layered Evaluation Algorithm}
@@ -121,7 +125,7 @@ requested.
   \item \textbf{Host reduction} – after iteration~$t$ the per–group partials
     are atomically accumulated; the host holds only updated scalars.
   \item \textbf{Importance update} – when invoked, the host computes
-    Eqs.~\eqref{eq:mif_estimator}–\eqref{eq:diagnostic} and their confidence
+    Eqs.~\eqref{eq:mif_estimator}–\eqref{eq:dif_estimator} and their confidence
     intervals without any device traffic.
 \end{itemize}
 
@@ -146,23 +150,3 @@ behind the command‐line flag \verb|--mc-extra-stats|.
 \emph{one} extra integer instruction per 64 Bernoulli trials and scales to
 thousands of variables with negligible overhead.  It therefore remains the
 solver’s default, while post–hoc kernels serve as an opt-in diagnostic tool.
-
-%--------------------------------------------------------------------------
-\section{Illustrative Example}
-%--------------------------------------------------------------------------
-Consider the sample \acrshort{pdag} in Fig.~\ref{fig:demo_pdag} with four basic
-events.  A Monte–Carlo campaign of $T=10^4$ iterations, $B=64$ batches and
-$P=16$ bit–packs ($n=6.55\times10^6$ trials) produces the counters in
-Table~\ref{tab:demo_counters}.  Plugging those values into the formulas above
-yields the importance ranking shown in
-Table~\ref{tab:demo_importance}.  Event~$e_3$ dominates every metric, which
-confirms the analytical intuition that it is the unique single‐point failure of
-the redundant subsystem.
-
-Through a single, inexpensive extension of the tally kernel the Monte–Carlo
-solver gathers all statistics needed for first–order importance measures.
-Derived quantities and their confidence intervals are evaluated on the host
-with $\mathcal{O}(\lvert\text{events}\rvert)$ arithmetic and \emph{no} extra
-device passes.  The approach reconciles statistical rigor with GPU efficiency
-and serves as the backbone for the risk‐ranking features demonstrated in
-Chapter~\ref{chap:case_studies}.

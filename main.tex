@@ -1,8 +1,8 @@
 % !TeX TS-program = pdflatex 
 
-\documentclass[11pt,          % font size: 11pt or 12pt
+\documentclass[12pt,          % font size: 11pt or 12pt
                phd,           % degree:    ms or phd
-               onehalfspacing % spacing: onehalfspacing or doublespacing
+               doublespacing % spacing: onehalfspacing or doublespacing
                ]{ncsuthesis}
 
 \def \docrev{v0.0.2}
@@ -58,7 +58,7 @@
 %%% For language switching -- like babel, but for xelatex
 % \usepackage{polyglossia}
 % \usepackage{algorithmicx}
-
+\usepackage{pgffor}
 \usepackage[inkscapelatex=false]{svg}
 \usepackage[xindy,acronym,toc]{glossaries}
 
@@ -175,13 +175,7 @@
 % \thesistitle{A North Carolina State University Sample \LaTeX{} Thesis \break 
 % with a Title So Long it Needs a Line Break}
 
-% \thesistitle{A Sampling Scheme for Numerical Integration of Boolean Functions with Many Variables}
-
-% \thesistitle{Finding Slopes in Large Boolean Spaces using Probabilistic Circuits}
-
-% \thesistitle{Quantifying Risk by Simulating Probabilistic Circuits}
-
-\thesistitle{A Data-Parallel Monte Carlo Framework for Large-Scale PRA using Probabilistic Circuits}
+\thesistitle{A Data-Parallel, Hardware-Accelerated Monte Carlo Framework for Quantifying Risk using Probabilistic Circuits}
 %% Degree year. Necessary if your degree year doesn't equal the current year.
 \degreeyear{2025}
 
@@ -235,7 +229,7 @@ heading=bibintoc,
 title={References}
 ]
 \appendix
-
+\input{appendix/_}
 %%---------------------------------------------------------------------------%%
 %%  Bibliography 
 %% or use BibTeX

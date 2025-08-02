@@ -28,6 +28,23 @@ The essential steps to build and traverse these layers are:
 
 This structure ensures a sound evaluation of the \acrshort{pdag}: no gate or variable is computed until after all of its inputs are finalized.
 
+\begin{figure}
+    \centering
+    \begin{subfigure}{1\textwidth}
+        \centering
+        \includesvg[height=0.3\textheight]{figs/pdag/dag_pass_1.svg}
+    \caption{Working example from Fig.~\ref{fig:pdag_pass_1}.}
+        \label{fig:recall_pdag_pass_1}
+    \end{subfigure}
+    \vfill
+    \begin{subfigure}{1\textwidth}
+        \centering
+        \includesvg[width=0.6\linewidth]{figs/pdag/dag_pass_2.svg}
+        \label{fig:pdag_pass_2}
+    \end{subfigure}
+    \caption{Layered topological ordering on the Propositional \acrfull{dag}, with coalesced/fused kernels, partitioned by operation type.}
+\end{figure}
+
 \subsection{Depth Computation and Node Collection}
 
 \begin{enumerate}
@@ -86,6 +103,82 @@ Apply the layer decomposition to drive \emph{kernel building} and \emph{evaluati
 
 Once kernels for a given layer finish, move on to the next layer. Because of the topological guarantee, no node in layer \(d\) references memory or intermediate states from layer \(d\!+\!1\) or later, preventing cyclical references and ensuring correctness.
 
+
+\section{Adopting the SYCL Execution Model}
+
+Before getting into our opinionated launch parameters, it is instructive to recall the abstract execution hierarchy defined by the SYCL standard. This detour provides the conceptual foundation upon which the remainder of this dissertation builds.
+
+\begin{figure}[hb]
+    \centering
+    \includegraphics[width=1\textwidth]{figs/sycl/sycl_execution_model.png}
+    \caption{At a glance: The SYCL execution model describes relationships between ND-Ranges, work-groups, sub-groups, and work-items.}
+    \label{fig:sycl_exec_model}
+\end{figure}
+
+% -----------------------------------------------------------------------------
+%  Conceptual overview and formal relationships
+% -----------------------------------------------------------------------------
+\subsection{Conceptual Overview}  Modern accelerator programming models must present the developer with a 
+\emph{logical} view of parallel work that is independent of any specific piece of hardware.  SYCL achieves this
+by defining a small hierarchy of index spaces.  Each level in the hierarchy provides progressively stronger 
+coherence and synchronization guarantees, yet none of them prescribes 
+\textit{where} that work will eventually run.  The mapping from logical indices to physical execution resources is
+entirely deferred to the run--time or device compiler and is therefore opaque to the application.  In what follows we formalize the four key abstractions exposed by the SYCL execution model and derive a set of identities that will be reused throughout the remainder of this dissertation.
+
+\subsection{Hierarchical Index Spaces}  Let
+\[
+   \mathbf{G} = (G_x,G_y,G_z) \in \mathbb{N}^3, \qquad
+   G_d > 0\quad(d\in\{x,y,z\}) ,
+\]
+be the \emph{global range}.  It enumerates the total number of logical tasks, or \emph{work--items}, that shall be executed in one kernel invocation.  The associated set of global indices is
+\[
+    \mathcal{I} \;=\; \{0,\dots,G_x-1\} \times \{0,\dots,G_y-1\} \times \{0,\dots,G_z-1\},
+\]
+with
+\( |\mathcal{I}| = G_x G_y G_z. \)
+
+A second triple
+\[
+    \mathbf{L} = (L_x,L_y,L_z), \qquad 0 < L_d \le G_d ,
+\]
+referred to as the \emph{local range}, partitions the ND--Range into disjoint \emph{work--groups}.  Defining
+\[
+    W_d \;=\; \frac{G_d}{L_d},\qquad d\in\{x,y,z\},
+\]
+(which implies $G_d \equiv 0\; (\mathrm{mod}\,L_d)$), the set of group indices reads
+\[
+    \mathcal{W} \;=\; \{0,\dots,W_x-1\} \times \{0,\dots,W_y-1\} \times \{0,\dots,W_z-1\},
+\]
+with cardinality $|\mathcal{W}|=W_x W_y W_z$.  Each group $w\in\mathcal{W}$ owns exactly
+\[
+    |\Gamma| \;=\; L_x L_y L_z
+\]
+work--items that share fast local memory and barrier synchronization.
+
+Within a work--group the implementation may further partition the local index space into \emph{sub--groups} of size $S$:
+\[
+    S \;=\; |\Sigma|,\quad \Sigma \subseteq \Gamma,\quad 1\le S\le |\Gamma|.
+\]
+Sub--groups execute in (near) lockstep and admit specialized collective operations, yet their existence and size remain device--specific.  Finally, the singleton element of the hierarchy is the \textbf{work--item}, uniquely addressed by its global id $i=(i_x,i_y,i_z)\in\mathcal{I}$.
+
+The containment relations
+\[
+    \text{work--item} \;\in\; \text{sub--group} \;\subseteq\; \text{work--group} \;\subseteq\; \text{ND--Range}
+\]
+hold for every index triple.
+
+\subsection{Abstractness of the Model}  None of the above definitions mention vector widths, cores, or memory banks.  The SYCL execution model is strictly an \emph{index algebra}; it provides (i)~a naming scheme for independent pieces of work, and (ii)~a lattice of synchronization points that the run--time must respect.  Once the tuples $\mathbf{G}$ and $\mathbf{L}$ have been fixed, every additional property of the physical execution, including occupancy, scheduling order, and even whether groups are run concurrently or serially, is an implementation detail.
+
+\subsection*{Notation used from here onward.}  We will exploit the following shorthand throughout the subsequent analysis:
+\begin{enumerate}
+  \item $|\mathcal{I}|=G_xG_yG_z$ \quad (total work--items),
+  \item $|\mathcal{W}|=W_xW_yW_z$ \quad (total work--groups),
+  \item $|\Gamma|=L_xL_yL_z$        \quad (work--items per group),
+  \item $\langle i_g,i_l\rangle$\quad embodiment of a work--item by its enclosing group index $i_g\in\mathcal{W}$ and its local index $i_l\in\Gamma$.
+\end{enumerate}
+These identities are purely algebraic and therefore remain valid for \emph{any} SYCL--conformant device.
+
+\paragraph*{From Abstraction to Implementation Strategy.} Next, we translate these concepts into the concrete launch geometries and dependency patterns required by our Monte--Carlo solver.  The forthcoming sections build progressively from global range rounding rules to kernel--specific mappings.
 % -----------------------------------------------------------------------------
 %  Extended algorithmic description of kernel generation and execution
 % -----------------------------------------------------------------------------
@@ -190,7 +283,7 @@ scheduler exploits two orthogonal forms of parallelism:
         previous layer, \emph{not} on one another.  They are therefore eligible
         for concurrent execution subject to device resources.
   \item \emph{Iterative sampling} --- the bit--packed sample space is sliced
-        into $T\_\text{iter}$ iterations decided by the sample shaper.
+        into $T_\text{iter}$ iterations decided by the sample shaper.
         Kernels capturing the same node repeat across iterations and are
         expressed with an explicit iteration counter, enabling the run--time to
         re--use the same compiled binary while varying the random counter seed
@@ -203,13 +296,13 @@ partial order.
 \subsection{Work--Group Optimization Heuristics}
 \label{subsec:wg_optim}
 
-Let $G$ denote the global item count of the kernel at hand and $L\_\max$ the
+Let $G$ denote the global item count of the kernel at hand and $L_{max}$ the
 maximum local size supported by the device along each axis.  The solver
 selects a local range $(l_x,l_y,l_z)$ according to
 \begin{align*}
-  l_x &= \min\bigl(\text{pow2\_ceil}(G),\,L\_\max\bigr),\\
-  l_y &= \min\bigl(B,\,L\_\max/l_x\bigr),\\
-  l_z &= \min\bigl(P,\,L\_\max/(l_x l_y)\bigr),
+  l_x &= min\Bigl(\text{pow2ceil}(G),\,L_{max}\Bigr),\\
+  l_y &= min\Biggl(B,\,\frac{L_{max}}{l_x}\Biggr),\\
+  l_z &= min\Biggl(P,\,\frac{L_{max}}{l_x l_y}\Biggr),
 \end{align*}
 which heuristically balances occupancy with register pressure while retaining a
 uniform work--item distribution.  The shape is re--evaluated independently for
@@ -244,9 +337,21 @@ analysis establishes the dependency structure; kernel generation translates
 that structure into homogeneous, vectorizable work; and a light--weight event
 system schedules the resulting kernels with minimal host intervention.
 
+
+\begin{landscape}
+\begin{figure}[p]
+    \centering
+    \includesvg[width=1.15\textheight]{figs/pdag/dag_pass_3.svg}
+    \caption{A fully connected Probabilistic-Propositional Directed Acyclic Graph.}
+    \label{fig:feedforward_ppdag}
+\end{figure}
+\end{landscape}
+
+
 % -----------------------------------------------------------------------------
 \section{Kernel-Level Execution Model}
 \label{sec:kernel_execution_model}
+% -----------------------------------------------------------------------------
 
 \subsection{Coordinate System and Notation}
 

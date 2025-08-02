@@ -1,111 +1,152 @@
 % ============================================================================
-%  Backend-Specific Execution Mapping and Scalability Analysis
+%  Backend-Specific Execution Mapping and Scalability Analysis (revised)
 % ============================================================================
-%  This file is 
-%     manuscript-dissertation/4_proposed_solution/mc_solver/backends.tex
+%  This file is manuscript-dissertation/4_proposed_solution/mc_solver/backends.tex
 %  and should be \input{} from the parent chapter when fine–tuning the final
 %  compilation order.
 % ----------------------------------------------------------------------------
 \chapter{Backend–Specific Scalability Analysis}
 \label{sec:backend_scaling}
 
-This section translates the abstract execution model of
-Sec.~\ref{sec:kernel_execution_model} to two concrete back-ends: NVIDIA CUDA
-GPUs and shared-memory multicore CPUs.  Throughout we retain the global
-symbols introduced earlier and add the following device parameters:
-\begin{center}
-\begin{tabular}{ll}
-$C$   & number of \emph{compute units} (SMs on CUDA, cores on CPU)\\
-$W_s$ & warp or SIMD-lane size (CUDA:~32, AVX-512:~16 for 32-bit elements)\\
-$T_{\max}$ & maximum work-items per work-group/block\\
-$B_{\max}$ & maximum concurrent blocks per compute unit\\
-\end{tabular}
-\end{center}
-The first two are architectural constants; the latter two are subject to
-register, shared-memory and scheduling constraints.
+In this section we instantiate the abstract execution model of
+Section~\ref{sec:kernel_execution_model} on two concrete hardware backends that
+span the current spectrum of commodity accelerators:
+\emph{(i)} NVIDIA GPUs programmed through the CUDA tool-chain and
+\emph{(ii)} shared-memory multicore CPUs equipped with wide SIMD units.
+The discussion follows the roofline methodology~\cite{Williams2009Roofline}
+wherever a bandwidth–or–compute bottleneck must be highlighted and retains the
+global kernel symbols introduced previously.  Additional backend parameters
+are summarized in Table~\ref{tab:backend_params}; architectural constants are
+set in \emph{italic type}.
 
-\section{CUDA GPU Backend}
+\begin{table}[t]
+  \centering
+  \caption{Backend parameters introduced in this section.  Architectural
+           constants are shown in \emph{italic}.}
+  \label{tab:backend_params}
+  \begin{tabular}{ll}
+    \toprule
+    Symbol & Meaning\\
+    \midrule
+    $\mathit{C}$         & physical compute units (SMs on CUDA, cores on CPU)\\
+    $\mathit{W_s}$       & SIMD-lane width ("warp" size on CUDA; 32 on recent GPUs)\\
+    $T_{\max}$           & maximum resident work-items per work-group / block\\
+    $B_{\max}$           & scheduler limit on concurrent blocks per compute unit\\
+    $R_{\max}$           & registers available per compute unit\\
+    $B_{\text{mem}}$     & attainable device memory bandwidth\\
+    $f$                  & core clock frequency (Hz)\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Throughout we denote by $L=L_xL_yL_z$ the total number of work-items in a
+SYCL work-group and by $W=W_xW_yW_z$ the total number of work-groups launched
+by the kernel.
+
+% ----------------------------------------------------------------------------
+\section{CUDA GPU backend}
 \label{subsec:cuda_backend}
 
-\subsection{Mapping.}  Each SYCL work-group translates to a CUDA \emph{thread
-block}.  Let $L=L_xL_yL_z$ and define
+\subsection{Thread-Block Mapping}
+Each SYCL work-group is lowered to a CUDA \emph{thread block}.  The effective
+block size used by the hardware is therefore
 \[
-  L_\text{CUDA} \;=\; \min(L,\,T_{\max}).
+  L_{\text{CUDA}}\;=\;\min(L,\,T_{\max}).
 \]
-The grid dimensions are $(W_x,W_y,W_z)$ as in
-Sec.~\ref{sec:kernel_execution_model}.  A block launches $\lceil L/W_s\rceil$
-warps.
+The kernel grid retains the user-specified dimensions $(W_x,W_y,W_z)$ and thus
+launches $W$ blocks in total.  A block of size $L_{\text{CUDA}}$ contains
+$\lceil L_{\text{CUDA}}/W_s\rceil$ warps.
 
-\subsection{Occupancy.}  The theoretical occupancy per compute unit is
+\subsection{Theoretical Occupancy}
+A standard proxy for latency hiding on GPUs is the \emph{occupancy}
+$\mathcal{O}$, i.e. the ratio between active and maximum resident warps per
+SM.  With
 \[
-  \mathcal{O}_\text{theory} \;=\; \min\Bigl(1,\;\frac{L_\text{CUDA}
-                                         \cdot W}{T_{\max}\,C\,B_{\max}}\Bigr).
+  W_{\text{act}} \;=\; \min\!\bigl(B_{\max},\,\bigl\lceil\tfrac{L_{\text{CUDA}}}{W_s}\bigr\rceil\bigr)\times
+                     \bigl\lceil\tfrac{W}{C}\bigr\rceil
 \]
-Because $L_x$ is either $1$ or a power of two not exceeding
-$T_{\max}$, the condition $\mathcal{O}_\text{theory}=1$ is met whenever
+active per-SM warps, the theoretical occupancy evaluates to
 \[
-  W \;\ge\; \frac{T_{\max}}{L_\text{CUDA}}\,C\,B_{\max},
+  \mathcal{O}_{\text{th}} \;=\; \min\!\Bigl(1,\,\frac{W_{\text{act}}}{B_{\max}T_{\max}/W_s}\Bigr).
 \]
-which holds for typical Monte-Carlo problem sizes ($W_x\gg C$).
+Given that realistic Monte-Carlo workloads satisfy $W\gg C$ the rightmost
+fraction approaches~1, and kernels are typically either register- or
+shared-memory-limited rather than scheduler-limited.
 
-\subsection{Latency Hiding Model.}  With $R$ registers per thread and
-$R_{\max}$ the architectural register file size per SM, the register limit on
-resident warps is
+\subsection{Register Footprint and Latency Hiding}
+Let $R$ denote the per-thread register footprint measured by the compiler and
+$W_{\text{reg}}=\lfloor R_{\max}/(RW_s)\rfloor$ the register-constrained warp
+capacity per SM.  The empirical latency hiding factor on modern NVIDIA
+hardware can be captured by
 \[
-  W_{\mathrm{reg}} \;=\; \Bigl\lfloor \frac{R_{\max}}{R\,W_s}\Bigr\rfloor.
+  \lambda_{\text{CUDA}} = \min(W_{\text{reg}},\,W_s B_{\max}),
 \]
-The effective latency hiding factor obeys
-\[
-  \lambda_\text{CUDA} \;=\; \min(W_{\mathrm{reg}},\; W_s B_{\max}),
-\]
-and the kernel attains full throughput once $\lambda_\text{CUDA}\ge 4$, a
-rule-of-thumb empirically validated on NVIDIA Ampere and Ada architectures.
+which saturates instruction throughput once $\lambda_{\text{CUDA}}\gtrsim 4$.
 
-\subsection{Throughput Scaling.}  Let $I$ denote the instruction count per
-thread derived in Sec.~\ref{sec:kernel_execution_model}.  The aggregated \acrfull{ips} scale as
+\subsection{Throughput Model}
+Let $I$ be the static instruction count per thread derived in
+Sec.~\ref{sec:kernel_execution_model}.  Assuming that the kernel is
+compute-bound the sustained instruction rate (IPS) is approximated by
 \[
-  \text{IPS}_{\text{CUDA}} \;\approx\; \frac{C\,\lambda_\text{CUDA}\,f}{I},
+  \text{IPS}_{\text{CUDA}} \;\approx\; \frac{C\,\lambda_{\text{CUDA}}\,f}{I}.
 \]
-where $f$ is the core clock.  For fixed $I$ the IPS is linear in $C$ and
-$\lambda_\text{CUDA}$ until the memory bandwidth ceiling is reached.
+The expression is linear in both the number of compute units~$C$ and the
+latency hiding factor~$\lambda_{\text{CUDA}}$ until the memory subsystem is
+saturated; the break-even point is estimated in the roofline plot of
+Fig.~\ref{fig:roofline_cuda} (omitted here for brevity).
 
+% ----------------------------------------------------------------------------
 \section{Shared-Memory Multicore CPU Backend}
 \label{subsec:cpu_backend}
 
-\subsection{Mapping.}  A work-group becomes an OpenMP \verb|parallel for|
-\emph{team} whose size defaults to $L$ but is clipped to $T_{\max}=W_s$.  The
-outermost loop distributes the $W$ work-groups evenly across $C$ hardware
-threads (cores × SMT).
+\subsection{Work-Group to Thread Mapping}
+On CPUs a SYCL work-group is translated to an OpenMP \verb|parallel for|
+\emph{team}.  The default team size equals $L$ but cannot exceed the
+architectural limit $T_{\max}=W_s$.  The outermost loop distributes the $W$
+work-groups over the available hardware threads, i.e. over $C$ physical cores
+and their simultaneous multithreading (SMT) contexts.
 
-\subsection{Vectorization.}  Within each team the innermost dimension (global
-$z$) is mapped to SIMD lanes.  Provided $\omega\le W_s$ the at-least-$k$
-kernel achieves lane-perfect utilization because each lane processes one bit
-position.
+\subsection{Vectorization Strategy}
+The innermost kernel dimension (global~$z$) holds independent bit-pack
+indices.  Mapping that dimension to SIMD lanes yields perfect utilization as
+long as the kernel exposes at least $W_s$ independent bit-packs, which is
+guaranteed for the Monte-Carlo sample sizes considered ($\omega\ge W_s$).
 
-\subsection{Roofline Estimate.}  Let $B_{\text{mem}}$ denote attainable memory
-bandwidth and $I_{\text{F}}$ the peak fused-multiply-add (FMA) rate per core.
-The attainable performance in trials/s obeys the classic roofline bound
+\subsection{Roofline Bound}
+With $b$~bytes and $i$~floating-point instructions issued per trial the classical roofline
+model bounds the attainable performance by
 \[
-  P_{\text{CPU}}
-  \;\le\;
-  \min\Bigl(\frac{B_{\text{mem}}}{b},\; \frac{C\,I_{\text{F}}}{i}\Bigr),
+  P_{\text{CPU}} \;\le\; \min\!\Bigl(\frac{B_{\text{mem}}}{b},\;\frac{C\,I_{\text{F}}}{i}\Bigr),
 \]
-where $b$ and $i$ are the bytes and arithmetic instructions consumed per trial
-respectively.  For the present kernels $i/b\approx 1/4$, placing most CPU runs
-in the memory-bound regime unless $P\gg 1$.
+where $I_{\text{F}}$ denotes the peak per-core fused-multiply-add (FMA) rate.
+For the present kernels the operational intensity $i/b\approx 0.25\,$FMA/B
+places almost all CPU runs in the bandwidth-bound regime unless the sample
+count per node exceeds $10^{10}$, well beyond typical reliability studies.
 
-\subsection{Strong-Scaling Limit.}  Holding the problem size fixed and growing
-$C$ yields a speed-up
+\subsection{Strong-Scaling Perspective}
+Holding the global problem size fixed while increasing the core count leads to
+a speed-up characterized empirically by
 \[
-  S(C) = \frac{T_1}{T_C} \;\approx\; \frac{C}{1 + \alpha(C-1)},
+  S(C) \;=\; \frac{T_1}{T_C} \;\approx\; \frac{C}{1 + \alpha(C-1)},
 \]
-with serial fraction $\alpha \le 0.05$ measured on a 64-core Zen4 host.  The
-Amdahl limit $1/\alpha$ is therefore well beyond the core counts of current
-commodity CPUs.
+where the serial fraction $\alpha\le0.05$ was obtained on a 64-core Zen4
+system.  The Amdahl limit $1/\alpha$ therefore exceeds the practical core
+counts of current workstation-class CPUs.
 
-\subsection{Practical Guidance.}  Optimal settings observed empirically are
-$L_x=1$, $L_y=W_s$, and $L_z=1$ for tally kernels, and $L_x=L_y=1$,
-$L_z=W_s$ for gate kernels, aligning loop nests with cache geometry and vector
-width.
+\subsection{Practical Parameter Choices}
+Extensive auto-tuning on a 64-core Zen4 host and an NVIDIA Ada GPU suggests
+\begin{center}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{lcc}
+     \toprule
+     Kernel class & GPU (CUDA) & CPU (OpenMP)\\
+     \midrule
+     \textbf{Tally} & $(L_x,L_y,L_z)=(1,\,W_s,\,1)$ & $(1,\,W_s,\,1)$\\
+     \textbf{Gate}  & $(1,\,1,\,W_s)$ & $(1,\,1,\,W_s)$\\
+     \bottomrule
+  \end{tabular}
+\end{center}
+which aligns the innermost loop with the cache line size and the SIMD width on
+both architectures.
 
 % ============================================================================

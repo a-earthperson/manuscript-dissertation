@@ -134,7 +134,7 @@ Bringing these elements together, we propose the following definition:
 
 \begin{definition}[Unified \acrshort{pra} Model]
 \label{def:unified_pra_dag}
-A \emph{unified \acrshort{pra} model} is a \acrfull{pdag}
+A \emph{unified \acrshort{pra} model} is a \acrfull{pdag}\footnote{Whether the “P’’ in \acrshort{pdag} is “probabilistic’’ or “propositional’’ is, appropriately, still a probabilistic proposition, so we’ll invoke whichever flavor suits the moment.}
 \[
 \mathcal{M}
 \;=\;
@@ -168,6 +168,24 @@ with the following properties:
 \item The graph \(\mathcal{M}\) is acyclic: no path in \(\mathcal{A}\) returns to a previously visited node.  
 \end{enumerate}
 \end{definition}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.35\textwidth}
+        \centering
+        \includesvg[width=\linewidth]{figs/pdag/pra-model.svg}
+    \caption{Working example from Fig.~\ref{fig:et_ft_example}.}
+        \label{fig:recall_ef_ft_example}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.60\textwidth}
+        \centering
+        \includesvg[width=\linewidth]{figs/pdag/dag_pass_1.svg}
+        \caption{PDAG constructed from Fig.\ref{fig:recall_ef_ft_example}}
+        \label{fig:pdag_pass_1}
+    \end{subfigure}
+    \caption{A unifying representation of a \acrfull{pra} model as a Propositional \acrfull{dag}.}
+\end{figure}
 
 \subsection{Operations on Probabilistic Directed Acyclic Graphs}
 In practice, we anticipate large nuclear \acrshort{pra}s to contain hundreds of event trees and thousands of fault trees, sharing many basic events or subsystem-level fault trees.  By embedding them in \(\mathcal{M}\), one can systematically compute probabilities for any high-level risk measure (e.g., core damage, large release) by enumerating scenario paths or using specialized algorithms (e.g.\ binary decision diagrams, minimal cut set expansions, or simulation-based techniques).  The unified \acrshort{pdag} structure codifies both the forward scenario expansions (\acrshort{et} logic) and the top-down sub-component dependencies (\acrshort{ft} logic) without creating contradictions or cycles. Definition~\ref{def:unified_pra_dag} makes manifest \emph{which} event tree references \emph{which} fault tree, how fault trees are chained together, and how basic events ultimately feed every higher-level node.  Once built, one may:

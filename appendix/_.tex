@@ -1,0 +1,32 @@
+
+
+\chapter{Revised Aralia Benchmark Plots}
+
+In this chapter, we plot the the Monte--Carlo convergence experiments on the \emph{Aralia} fault--tree data set (Section~\ref{subsec:aralia_dataset}).  The revised study targeted a relative margin of error of $0.1\%$, that is, $\varepsilon = 10^{-3}\,\hat{p}$, at a $99\,\%$ confidence level with a wall--clock time limit of 60~s per model. The following figures collate the updated convergence traces for all 43 fault trees.
+
+\begin{itemize}
+  \item the sample mean estimate (solid colored line),
+  \item the empirical $90\,\%$ and $99\,\%$ confidence bands (shaded regions)
+  \item where available, the reference ``oracle/true'' probability (black dashed).
+\end{itemize}
+
+
+\begin{landscape}
+\foreach \i in {1,...,9}{%%
+  \begin{figure}[p]
+      \centering
+      \includegraphics[width=1\textwidth]{figs/convergence/e001p99/conv_fig_0\i.png}
+      \caption{Aralia Fault Tree \i}
+      \label{fig:conv_fig_\i}
+  \end{figure}
+}
+
+\foreach \i in {10,...,43}{%%
+  \begin{figure}[p]
+      \centering
+      \includegraphics[width=1\textwidth]{figs/convergence/e001p99/conv_fig_\i.png}
+      \caption{Aralia Fault Tree \i}
+      \label{fig:conv_fig_\i}
+  \end{figure}
+}
+\end{landscape}

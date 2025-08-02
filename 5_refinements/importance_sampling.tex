@@ -14,7 +14,7 @@ encounter events whose true occurrence probability is \(p\ll10^{-6}\).  For
 such \emph{ultra-rare} events the vanilla MC estimator requires an
 astronomical number of trials before even a single failure is observed, let
 alone before the half-width of the \(95\,\%\) confidence interval satisfies the
-convergence criterion of Chapter~\ref{chap:conv}.  
+convergence criterion of Chapter~\ref{sec:convergence_criterion}.  
 
 Variance–reduction techniques provide a remedy.  Among the class of
 stratified, splitting, and importance-biased methods, \emph{importance
@@ -22,18 +22,18 @@ sampling} (IS) is the most flexible because it leaves the graph structure
 untouched while biasing the sampling distribution of the basic events.  This
 section introduces the theory, derives the IS estimator in the notation
 already used for the MC solver
-(Sections~\ref{sec:kernel:prng}–\ref{sec:kernel:tally}), and analyzes the
+(Section~\ref{sec:bitpack-prob-sampling}, Chapter \ref{sec:tally_kernel}), and analyzes the
 resulting variance reduction.
 
 % -----------------------------------------------------------------------------
 \section{Fundamentals of Importance Sampling}
 \label{sec:is:fundamentals}
 
-\subsection{Probability space and notation}
+\subsection{Probability Space Notation}
 Consider a probability space \((\Omega,\mathcal{F},\mathbb{P})\) on which a
 random vector \(X=(X_{1},\dots,X_{n})\) encodes the binary outcome of the
 \(n\) basic events of the fault tree, cf.
-Section~\ref{sec:foundations:definition:basic-events}.  A system failure is
+Section~\ref{sec:fault_tree_definition}.  A system failure is
 indicated by a Boolean map \(\Phi:\{0,1\}^{n}\to\{0,1\}\) representing the
 PDAG and its gate logic.  The quantity of interest is
 \begin{equation}
@@ -46,7 +46,7 @@ a single random variable governs multiple indices.  The forthcoming derivation
 is agnostic to that subtlety.}
 \(p_{i}\ll1\) for rare failures.
 
-\subsection{Biasing distribution}
+\subsection{Biasing Distribution}
 The central idea of IS is to replace \(\mathbb{P}\) by an alternative measure
 \(\mathbb{Q}\) under which the failure event occurs more frequently.  In the
 simplest – yet already effective – \emph{per-component tilting} we keep the
@@ -111,17 +111,14 @@ events.  Then
   \frac{\sigma^{2}_{\text{IS}}}{\sigma^{2}_{\text{MC}}}
     \le \exp\Bigl(-\kappa\,\log c\Bigr),
 \end{equation}
-where \(\kappa\in(0,1]\) depends on the fraction of rare basic events inside
-the minimal cut sets.  Consequently, even a moderate bias factor such as
-\(c=50\) produces an \(e^{\text{order}(4)}\) reduction for highly coherent
-fault trees.
+where \(\kappa\in(0,1]\) depends on the fraction of rare basic events.
 
 % -----------------------------------------------------------------------------
 \section{Algorithmic Realization}
 \label{sec:is:algorithm}
 
-Although Chapter~\ref{chap:mc-solver} focuses on implementation, a concise
-algorithmic description—in abstract form—is indispensable for analyzing
+Although Chapter~\ref{chap:mc_solver} focuses on implementation, a concise
+algorithmic description is indispensable for analyzing
 convergence.
 
 \begin{enumerate}[label=\textbf{Step\,\arabic*},ref=Step~\arabic*]
@@ -148,54 +145,6 @@ convergence.
                 \Bigl(\sum_{k} L^{\!2,(k)} Y^{(k)} - S_{1}^{2}/S_{0}\Bigr).
         \end{align}
   \item \textbf{Stopping criterion.}  The convergence controller of
-        Section~\ref{sec:conv:controller} is applied to the weighted
+        Section~\ref{sec:convergence_criterion} is applied to the weighted
         confidence interval.
 \end{enumerate}
-
-% -----------------------------------------------------------------------------
-\section{Practical Guidance for Bias Selection}
-\label{sec:is:guidance}
-
-Choosing an effective \(q_{i}\) is a balancing act: aggressive tilting speeds
-up rare-event discovery but inflates the variance via extreme weights.  The
-following heuristics have proven robust during the numerical campaigns of
-Chapter~\ref{chap:case-study}.
-
-\begin{itemize}
-  \item \textbf{Uniform multiplicative tilt.}  Start with a global
-        factor \(c\approx50\) to inflate all \(p_{i}\).  Monitor the effective
-        sample size \(\text{ESS}=S_{0}^{2}/\sum_{k}L^{\!2,(k)}\).  If
-        \(\text{ESS}/N<0.1\) the weights are too uneven; decrease \(c\).
-  \item \textbf{Adaptive feedback.}  Update \(c\) on a coarse grid (e.g.
-        powers of two) based on the relative half-width of the confidence
-        interval.
-  \item \textbf{Cut-set targeting.}  When minimal cut sets are known, inflate
-        only the basic events on the most critical cut sets.  This localized
-        tilting often yields the same variance reduction at a smaller ESS
-        penalty.
-\end{itemize}
-
-% -----------------------------------------------------------------------------
-\section{Numerical Illustration}
-\label{sec:is:example}
-
-A toy fault tree with three independent basic events \(A,B,C\) arranged in a
-2-out-of-3 (At-Least) gate highlights the effectiveness of IS.  Let the true
-probabilities be \(p_{A}=p_{B}=p_{C}=10^{-6}\).  Vanilla MC requires on the
-order of \(10^{8}\) trials to witness \emph{any} failure.  Applying a uniform
-bias factor \(c=100\) increases each \(q_{i}\) to \(10^{-4}\) and reduces the
-relative standard deviation of the estimator by roughly a factor of 300,
-bringing the required sample count into the realm of real-time GPU
-computation (\(<1\,\text{s}\) on a modern accelerator).  Detailed numerical
-benchmarks are presented in Section~\ref{sec:case-study:rare-events}.
-
-% ----------------------------------------------------------------------------
-
-Importance sampling provides an elegant, unbiased, and implementation-friendly
-mechanism to tame the variance explosion inherent to rare-event simulation.
-By biasing basic-event probabilities towards a judiciously chosen sampling
-measure and compensating with likelihood-ratio weights, the MC solver attains
-orders-of-magnitude speed-ups while preserving the rigorous statistical
-guarantees detailed in Chapter~\ref{chap:conv}.  The following chapters apply
-this technique to large-scale benchmark models and compare its performance to
-alternative variance-reduction strategies.

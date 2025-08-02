@@ -1,40 +1,40 @@
-\tikzset{
-    grow'=down,
-    level distance=42pt,
-    % sibling distance=24pt,
-    % sibling distance=8mm/#1,
-    level/.style={sibling distance=3pt+44pt/(#1*#1*0.75)},
-    edge from parent/.append style={
-        draw,
-        %thick,
-        edge from parent path={
-        (\tikzparentnode.west) |- ($(\tikzparentnode.west)!0.5!(\tikzchildnode.east)$) -| (\tikzchildnode.east)
-        },
-    },
-    every node/.append style={
-        anchor=center,
-        rotate=90,
-        draw=black,
-        fill=white,
-        thick,
-        font=\footnotesize\bfseries,
-        text centered,
-        inner sep=0pt
-    },
-    var/.style={
-        shape=circle,
-        minimum height=16pt,
-    },
-    and/.style={
-    and gate US,
-    },
-  not/.style={
-    not gate US,
-  },  
-  or/.style={
-    or gate US,
-  },
-  vot/.style={
-    or gate US,
-  }
-}
+% \tikzset{
+%     grow'=down,
+%     level distance=42pt,
+%     % sibling distance=24pt,
+%     % sibling distance=8mm/#1,
+%     level/.style={sibling distance=3pt+44pt/(#1*#1*0.75)},
+%     edge from parent/.append style={
+%         draw,
+%         %thick,
+%         edge from parent path={
+%         (\tikzparentnode.west) |- ($(\tikzparentnode.west)!0.5!(\tikzchildnode.east)$) -| (\tikzchildnode.east)
+%         },
+%     },
+%     every node/.append style={
+%         anchor=center,
+%         rotate=0,
+%         %draw=black,
+%         %fill=white,
+%         thick,
+%         %font=\footnotesize\bfseries,
+%         text centered,
+%         inner sep=0pt
+%     },
+%     var/.style={
+%         shape=circle,
+%         minimum height=16pt,
+%     },
+%     and/.style={
+%     and gate US,
+%     },
+%   not/.style={
+%     not gate US,
+%   },  
+%   or/.style={
+%     or gate US,
+%   },
+%   vot/.style={
+%     or gate US,
+%   }
+% }

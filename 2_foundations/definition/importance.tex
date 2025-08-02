@@ -2,7 +2,7 @@
 \label{sec:foundations_importance}
 Importance measures quantify the contribution of basic events to system reliability or risk. They provide insights into which components or events are most critical to system performance, guiding resource allocation for maintenance, design improvements, and risk management. \acrshort{pra} tools typically calculate the following importance measures to support comprehensive reliability analysis.
 
-\paragraph{Conditional Importance}
+\subsection{Conditional Importance}
 The \emph{Conditional Importance} (CI) of a basic event $i$ measures the probability that event $i$ contributes to system failure, given that the system has failed. It represents the fraction of system failures that involve the basic event.
 
 \[
@@ -11,7 +11,7 @@ The \emph{Conditional Importance} (CI) of a basic event $i$ measures the probabi
 
 This is calculated by identifying minimal cut sets containing the basic event and determining the proportion of failure probability attributed to these cut sets.
 
-\paragraph{Marginal Importance}
+\subsection{Marginal Importance}
 The \emph{Marginal Importance} (MI), also known as Birnbaum importance, measures the rate of change in system reliability with respect to the reliability of component $i$. It quantifies how sensitive the system failure probability is to changes in the failure probability of the component.
 
 \[
@@ -20,7 +20,7 @@ The \emph{Marginal Importance} (MI), also known as Birnbaum importance, measures
 
 This is computed by evaluating the difference in system failure probability when the component is assumed failed versus successful.
 
-\paragraph{Potential Importance}
+\subsection{Potential Importance}
 The \emph{Potential Importance} (PI) measures the maximum possible reduction in system failure probability that could be achieved by improving component $i$. It indicates the potential benefit of perfect reliability for a component.
 
 \[
@@ -29,7 +29,7 @@ The \emph{Potential Importance} (PI) measures the maximum possible reduction in 
 
 This is calculated using the system failure probability under current conditions compared to the system failure probability when the component is perfectly reliable.
 
-\paragraph{Diagnostic Importance}
+\subsection{Diagnostic Importance}
 The \emph{Diagnostic Importance} (DI) measures the probability that component $i$ has failed, given that the system has failed. It is useful for fault diagnosis and identifying likely causes of system failure.
 
 \[
@@ -38,7 +38,7 @@ The \emph{Diagnostic Importance} (DI) measures the probability that component $i
 
 This is calculated by determining the conditional probability of component failure given system failure, normalized by the component's failure probability.
 
-\paragraph{Criticality Importance}
+\subsection{Criticality Importance}
 The \emph{Criticality Importance} (CRI) combines the Marginal Importance with the probability of component failure. It measures the contribution of component $i$ to the overall system failure probability.
 
 \[
@@ -47,7 +47,7 @@ The \emph{Criticality Importance} (CRI) combines the Marginal Importance with th
 
 This is computed by multiplying the Marginal Importance by the ratio of component failure probability to system failure probability.
 
-\paragraph{Risk Achievement Worth}
+\subsection{Risk Achievement Worth}
 The \emph{Risk Achievement Worth} (RAW) measures the factor by which system failure probability increases when component $i$ is assumed to have failed. It indicates the importance of maintaining the current reliability of the component.
 
 \[
@@ -56,7 +56,7 @@ The \emph{Risk Achievement Worth} (RAW) measures the factor by which system fail
 
 RAW is computed by comparing the system failure probability when the component is assumed failed to the baseline system failure probability.
 
-\paragraph{Risk Reduction Worth}
+\subsection{Risk Reduction Worth}
 The \emph{Risk Reduction Worth} (RRW) measures the factor by which system failure probability decreases when component $i$ is assumed perfectly reliable. It indicates the potential value of improving component reliability.
 
 \[

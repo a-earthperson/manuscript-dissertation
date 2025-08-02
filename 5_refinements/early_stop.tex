@@ -5,15 +5,15 @@
 \chapter{On-the-Fly Updates to Convergence Policy}
 \label{sec:convergence_criterion}
 
-Monte--Carlo probability estimators accrue sampling error that decays only at
-rate~$\mathcal{O}(1/\sqrt{n})$ with the number of Bernoulli trials $n$.
-Running indefinitely therefore yields diminishing returns.
-A principled \emph{convergence criterion} is required to decide when further
-sampling ceases to be cost--effective.  This section formalizes the stopping
-rule adopted by the solver, combining classical confidence--interval analysis
-with information--theoretic diagnostics.  The notation introduced in
-Section~\ref{sec:kernel_execution_model} remains in force; in particular each
-node $v\!\in\!\mathcal{V}$ is evaluated over $T$ Monte--Carlo iterations with
+Monte–Carlo probability estimators suffer from a sampling error that vanishes only as $\mathcal{O}\!\bigl(1/\sqrt{n}\bigr)$ with the number of Bernoulli trials $n$. Beyond a certain point additional samples yield diminishing returns, so a principled \emph{convergence policy} must dictate when computation may be halted. We adopt a composite policy that synthesizes three complementary viewpoints on uncertainty:
+
+\begin{enumerate}
+\item \textbf{Frequentist margin-of-error} — classical Wald bounds in linear and logarithmic probability space guarantee nominal coverage of the unknown success probability.
+\item \textbf{Bayesian credible intervals} — a Jeffreys-prior posterior quantifies belief updating at any sample size and excels for rare events.
+\item \textbf{Information-theoretic gain} — the reduction in Shannon entropy after each batch measures how much new information the latest data convey about the parameter itself.
+\end{enumerate}
+
+The notation introduced in Section~\ref{sec:kernel_execution_model} remains in effect; in particular each node $v\!\in\!\mathcal{V}$ is evaluated over $T$ Monte--Carlo iterations with
 $N\!=\!B P \omega$ trials per iteration.
 
 % ----------------------------------------------------------------------------
@@ -21,7 +21,7 @@ $N\!=\!B P \omega$ trials per iteration.
 \label{subsec:conv_point_estimates}
 
 Let $s_v$ be the number of one--bits observed for node~$v$ after $T$ iterations
-(Section~\ref{sec:tally_kernel}).  The unbiased estimator and its standard
+(Chapter~\ref{sec:tally_kernel}).  The unbiased estimator and its standard
 error are
 \begin{equation}
   \widehat{p}_v \;=\; \frac{s_v}{T N},
@@ -31,7 +31,7 @@ error are
   \label{eq:p_hat_sigma_hat}
 \end{equation}
 Assuming $T N \widehat{p}_v$ and $T N\bigl(1-\widehat{p}_v\bigr)$ both exceed
-roughly~$10$, the Central Limit Theorem implies the \emph{half--width}
+roughly~$10$\cite{AgrestiCoull1998}\footnote{A widely cited “$np\ge10$’’\cite{AgrestiCoull1998} \cite{BrownCaiDasGupta2001}}, the Central Limit Theorem implies the \emph{half--width}
 \begin{equation}
   h_v(z) \;=\; z\,\widehat{\sigma}_v
   \label{eq:half_width}
@@ -40,7 +40,22 @@ contains $\widehat{p}_v$ inside a two--sided normal confidence interval with
 probability $\operatorname{erf}(z/\sqrt{2})$.
 
 % ----------------------------------------------------------------------------
-\section{Linear--Space Margin--of--Error Criterion}
+\section{Competing Statistical Paradigms}
+\label{subsec:conv_paradigms}
+
+Monte--Carlo early-stopping can be formalized either in a
+\emph{frequentist} or a \emph{Bayesian} decision-theoretic framework.
+Both paradigms aim to certify that the estimator $\widehat{p}_v$ lies within a tolerance band around the (unknown) truth $p_v$, yet they differ in the interpretation of probability and in how uncertainty is propagated.
+
+\begin{itemize}
+  \item \textbf{Frequentist (Wald) policy:} randomness is limited to the sampling process; $p_v$ is treated as fixed and confidence intervals derive from large-sample normal theory.
+  \item \textbf{Bayesian policy:} treats $p_v$ itself as random with a prior distribution and bases inference on the posterior credible interval.
+\end{itemize}
+
+Neither policy strictly dominates the other: Wald intervals are (marginally) computationally cheaper and asymptotically exact; Bayesian intervals are exact at \emph{any} sample size and exhibit superior coverage for rare events. We therefore adopt a \emph{dual-policy} architecture, halting the computation once \emph{all} monitored nodes satisfy the tightest criterion.
+
+% ----------------------------------------------------------------------------
+\section{Frequentist (Wald) Margin--of--Error Criterion}
 \label{subsec:lin_margin}
 
 A user supplies a relative margin--of--error $\varepsilon_{\mathrm{rel}}\!\in\!(0,1)$
@@ -62,6 +77,49 @@ Inserting~\eqref{eq:half_width} gives the minimum sample budget
 \end{equation}
 Hence additional trials are scheduled until $T N\ge N_{\varepsilon}^{(v)}$ for
 \emph{every} monitored node.
+
+\subsection*{Interpretation.} Equation~\eqref{eq:trials_required_lin} stems from the textbook formula $N\ge z^{2}p(1-p)/\varepsilon^{2}$, implicitly assuming $p_v \approx \widehat{p}_v$. In finite samples the approximation may underestimate the true half-width whenever $\widehat{p}_v$ lies in the extreme tails. The Bayesian policy introduced next remedies this limitation by integrating over posterior uncertainty instead of relying on a single point estimate.
+
+% ----------------------------------------------------------------------------
+\section{Bayesian Credible--Interval Criterion}
+\label{subsec:bayes_margin}
+
+\subsection{Jeffreys Prior and Posterior Distribution}
+
+Adopt the non-informative Jeffreys prior for a Bernoulli proportion,
+\[
+  \pi(p_v) \;=\; \mathrm{Beta}\!\bigl(\tfrac12,\tfrac12\bigr),
+  \qquad 0 < p_v < 1,
+\]
+which is invariant under re-parametrization and yields near-optimal frequentist coverage.  After observing $s_v$ successes and $f_v=T N-s_v$ failures the posterior is
+\[
+  p_v \mid \mathbf{Y}_v \;\sim\; \mathrm{Beta}\!\bigl(\alpha,\beta\bigr),
+  \quad (\alpha,\beta)=\bigl(s_v+\tfrac12,\,f_v+\tfrac12\bigr).
+\]
+
+\subsection{Central $(1-\alpha)$ Credible Interval}
+
+Let $0<\gamma<1$ denote the target two-sided credibility.   With $t=(1-\gamma)/2$ we form
+\[
+  C^{\mathrm{Bayes}}_{v,\gamma}=\bigl[q_t,\,q_{1-t}\bigr],
+\]
+where $q_q$ is the $q$-quantile of $\mathrm{Beta}(\alpha,\beta)$.  Its half--width is
+\[
+  h_v^{\mathrm{Bayes}}(\gamma)=\frac{q_{1-t}-q_t}{2}.
+\]
+
+\subsubsection{Stopping Criterion}
+
+Define a relative tolerance $\varepsilon_{\mathrm{rel}}^{\mathrm{Bayes}}$ identical to that used in linear space.  Convergence is declared when
+\begin{equation}
+  \frac{h_v^{\mathrm{Bayes}}(\gamma)}{\widehat{p}_v} \;\le\; \varepsilon_{\mathrm{rel}}^{\mathrm{Bayes}},
+  \label{eq:bayes_conv}
+\end{equation}
+which rearranges to the sample--size forecast
+\begin{equation}
+  N_{\mathrm{Bayes}}^{(v)} \;=\;\biggl\lceil \frac{z^{2}\,p_v(1-p_v)}{\bigl(\varepsilon_{\mathrm{rel}}^{\mathrm{Bayes}}\,\widehat{p}_v\bigr)^{2}} - (\alpha+\beta+1) \biggr\rceil.
+  \label{eq:trials_required_bayes}
+\end{equation}
 
 % ----------------------------------------------------------------------------
 \section{Logarithmic--Space Refinement}
@@ -102,7 +160,7 @@ which translates into a second sample--size forecast
 \end{equation}
 
 % ----------------------------------------------------------------------------
-\section{Information--Theoretic Progress Monitor}
+\section{Tracking Shannon Information Gain}
 \label{subsec:info_gain}
 
 The preceding criteria are variance--based and symmetric around
@@ -124,80 +182,200 @@ Sampling is considered \emph{saturated} once
   I_{\text{batch}} \;<\; I_{\min},
   \label{eq:info_stop}
 \end{equation}
-for a user--defined threshold $I_{\min}$ (default $\approx 10^{-4}$ bits).
+for a user--defined threshold $I_{\min}$ (default $\approx 10^{-4}$ bits). Treat the unknown success probability $p_v$ as a random variable with a
+Jeffreys prior $\operatorname{Beta}(\tfrac12,\tfrac12)$.  After $s$ successes
+and $f$ failures the posterior is $\operatorname{Beta}(\alpha,\beta)$ with
+$(\alpha,\beta)=(s+\tfrac12,\,f+\tfrac12)$.  Its Shannon differential
+entropy
+\begin{equation}
+  H\bigl(\operatorname{Beta}(\alpha,\beta)\bigr)
+  = \ln\!\bigl(\operatorname{B}(\alpha,\beta)\bigr)
+    - (\alpha-1)\,\psi(\alpha)
+    - (\beta-1)\,\psi(\beta)
+    + (\alpha+\beta-2)\,\psi(\alpha+\beta)
+  \quad[\text{nats}],
+\end{equation}
+quantifies the average message length required to encode $p_v$ under an
+ideal code.  Converting $\ln$ to base~2 multiplies the result by
+$1/\ln 2$, yielding \emph{bits} as the unit.  The increment
+\eqref{eq:info_gain} is therefore the mutual information between the most
+recent batch of data and $p_v$.
+
+\subsubsection*{Interpretation.}  A value $I_{\text{batch}}=10^{-3}$ means the
+posterior uncertainty has shrunk by one thousandth of a bit.  In coding
+terms the optimal binary description of $p_v$ is now $0.1\,\%$ shorter
+than before the batch was processed.
+
+% -----------------------------------------------------------------------------
+\subsection{Units, Range and Practical Thresholds}
+\label{subsubsec:info_units}
+
+\begin{itemize}
+  \item \textbf{Units.}  Bits ($\log_2$ of a probability measure).
+  \item \textbf{Upper bound.}  A single Bernoulli trial can convey at most
+        one bit of information.  Under Jeffreys' prior the first few
+        batches typically contribute $0.5$--$0.8$ bits; thereafter the gain
+        decays rapidly.
+  \item \textbf{Asymptotic decay.}  For large $\alpha+\beta$ the series
+        expansion of $H$ gives $I_{\text{batch}}\approx(2\ln 2)^{-1}
+        (\alpha+\beta)^{-1}$, i.e.
+        $\mathcal{O}\!\bigl(N^{-1}\bigr)$ with $N$ the cumulative sample
+        size.
+  \item \textbf{Threshold choice.}  Setting $I_{\min}\approx10^{-4}$ bits
+        balances two objectives: (i) the numerical precision of double
+        floating--point ($\approx10^{-15}$) and (ii) the overhead of an
+        extra Monte--Carlo iteration relative to the cost of writing an
+        output record.  Empirically the wall--clock savings plateau once
+        $I_{\min}$ falls below $10^{-4}$.
+\end{itemize}
+
+% -----------------------------------------------------------------------------
+This entropy-based convergence criteria complements our variance-based criteria well for a few reasons.
+
+\begin{enumerate}
+  \item \emph{Scale invariance.}  Because entropy is dimensionless it
+        permits uniform interpretation across nodes regardless of the
+        magnitude of $p_v$.
+  \item \emph{Early plateau detection.}  Half--width based criteria can
+        stagnate when $\widehat{p}_v$ changes slowly; entropy continues to
+        decrease monotonically as soon as \emph{any} information is gained.
+  \item \emph{Guaranteed non--negativity.}  The mutual information is always
+        non–negative, so the inequality \eqref{eq:info_stop} cannot be
+        violated after it first becomes true.
+\end{enumerate}
+
+Collectively these properties justify the inclusion of
+$I_{\text{batch}}$ in the composite rule (§\,\ref{subsec:composite_rule})
+and establish a principled, information--optimal stopping condition.
+
+% ----------------------------------------------------------------------------
 
 % ----------------------------------------------------------------------------
 \section{Composite Stopping Rule}
 \label{subsec:composite_rule}
 
-Define the per--node forecasts
+Having derived four complementary precision forecasts—linear-space Wald ($N_{\varepsilon}^{(v)}$), log-space Wald ($N^{(v)}_{\log}$), Bayesian credible–interval ($N^{(v)}_{\mathrm{Bayes}}$), and an information-theoretic forecast ($N_{\mathrm{info}}^{(v)}$) obtained from the asymptotic decay of Shannon information—we now fuse them into a \emph{single, conservative budget}.  The guiding principle is simple: if \emph{any} viewpoint still demands additional evidence, sampling must continue.  The information-theoretic forecast follows from the large-sample approximation $I_{\text{batch}}\approx\bigl(2\ln 2\bigr)^{-1}N^{-1}$ (cf.\ §\,\ref{subsubsec:info_units}) and reads
+
 \begin{equation}
-  N^{(v)}_{\text{req}} \;=\; \max\Bigl(N_{\varepsilon}^{(v)},\;N^{(v)}_{\log}\Bigr).
+  N_{\mathrm{info}}^{(v)}
+  \;=\;
+  \bigl\lceil (2\ln 2)\,I_{\min}^{-1} \bigr\rceil.
+  \label{eq:n_info_node}
+\end{equation}
+
+Combining all four budgets gives
+\begin{equation}
+  N^{(v)}_{\text{req}} \;=\; \max\!\Bigl(N_{\varepsilon}^{(v)},\; N^{(v)}_{\log},\; N_{\mathrm{Bayes}}^{(v)},\; N_{\mathrm{info}}^{(v)}\Bigr).
   \label{eq:n_req_node}
 \end{equation}
 Let $N_{\text{req}}=\max_{v\in\mathcal{V}}N^{(v)}_{\text{req}}$.  The run
 terminates the first time both conditions hold:
 \begin{enumerate}
   \item \textbf{Precision achieved:} $T N \ge N_{\text{req}}$.  Every monitored
-        node meets \eqref{eq:lin_conv} \emph{and}\,\eqref{eq:log_conv} at the
+        node meets \eqref{eq:lin_conv}, \eqref{eq:log_conv}, and \eqref{eq:bayes_conv} at the
         requested confidence level.
   \item \textbf{Diminishing returns:} the most recent batch satisfies
         \eqref{eq:info_stop}, signaling that further sampling conveys less
         than~$I_{\min}$ bits of new information.
 \end{enumerate}
 The second clause rarely triggers before the first but provides robustness
-when variance estimates are noisy during early burn--in.
+when variance estimates are noisy during early burn--in. In practice, after every Monte--Carlo iteration, we  update the three projected budgets, check the information--gain threshold,
+and decide whether another iteration is warranted.
+
+% ----------------------------------------------------------------------------
+\section{Interaction with External Budgets}
+\label{subsec:conv_budget}
+% ----------------------------------------------------------------------------
+
+Real-world deployments rarely afford an unlimited sampling horizon: a solver is
+often constrained not only by a prescribed \emph{iteration budget} but also by a
+\emph{wall-clock budget}.  Let  
+
+\[
+  T_{\max}\in\mathbb{N}            \quad\text{and}\quad
+  \tau_{\max}\in\mathbb{R}_{>0}
+\]
+
+denote the maximum number of Monte–Carlo iterations and the maximum permissible
+wall-clock time, respectively.  Define  
+
+\[
+  T_{\varepsilon}
+    \;=\;
+    \Bigl\lceil N_{\text{req}}/N\Bigr\rceil ,
+    \qquad\qquad
+  T_{\tau}
+    \;=\;
+    \min\Bigl\{\,t\in\mathbb{N}\;\bigl|\;
+                 \tau(t)\ge\tau_{\max}\Bigr\},
+\]
+
+where $N_{\text{req}}$ is the composite sample budget from
+Eq.~\eqref{eq:n_req_node}, $N=B P \omega$ is the trial count per iteration, and
+$\tau(t)$ records the elapsed wall-clock time after $t$ iterations.  The
+\emph{effective stopping time} of the solver is therefore
+
+\begin{equation}
+  T^\star
+  \;=\;
+  \min\!\bigl\{
+          T_{\varepsilon},\;
+          T_{\max},\;
+          T_{\tau}
+        \bigr\}.
+  \label{eq:Tstar}
+\end{equation}
+
+Equation~\eqref{eq:Tstar} formalizes a simple yet powerful rule: sampling ceases
+as soon as \emph{any} of the three limits is hit.  The convergence criterion
+($T_{\varepsilon}$) guarantees statistical reliability, $T_{\max}$ enforces an
+upper bound on computational effort measured in iterations, and
+$T_{\tau}$ prevents a runaway execution in wall-clock time whenever individual
+iterations are more expensive than anticipated.
+
+\paragraph*{Practical implications.}  If the external budgets are large
+($T_{\max},\tau_{\max}\rightarrow\infty$) the solver reverts to a
+purely precision-driven regime, halting at $T_{\varepsilon}$.  Conversely, when
+either budget is small the risk of non-convergence is quantified by the
+residual half-widths and information gain at $T^\star$; these diagnostics allow
+the practitioner to evaluate whether additional resources are warranted.
+
+The next subsection distills Eq.~\eqref{eq:Tstar} into an operational
+control loop whose structure mirrors the logical precedence of the three
+terminating events.
 
 % ----------------------------------------------------------------------------
 \section{Algorithmic Workflow}
 \label{subsec:workflow}
+% ----------------------------------------------------------------------------
 
-\begin{algorithm}[H]
-  \caption{Adaptive early--stopping procedure per node $v$}
+\begin{algorithm}
+  \caption{Adaptive early-stopping procedure per node $v$}
   \label{alg:convergence}
   \begin{algorithmic}[1]
-    \Require Target $\varepsilon_{\mathrm{rel}},\varepsilon^{\log}$; confidence $z$; \vspace{1pt}
-    \State Initialize $s_v\gets 0$, $f_v\gets 0$, $(\alpha,\beta)\gets(\tfrac12,\tfrac12)$
-    \While{not converged}
-      \State Run one Monte--Carlo iteration and tally $(\Delta s,\Delta f)$
+    \Require Relative tolerances $\varepsilon_{\mathrm{rel}},\varepsilon^{\log}$;
+            confidence $z$;
+            iteration budget $T_{\max}$;
+            time budget $\tau_{\max}$
+    \State $\tau_{\mathrm{start}}\gets$ current wall-clock time
+    \State Initialize $s_v\gets0$, $f_v\gets0$, $(\alpha,\beta)\gets(\tfrac12,\tfrac12)$
+    \While{\textbf{true}}
+      \State \textbf{if} elapsed\_time$(\tau_{\mathrm{start}}) \ge \tau_{\max}$ \textbf{then break}
+      \State \textbf{if} iteration\_count $\ge T_{\max}$ \textbf{then break}
+      \State Run one Monte–Carlo iteration and tally $(\Delta s,\Delta f)$
       \State $s_v\mathrel{+}=\Delta s$, \quad $f_v\mathrel{+}=\Delta f$
       \State Update $(\alpha,\beta)$ and compute $I_{\text{batch}}$ via~\eqref{eq:info_gain}
       \State Evaluate $\widehat{p}_v$, $\widehat{\sigma}_v$ from~\eqref{eq:p_hat_sigma_hat}
-      \State Compute $N_{\varepsilon}^{(v)}$, $N^{(v)}_{\log}$
-      \State \textbf{Converged} $\Leftarrow$ \eqref{eq:n_req_node} and~\eqref{eq:info_stop}
+      \State Compute $N_{\varepsilon}^{(v)}$, $N^{(v)}_{\log}$, $N_{\mathrm{Bayes}}^{(v)}$, $N_{\mathrm{info}}^{(v)}$
+      \State \textbf{if} \eqref{eq:n_req_node} \textbf{and} \eqref{eq:info_stop} \textbf{hold then break}
     \EndWhile
-    \State \Return $\widehat{p}_v$, CI, diagnostics
+    \State \Return $\widehat{p}_v$, credible intervals, diagnostics
   \end{algorithmic}
 \end{algorithm}
-Algorithm~\ref{alg:convergence} runs in amortized $\mathcal{O}(1)$ time per
-iteration: all statistics derive from constant--time updates of $(s_v,f_v)$
-and the digamma evaluations in~\eqref{eq:info_gain} are scalar.
 
-% ----------------------------------------------------------------------------
-\section{Computational Complexity}
-\label{subsec:conv_complexity}
-
-The computational overhead of convergence monitoring is negligible relative to
-the sampling kernels.  Each tally update costs one integer addition and a
-handful of floating--point operations per node, i.e.
-\begin{equation}
-  \mathcal{O}\bigl(|\mathcal{V}|\bigr) \text{ host FLOPs per iteration.}
-\end{equation}
-Because these calculations are batched on the CPU and overlap with device
-kernels, the wall--clock impact stays below~1\,\% even for graphs with
-$|\mathcal{V}|>10^{4}$.
-
-% ----------------------------------------------------------------------------
-\section{Interaction with Fixed Iteration Budgets}
-\label{subsec:conv_budget}
-
-When an \emph{a priori} iteration budget $T_{\max}$ is imposed (e.g., due to
-wall--time constraints) the stopping rule collapses to
-\begin{equation}
-  T \;=\; \min\!\bigl\{T_{\max},\;\lceil N_{\text{req}}/N \rceil\bigr\}.
-\end{equation}
-If $T_{\max}$ is reached before the precision targets, the solver returns the
-current estimates along with their realized half--widths so that the user can
-assess residual uncertainty.
-
-% ============================================================================ 
+The loop tests the time budget first, followed by the iteration budget, and
+finally the precision criteria.  This ordering ensures that external contracts
+(\emph{time} and \emph{iterations}) are honored even when variance estimates
+are still immature.  At the same time, Eq.~\eqref{eq:Tstar} guarantees that
+whenever resources permit, the run terminates exclusively on the basis of
+statistical sufficiency.

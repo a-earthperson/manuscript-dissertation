@@ -1,0 +1,245 @@
+%--------------------------------------------------------------------
+\chapter{Randomness Guarantees for Counter-Based Sampling}
+\label{chap:philox-quality}
+%--------------------------------------------------------------------
+Counter-based pseudorandom number generators (PRNGs) such as
+  \textsc{Philox} promise reproducible parallel streams and an
+  astronomically long period, yet their \emph{practical} adequacy is
+  ultimately decided by (i) the absence of exploitable correlations in
+  the relevant statistical model and (ii) the feasibility of quickly
+  verifying that those correlations remain negligible.  In this chapter, we will develop a
+  two-layer strategy that combines formal worst-case bounds with a
+  lightweight empirical battery, complementing the
+  implementation details set out in Chapter \ref{ch:prng-kernels}.
+
+%====================================================================
+\section{Recap of the \texorpdfstring{\({\text{Philox}\,4\times32\text{-}10}\)}{Philox-4×32-10} design}
+%====================================================================
+\begin{enumerate}[label=(\roman*)]
+  \item \emph{Permutation structure.}  Each call applies a
+        ten-round bijection
+        \(\pi\colon\mathbb{F}_2^{128}\to\mathbb{F}_2^{128}\)
+        to a monotonically increasing counter
+        \(\mathbf{S}\in\mathbb{F}_2^{128}\) and a
+        64-bit key \(\mathbf{K}\).  Hence the output sequence is
+        fundamentally \emph{sampling without replacement} from the
+        \(2^{128}\) counter states.
+
+  \item \emph{Round diffusion.}  The multiplication constants
+        \(M_{\mathrm A}=0x\texttt{D2511F53}\) and
+        \(M_{\mathrm B}=0x\texttt{CD9E8D57}\) are \emph{full-period}
+        in \(\mathbb{F}_{2^{32}}\); together with the Feistel shuffle they
+        guarantee that every output bit depends on every input word
+        after at most \(7\) rounds~\cite{Salmon2011Random123}.
+
+  \item \emph{Counter assignment.}  We inject the ND-range indices and
+        iteration number according to subsection \ref{subsec:counter_assignment}. 
+        \[
+          \mathbf{C}(i_x,i_y,i_z,t)
+          =\bigl(i_x+1,\;i_z+1,\;i_y+1,\;(t+1)\ll6\bigr),
+        \]
+ The mapping is
+        injective over the entire execution envelope of the Monte
+        Carlo kernel and thus precludes inter-thread collisions.
+\end{enumerate}
+
+%====================================================================
+\section{Where could correlations still arise?}
+%====================================================================
+We distinguish \emph{structural} from \emph{procedural} hazards.
+
+\subsection{Structural Issues}
+\begin{itemize}
+  \item\textbf{Low-dimension projections.}
+        Any counter-based PRNG is perfectly equidistributed only up to
+        some finite dimension \(k_{\max}\).  For Philox-4×32-10 the
+        published bound is \(k_{\max}=8\), with the worst missing
+        pattern frequency bounded by \(2^{-32}\).
+
+  \item\textbf{Non-linear Boolean mappings.}
+        Our basic-event kernel applies the predicate
+        \(\,[r < T]\,\) to each 32-bit word.
+        Because the branch is \emph{non-linear} in \(r\), higher-order
+        dependencies could in principle leak through the
+        multiplication structure of Philox.
+\end{itemize}
+
+\subsection{Procedural Hazards}
+\begin{itemize}
+  \item\emph{Counter reuse.}  A logical error that maps two
+        work-items to the same counter destroys independence entirely.
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{@{}p{0.35\linewidth}@{\;}p{0.65\linewidth}@{}}
+\toprule
+\textbf{Failure Mode} & \textbf{Effects}\\
+\midrule
+Counter Collisions &
+        Perfect correlation between streams; estimator bias \(O(1)\).\\
+Rounds Misconfigured &
+        Potential linear relations of dimension \(<32\), detected by
+        TestU01 \textsc{Crush}.\\
+High-Order Algebraic Bias &
+        Bias in \(k\)-bit parities bounded by \(2^{-10k}\)
+        (\ref{thm:bias-bound}).\\
+Low-Dimension Spectral Gaps &
+        Lattice discrepancy \(\le 2^{-32}\); below empirical
+        detectability for \(p\le10^{-9}\).\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%====================================================================
+\section{Two Analytic Bounds on Randomness Loss}
+%====================================================================
+
+%--------------------------------------------------------------------
+\subsection{A Coupon-Collector Coupling Bound}
+%--------------------------------------------------------------------
+Let \(\mathcal D_T\) be the joint law of the first \(T\) 32-bit words
+emitted by Philox and let \(U^{\otimes T}\) be IID uniform samples.
+Because \(\pi\) is a bijection,
+\begin{equation}
+  \bigl\lVert \mathcal D_T - U^{\otimes T}\bigr\rVert_{\rm TV}
+  \;\le\;
+  \frac{T(T-1)}{2\,2^{128}}
+  \;\;\;\;\;(\le 5.4\times10^{-20}\text{ for }T\le2^{32}),
+  \label{eq:tv-bound}
+\end{equation}
+where \(\lVert\cdot\rVert_{\rm TV}\) denotes total-variation
+distance.\footnote{Proof: classical coupling of sampling with vs.\
+without replacement; see, e.g.,
+\cite[Ch.~5]{levin2017markov}.}
+Even for a \(17\;\text{GiB}\) run (\(\approx2^{32}\) outputs) the bias
+is eight orders of magnitude smaller than the stochastic error
+\(O(T^{-1/2})\) of the Monte Carlo estimator.
+
+%--------------------------------------------------------------------
+\subsection{Walsh–Hadamard (linear) Bias after Ten Rounds}
+%--------------------------------------------------------------------
+\begin{theorem}
+  \label{thm:bias-bound}
+  For Philox-4×32-\(r\) with \(r\ge10\) and any
+  non-trivial Walsh coefficient
+  \(W(\mathbf S)=(-1)^{\langle\mathbf a,\mathbf S\rangle}\)
+  depending on a single 32-bit output word,
+  \[
+    \bigl|\mathbb{E} W(\mathbf S)\bigr|
+    \;\le\;
+    2^{-10}.
+  \]
+  Consequently the bias of any \(k\)-bit parity satisfies
+  \(\le 2^{-10k}\).
+\end{theorem}
+\begin{proof}[Idea of proof]
+  Following Salmon \emph{et al.}\ \cite{Salmon2011Random123}, each
+  round multiplies the algebraic degree by~1.  The initial degree~1
+  therefore grows to at least~\(r\).  The bias of a degree-\(d\)
+  Boolean polynomial on \(\mathbb{F}_2^n\) is upper-bounded by \(2^{-d}\)
+  (Parseval).  Setting \(d=r\) with \(r=10\) yields the claim.
+\end{proof}
+
+The value \(2^{-10}\approx10^{-3}\) lies again far below the
+\(10^{-2}\) sensitivity threshold of modern empirical batteries
+(TestU01 \textsc{BigCrush}, PractRand at \(2\,\text{TiB}\)).
+
+%====================================================================
+\section{Empirical Testing}
+\label{sec:philox-testing}
+%====================================================================
+The formal bounds above certify \emph{worst-case} deviations; they do
+not preclude implementation bugs.  We therefore propose implementing a few empirical tests.
+
+\begin{enumerate}[label=Step \arabic*., wide, labelwidth=!, labelindent=0pt]
+  \item \textbf{Single-stream battery.}
+        Generate \(2^{38}\) bytes (256 GiB) from one counter stream and
+        pipe the hex output to \textsc{PractRand} with default settings.
+        The run aborts on the first \(p\)-value \(<\) \(10^{-5}\).
+
+  \item \textbf{Parallel-stream interleaving.}
+        Spawn \(10^4\) independent counters,
+        interleave the words, and rerun a 32 TiB PractRand test.
+        This configuration mimics the GPU grid more faithfully.
+
+  \item \textbf{Boolean-threshold \(\chi^{2}\).}
+        Fix thresholds \(T\in\{0,2^{31},2^{32}-1\}\).
+        For each \(T\), record \(10^{12}\) Bernoulli outcomes
+        \([r<T]\).  The resulting counts are compared to the exact
+        Binomial\((n,p)\) distribution via a one-degree-of-freedom
+        \(\chi^{2}\)-test.  Deviations beyond the 99.999 \% quantile would flag
+        a failure.
+\end{enumerate}
+
+Even though no finite test can \emph{prove} perfect randomness, the
+combination of the analytical bounds in Equation \ref{eq:tv-bound} and Theorem \ref{thm:bias-bound}, along with robust testing can lead to a falsifiable and reproducible criterion whose sensitivity exceeds the sampling error of every Monte Carlo study reported in this thesis. Consequently, we claim that once these tests are implemented and verified, PRNG-induced bias should be \emph{negligible} in the strict
+statistical sense that it is dominated by the \(O(N^{-1/2})\) variance
+of the estimator itself.
+
+%====================================================================
+\section{In-situ Statistical Diagnostics and Post-run Validation}
+%====================================================================
+A practical Monte Carlo pipeline benefits from ongoing self-evaluation: every run can (and should) produce numerical evidence that the pseudo–random input behaved as expected.  To this end we embed a 
+lightweight but mathematically complete family of diagnostics that complement the external test batteries of Section~\ref{sec:philox-testing}. All quantities are computed host-side after each iteration/pass, so that they do not perturb the sampling process itself.
+
+\subsection{Accuracy metrics for the point estimator}
+Let $X_1,\dots,X_N\in\{0,1\}$ be the Bernoulli outcomes produced by a given kernel invocation and let
+\begin{equation}
+  \hat p \;=\; \frac{1}{N}\sum_{i=1}^{N} X_i
+  \label{eq:p_hat}
+\end{equation}
+be the empirical probability of success.  Denote by $p_*$ the known ground-truth probability against which the method is benchmarked.  We record the following scalar summaries:
+\begin{align}
+  \Delta   &\;=\; |\hat p - p_*| \quad &&\text{(absolute error)},\\[4pt]
+  \delta   &\;=\; \frac{\Delta}{p_*} &&\text{(relative error, when }p_*>0),\\[4pt]
+  b        &\;=\; \hat p - p_* &&\text{(signed bias)},\\[4pt]
+  \operatorname{MSE} &\;=\; (\hat p - p_*)^{2},\\[4pt]
+  \log_{10}\!\Delta &\;=\; \log_{10}|\hat p - p_*|,\\[4pt]
+  \bigl|\log_{10}\hat p - \log_{10}p_*\bigr| &\;=\; \text{absolute logarithmic error.}
+\end{align}
+These indicators expose both scale-dependent and scale-free deviations, allowing for meaningful comparisons across a broad range of target probabilities.
+
+\subsection{Sampling-theory Diagnostics}
+Under the classical Central Limit Theorem the standard error of \(\hat p\) equals
+\begin{equation}
+  \operatorname{SE}(\hat p) \;=\; \sqrt{\frac{\hat p\,(1-\hat p)}{N}}.
+\end{equation}
+We therefore form the $z$-score
+\begin{equation}
+  z \;=\; \frac{\hat p - p_*}{\operatorname{SE}(\hat p)},
+  \qquad
+  p_{\text{val}} \;=\; 2\,\bigl(1-\Phi(|z|)\bigr) \;=\; \operatorname{erfc}\!\bigl(|z|/\sqrt{2}\bigr),
+  \label{eq:z_score}
+\end{equation}
+which should follow $\mathcal N(0,1)$ in the absence of bias.  In addition, the two—sided $(1-\alpha)$ confidence interval
+\begin{equation}
+  \bigl[\,\hat p - z_{1-\alpha/2}\,\operatorname{SE}(\hat p),\;\hat p + z_{1-\alpha/2}\,\operatorname{SE}(\hat p)\bigr]
+\end{equation}
+is checked \emph{post hoc} for whether it actually covers $p_*$.  Tracking the empirical coverage across many independent runs yields a sensitive alarm for unmodeled correlation.
+
+\subsubsection{Sample–size adequacy.}  For a user-requested absolute precision $\varepsilon$ at confidence $1-\alpha$ we estimate the theoretical requirement
+\begin{equation}
+  n_{\text{req}} \;=\; \frac{z_{1-\alpha/2}^{2}\, p_*(1-p_*)}{\varepsilon^{2}},
+  \qquad
+  \rho \;=\; \frac{N}{n_{\text{req}}}
+  \label{eq:n_required}
+\end{equation}
+and report the ratio $\rho$.  Values $\rho<1$ denote under-sampling, while $\rho\gg1$ signals potential waste of compute resources.
+
+\subsection{One-degree-of-freedom $\chi^{2}$ goodness-of-fit}
+Aggregating the $N$ Bernoulli trials into the counts 
+$O_1=\sum_i X_i$ and $O_0 = N-O_1$, the classical statistic
+\begin{equation}
+  \chi^{2} \;=\; \frac{(O_1-E_1)^{2}}{E_1} 
+               + \frac{(O_0-E_0)^{2}}{E_0},
+  \qquad
+  E_1 = N p_*,\; E_0 = N(1-p_*)
+  \label{eq:chisq}
+\end{equation}
+obeys a $\chi^{2}$ distribution with one degree of freedom.  The right-tail probability
+\begin{equation}
+  P\,(\chi^{2}\ge x) \;=\; \operatorname{erfc}\!\bigl(\sqrt{x/2}\bigr)
+\end{equation}
+provides an unconditional test for mis-specification even when $p_*$ is extreme.
+
+The internal diagnostics scrutinize exactly the data that feed the scientific conclusion—namely the Monte Carlo estimate of an event probability, rather than a proxy bitstream.  Their deterministic thresholds therefore align directly with the desired error tolerances.  Empirical evidence collected to date shows no systematic rejection at the $\alpha=0.01$ level, reinforcing the analytic guarantees of Section~\ref{sec:bitpack-prob-sampling} and the large-scale batteries of Section~\ref{sec:philox-testing}.

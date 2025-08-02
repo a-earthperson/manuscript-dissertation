@@ -25,8 +25,8 @@ main node/.style={circle,draw,font=\sffamily\small\bfseries},
 terminal node/.style={rectangle,draw,font=\sffamily\small\bfseries}]
 
 \node[main node] (A) {$a$};
-\node[main node] (B) [below right of=A] {$b$};
-\node[main node] (C) [below left of=B] {$c$};
+\node[main node] (B) [below left of=A] {$b$};
+\node[main node] (C) [below right of=B] {$c$};
 
 \node[terminal node] (Z1) [below of=C] {1};
 \node[terminal node] (Z0) [right of=Z1,node distance=2.8cm] {0};

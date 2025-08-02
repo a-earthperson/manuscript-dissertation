@@ -1,12 +1,28 @@
 \chapter{Building a Data-Parallel Monte Carlo Probability Estimator}
 \label{chap:mc_solver}
 
-To handle massively parallel Monte Carlo evaluations of large-scale Boolean functions, we have developed a preliminary layered architecture that organizes computation in a topological graph. At the lowest level, each Boolean variable/basic event (e.g., a component failure) is associated with a random number generator to sample its truth assignment. We bit-pack these outcome, storing multiple Monte Carlo samples in each machine word to maximize computational throughput and reduce memory footprint. Subsequent layers consist of logically higher gates or composite structures that receive the bit-packed results from previous layers and combine them in parallel using coalesced kernels. By traversing the computation graph topologically, dependencies between gates and events are naturally enforced, so kernels for each layer can run concurrently once all prerequisite layers finish, resulting in high kernel occupancy and predictable throughput.
+To handle massively parallel Monte Carlo evaluations of large-scale Boolean functions, we have developed a feedforward-layer architecture that organizes computation in a topological graph. At the lowest level, each Boolean variable/basic event (e.g., a component failure) is associated with a random number generator to sample its truth assignment. We bit-pack these outcomes, storing multiple Monte Carlo samples in each machine word to maximize computational throughput and reduce memory footprint. Subsequent layers consist of logically higher gates or composite structures that receive the bit-packed results from previous layers and combine them in parallel using coalesced kernels. By traversing the computation graph topologically, dependencies between gates and events are naturally enforced, so kernels for each layer can run concurrently once all prerequisite layers finish, resulting in high kernel occupancy and predictable throughput.
 
 Section~\ref{sec:kernel_execution_model} formalizes how these kernels map the logical sampling workload onto a three–dimensional ND–range, introducing a consistent coordinate system $(i_x,i_y,i_z)$ and a rounding scheme that guarantees complete coverage without redundancy.  The remainder of this chapter adopts that notation.
 
-In practice, each layer is dispatched to an accelerator node using a data-parallel model implement using \acrshort{sycl}. The random number generation pipelines are counter-based, ensuring reproducibility and thread-safety even across millions or billions of samples. Gates that go beyond simple AND/OR logic--such as \acrshort{vot} operators--are handled by specialized routines that can exploit native popcount instructions for efficient threshold evaluations. As we progress upwards through the layered topology, each gate or sub-function writes out its bit-packed output, effectively acting as an input stream to the next layer.
+In practice, each layer is dispatched to an accelerator node using a data-parallel model ed using \acrshort{sycl}. The random number generation pipelines are counter-based, ensuring reproducibility and thread-safety even across millions or billions of samples. Gates that go beyond simple AND/OR logic--such as \acrshort{vot} operators--are handled by specialized routines that can exploit native popcount instructions for efficient threshold evaluations. As we progress upwards through the layered topology, each gate or sub-function writes out its bit-packed output, effectively acting as an input stream to the next layer.
 Throughout the simulation, online tallying kernels aggregate how often each node or gate evaluates to True. These tallies can then be turned into estimates of probabilities and sensitivity metrics on the fly. This approach also makes adaptive sampling feasible: if specific gates appear to dominate variance or are tied to particularly rare events, additional sampling can be allocated to their layer to refine estimates.
+
+% -----------------------------------------------------------------------------
+\section{Minimal Knowledge–Compilation Preprocessing for Monte-Carlo Sampling}
+\label{sec:mc_kc_preprocessing}
+
+Before any kernels are built, the solver applies a \emph{single, very light} compile pass whose only purpose is to shave off two gate types that would otherwise require special kernels:
+\begin{itemize}
+  \item \textbf{NULL gates} – a gate whose output is logically a no-op is deleted and any fan-out rewired directly to its input buffer.
+  \item \textbf{NOT gates} – instead of scheduling a one-input gate kernel, we tag the affected buffer with an \emph{inversion flag}.  Every subsequent kernel simply toggles the word with a bitwise~\texttt{\char`~} on read.
+\end{itemize}
+
+\subsection{Why such little knowledge–compilation?}  Classical KC pipelines (Section ~\ref{sec:unified_pra_dag}) strive for determinism or decomposability to enable \emph{exact} inference. Monte-Carlo evaluation requires no such restrictions. No other syntactic normalization is attempted: negations may appear at arbitrary depth, XOR or $k/n$ gates remain untouched, and literals are free to occur with both polarities in different contexts.  This choice maximizes semantic expressivity and succinctness – flattening or pushing down is possible by using a higher compilation flag, but not strictly necessary.
+
+
+% -----------------------------------------------------------------------------
+
 
 \input{4_proposed_solution/mc_solver/kernel}
 \input{4_proposed_solution/mc_solver/prng}

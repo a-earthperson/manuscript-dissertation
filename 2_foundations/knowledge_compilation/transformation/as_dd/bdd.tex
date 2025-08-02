@@ -29,10 +29,10 @@ main node/.style={circle,draw,font=\sffamily\small\bfseries},
 terminal node/.style={rectangle,draw,font=\sffamily\small\bfseries}]
 
 \node[main node] (A) {a};
-\node[main node] (B) [below left=1.6cm of A, xshift=0.6cm] {b};
-\node[main node] (C) [below right=1.6cm of A, xshift=-0.6cm] {c};
-\node[terminal node] (T1) [below=1.8cm of B] {1};
-\node[terminal node] (T0) [below=1.8cm of C] {0};
+\node[main node] (B) [below left=1.6cm of A] {b};
+\node[main node] (C) [below right=1.6cm of B, xshift=0.6cm] {c};
+\node[terminal node] (T1) [below=1.8cm of C, xshift=-1.2cm] {1};
+\node[terminal node] (T0) [right of=T1,node distance=2.8cm] {0};
 
 \path[every node/.style={font=\sffamily\scriptsize}]
 (A) edge[dashed] node[left]  {0} (T0)
