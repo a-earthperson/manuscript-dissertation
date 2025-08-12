@@ -4,7 +4,7 @@
 \begin{landscape}
 \begin{figure}[p]
     \centering
-    \includegraphics[width=1\textwidth]{figs/aralia/rel_log_error_vs_prob.png}
+    \includegraphics[width=1.38\textwidth]{figs/aralia/rel_log_error_vs_prob.png}
     \caption{Absolute error (Log-probability) for \acrfull{dpmc} vs \acrfull{mcub} and \acrfull{rea}}
     \label{fig:canopy_rel_error_plot_revies}
 \end{figure}
@@ -22,6 +22,9 @@ Figures~\ref{fig:conv_fig_01} and~\ref{fig:conv_fig_02} collate the updated conv
   \item the empirical $90\,\%$ and $99\,\%$ confidence bands (shaded regions), and
   \item, where available, the reference ``oracle'' probability (black dashed).
 \end{itemize}
+
+The remainder of the 41 convergence runs can be located in the Appendix.
+
 \begin{landscape}
 
 %% conv_fig_01
@@ -45,7 +48,14 @@ Figures~\ref{fig:conv_fig_01} and~\ref{fig:conv_fig_02} collate the updated conv
 \section{Throughput Benchmark}
 \begin{figure}[p]
     \centering
-    \includegraphics[width=1\textwidth]{figs/aralia/throughput_vs_nodes_by_device.png}
-    \caption{Absolute error (Log-probability) for \acrfull{dpmc} vs \acrfull{mcub} and \acrfull{rea}}
-    \label{fig:canopy_rel_error_plot_revies}
+    \includegraphics[width=1\textwidth]{figs/aralia/slides_nodes_vs_throughput.eps}
+    \caption{Throughput as function of graph size on multicore CPU, embedded GPU, and discrete GPU}
+    \label{fig:nodes_vs_throughput}
+\end{figure}
+
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=1\textwidth]{figs/aralia/slides_nodes_vs_convergence.eps}
+    \caption{Time to convergence for different convergence target, multicore CPU, embedded GPU, and discrete GPU}
+    \label{fig:nodes_vs_convergence}
 \end{figure}

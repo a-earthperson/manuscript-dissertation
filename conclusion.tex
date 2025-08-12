@@ -1,0 +1,200 @@
+% ============================================================================
+%  Conclusion and Future Work
+% ============================================================================
+\chapter{Conclusion and Future Work}
+\label{chap:conclusion}
+
+The preceding chapters have advanced a hardware--accelerated Monte--Carlo
+framework that re-imagines quantitative risk assessment from first principles:
+from the unification of event trees and fault trees into a single
+\emph{probabilistic directed acyclic graph} (PDAG), through a
+bit--parallel execution model that saturates commodity GPUs, to a suite of
+statistical diagnostics that certify estimator quality in real time.  The
+purpose of this chapter is threefold:
+\begin{enumerate}
+  \item Recapitulate the dissertation's principal contributions and empirical
+        findings;
+  \item Assess the methodological limitations that remain; and
+  \item Chart a research agenda that extends the present work toward an
+        end-to--end, industry--grade risk-analytics platform.
+\end{enumerate}
+
+% ---------------------------------------------------------------------------
+\section{Summary of Contributions}
+\label{sec:contrib_summary}
+
+\paragraph*{1. Holistic Modeling via Unified PDAGs.}  We demonstrated that the
+full spectrum of PRA artifacts—hundreds of event trees and thousands of fault
+trees—can be embedded in a single computation graph (Chapter~\ref{sec:unified_pra_dag}).
+The formulation preserves logical semantics while eliminating bookkeeping
+boundaries between top‐down and forward‐chaining analyses.
+
+\paragraph*{2. Hardware-Native Logic Gates.}  Threshold, cardinality,
+and related voting constructs were formalized as first-class citizens whose
+bit-packed kernels provably replicate AND/OR expansions
+(Chapter~\ref{chap:voter}).  The result is an exponential reduction in graph
+size—up to $\mathcal{O}(2^n/\!\sqrt{n})$ for worst–case fan-ins—without
+sacrificing estimator unbiasedness or variance.
+
+\paragraph*{3. Knowledge Compilation Re-examined.}  An eight-stage transformation
+pipeline was designed for Monte-Carlo rather than exact inference
+(Chapter~\ref{sec:kc_pipeline}).  By relaxing certain normal‐form constraints
+and introducing linear-time data structures, compile times fell from 1\,080~s to
+5.8~s (186×) on a representative $\mathrm{ATLEAST}(6/32)$ gate.
+
+\paragraph*{4. Bit-Parallel Execution Model.}  Layers of the PDAG are evaluated
+in lock-step by SYCL kernels that process 64 Bernoulli trials per machine word
+(Parts~III and IV).  Benchmarks on the 43-model Aralia dataset confirm
+\emph{fully saturated} memory bandwidth and arithmetic pipelines, with
+sub-percent relative error attained in $<5$~s for graphs containing $\sim\!10^3$
+unique events—even on entry-level consumer GPUs.
+
+\paragraph*{5. Rigorous Convergence Diagnostics.}  A composite stopping rule
+(Chapter~\ref{sec:convergence_criterion}) fuses frequentist, Bayesian, and
+information-theoretic criteria, ensuring that every estimate meets a
+user-specified margin of error while avoiding wasteful oversampling.
+
+\paragraph*{6. Domain-Specific Extensions.}  Common-cause failure modeling,
+first-order importance measures, and a practical importance-sampling scheme for
+rare events were integrated without altering kernel code paths (Part~IV).  Each
+extension carries formal proofs of unbiasedness and variance preservation.
+
+\paragraph*{7. Open-Source Reference Implementation.}  The entire framework is
+released under a permissive license, thereby lowering the barrier to
+third-party validation, audit, and reuse.
+
+% ---------------------------------------------------------------------------
+\section{Empirical Findings}
+\label{sec:empirical_findings}
+
+\begin{itemize}
+  \item \textbf{Graph Compression.}  Knowledge-compilation levels $C_2$–$C_4$
+already yield median gate-count reductions of 30 \%; final compiled graphs
+shrink by a median factor of 1.3× while preserving logical fidelity.
+  \item \textbf{Throughput and Scaling.}  On an NVIDIA RTX 3060 Laptop GPU the
+solver sustains $\approx\!5.8\times10^{9}$ Boolean operations \textit{per second},
+a 200–400× improvement over single-threaded CPU baselines.
+  \item \textbf{Estimator Quality.}  Across all Aralia models the empirical
+coverage of 99 \% confidence intervals exceeds 98.6 \%, confirming that the
+composite stopping rule is neither overly conservative nor prone to premature
+termination.
+  \item \textbf{Rare-Event Performance.}  Importance sampling lowers variance by
+up to two orders of magnitude for top-event probabilities below $10^{-6}$, but
+probabilities in the $10^{-8}$ regime still require prohibitively many samples
+on commodity hardware.
+\end{itemize}
+
+% ---------------------------------------------------------------------------
+\section{Limitations}
+\label{sec:limitations}
+
+Despite substantial progress, several constraints delimit the present
+framework’s applicability:
+\begin{description}[leftmargin=2.5em]
+  \item[Ultra-Rare Events] For probabilities $<10^{-8}$ the sample size needed
+        to achieve sub-percent precision remains computationally expensive even
+        with importance sampling.
+  \item[Hardware Dependence] Peak performance assumes wide SIMD lanes and high
+        memory bandwidth; CPU-only deployments incur 1–2 orders of magnitude
+        slower runtimes.
+  \item[Static Graphs] The methodology targets \emph{static} Boolean logic.
+        Time-dependent degrading components, repair policies, or scenario trees
+        with feedback loops are out of scope.
+  \item[Correlation Modeling] While common-cause failures are supported,
+        broader classes of statistical dependence (e.g.
+        epistemic‐aleatory mixtures, copulas) have not yet been integrated into
+        the bit-packed sampler.
+  \item[Verification and Validation] Industry-scale PRA models—such as the
+        Generic Pressurized Water Reactor benchmark—have yet to undergo
+        full-fidelity replication within mcSCRAM.
+\end{description}
+
+% ---------------------------------------------------------------------------
+\section{Future Work}
+\label{sec:future_work}
+
+The limitations above point to a fertile research agenda:
+
+\subsection{Variance-Reduction Beyond Importance Sampling}
+Importance sampling remains our primary defense against estimator blow-up in the tail, yet it is notoriously brittle: likelihood–ratio weights can explode, self-normalized estimators suffer when weight variance is high, and GPU reduction of double-precision weights stresses memory bandwidth.  A richer palette of variance-reduction strategies promises more reliable convergence across the entire probability spectrum:
+
+\begin{enumerate}
+  \item \textbf{Stratified and Latin–Hypercube Sampling (LHS).}  By forcing each stratum of the basic-event probability simplex to be represented exactly once per iteration, LHS lowers variance for smoothly varying response surfaces by up to an order of magnitude and reuses the existing bit-packing kernels with only a deterministic permutation of PRNG counters.
+  \item \textbf{Antithetic Variates.}  For coherent fault trees the mapping $(X\mapsto \lnot X)$ yields negatively correlated pairs.  Launching antithetic trajectories doubles work per thread but can halve variance at negligible implementation cost.
+  \item \textbf{Control Variates and Rao–Blackwellization.}  Gate-level surrogate models—e.g. logistic or polynomial fits updated on-the-fly—offer closed-form expectations that, when subtracted, act as low-cost control variates.  The correction occurs during the tally reduction and does not perturb the sampling kernel.
+  \item \textbf{Multi-Level / Multi-Fidelity Monte Carlo.}  Evaluate a hierarchy of approximations—coarse cut-set truncations, reduced bit-width kernels, or early-exit gate evaluations—and combine them with optimally chosen coefficients to achieve the canonical $\mathcal{O}(\epsilon^{-2})$ complexity with markedly smaller constants.
+  \item \textbf{Subset Simulation and Splitting.}  Particularly effective for top events with probabilities below $10^{-9}$, these algorithms recurse on nested conditional events rather than rely on exponentially small likelihood ratios, thereby avoiding the weight-degeneracy problem of extreme importance sampling.
+\end{enumerate}
+
+All five techniques map cleanly onto modern accelerators: strata and antithetic pairs correspond to extra kernel dimensions; control-variate adjustment is a post-kernel reduction; multi-level sampling reuses the compiled graph with altered fan-in; and subset simulation requires only a lightweight, GPU-resident event queue.  Integrating them would extend mcSCRAM’s reach to risk scenarios where the current importance-sampling prototype stalls.
+
+\subsection{Discrete-Event Simulation Engine}
+The static Boolean abstraction is well suited to snapshot risk metrics, yet many
+industries require explicit reasoning about \emph{when} failures occur, how long
+repairs take, and how operator interventions alter the hazard landscape.  A
+discrete–event simulation (DES) back-end would elevate mcSCRAM from a purely
+probabilistic calculator to a full life-cycle risk engine.
+
+\paragraph*{Event Calendar.}  A lock-free, GPU–resident event calendar—realized
+as a ring buffer or bucketed heap—would schedule state transitions while
+maintaining sub-microsecond synchronization overhead.
+
+\paragraph*{Hybrid Evaluation.}  Boolean layers continue to leverage the
+bit-parallel kernels; the DES layer merely dictates \emph{which} subset of
+nodes fire at each time stamp.  This preserves the compiled-graph investment
+while adding a temporal dimension.
+
+\paragraph*{Variable-Time Stepping.}  Techniques such as \emph{subset
+simulation} dovetail naturally with DES: busy early phases are simulated
+densely, whereas long quiescent intervals can be collapsed into single jumps,
+reducing the event calendar’s size without biasing results.
+
+\paragraph*{Validation Path.}  An incremental roadmap begins with mission-time
+availability models—exponential failure and repair—where analytical
+benchmarks exist, then extends to phased-mission and standby redundancy logic.
+
+\paragraph*{Scalability Considerations.}  Typical DES workloads involve $10^6$–$10^7$
+events, orders of magnitude fewer than Monte-Carlo samples, making them ideal
+for CPU–GPU pipelining: the CPU advances the calendar while the GPU processes
+batched Boolean evaluations in the background.
+
+A DES extension therefore promises accurate time-dependent risk metrics at
+interactive latencies, closing the gap between snapshot PRA and real-time
+condition monitoring.
+
+\subsection{Correlated Uncertainty Models}
+Incorporating copula-based or Bayesian network representations of component
+dependence will broaden the framework’s realism.  A first step is to embed
+vectorized random-field generators whose correlation structure aligns with
+bit-packed memory layouts.
+
+\subsection{Gradient-Based Parameter Learning}
+Chapter~\ref{sec:mc_importance_measures} hinted at automatic differentiation of
+Boolean circuits.  A full autodiff backend would unlock gradient descent over
+leaf probabilities or gate parameters, enabling data-driven calibration and
+model fitting (Part V).
+
+\subsection{Real-Time and Streaming Probabilistic Risk Assessment}
+By streaming input data and maintaining incremental tallies, the solver could
+support rolling updates with statistical guarantees—a capability relevant to
+plant monitoring and digital twin applications.
+
+\subsection{Cross-Industry Validation}
+Applicability to aerospace, autonomous driving, and chemical processing systems
+should be demonstrated on open benchmark suites, thereby establishing
+mcSCRAM’s generality.
+
+% ---------------------------------------------------------------------------
+\section*{Closing Remarks}
+
+This dissertation has shown that a principled blend of probabilistic circuits,
+high-throughput hardware, and modern statistical diagnostics redefines the
+computational frontier of quantitative risk assessment.  By evaluating
+\emph{entire} PRA models as unified computation graphs, mcSCRAM closes the gap
+between theoretical rigour and practical turnaround time—bringing
+risk-informed decision making within reach of domains where exhaustive symbolic
+methods have long since faltered.  The roadmap laid out above offers a vision
+for completing the transition from point solution to pervasive, real-time risk
+analytics.  The author invites the community to build upon this foundation and
+advance the state of the art in stochastic dependability modeling.
+

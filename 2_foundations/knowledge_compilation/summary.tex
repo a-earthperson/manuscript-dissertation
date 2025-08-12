@@ -10,15 +10,11 @@
 % The semantics of the risk model-language have been developed for succinct representation of risk-reliability. That is exactly †he intent - = a language should serve the needs of the represented domain. Howecver
 % Knowing what problems can be solved efficiently.
 
-The risk model-language has been developed for efficient and tractable model building and representation of risk and reliability of the systems at hand.
-The semantic distinctions between Initiating Events, Event Tree, and Fault Trees provides human-interpretable language that allows engineers to effectively reason about potential failure events and their consequences, describe failure propagation paths between them, and iteratively and systematically increase description granularity of these these paths.
-While this is approach facilities effective model building and allows quantification of small systems, it quickly becomes intractable even for moderately sized systems. 
-Furthermore, an inherent inhomogeneity of data structures involved, though ``human-readable'', complicates qualitative and quantitative computational analysis of the model as a whole. 
+The traditional PRA modeling language—with its separate constructs for Initiating Events, Event Trees, and Fault Trees—was devised for human readability and incremental model construction.  Those distinctions help engineers reason about failure propagation and refine a model’s granularity, yet they also fragment information across heterogeneous data structures.  For small systems this heterogeneity is innocuous; for today’s models containing hundreds of event trees and thousands of fault trees it becomes a barrier to scalable analysis, impeding both exact probability calculations and qualitative queries such as minimal-cut-set enumeration.
 
-Therefore, a unified form of \acrshort{pra} model is required. 
-Firstly, such form must be deterministically generated from the human-built data structures without loss of information.
-Secondly, it must be ``computer-friendly'' and facilitate optimized quantitative and qualitative risk analyses and operations such as probability estimation, minimal cut set generation, etc.
-Finally, it should allow iterative updates in correspondence to the evolution of the underlying PRA model.
+To overcome these limitations we advocate translating the entire model into a single probabilistic directed acyclic graph (PDAG).  The transformation is loss-free, deterministic, and yields a representation that is simultaneously human-verifiable and machine-amenable.  Once in PDAG form the model enjoys three key benefits: (i) a uniform graph data structure that supports high-performance algorithms for probability estimation and structural queries, (ii) compatibility with knowledge-compilation techniques that enable selective normal-form transformations, and (iii) the ability to accommodate incremental design changes through lightweight graph updates.
+
+The remainder of this chapter explains the PDAG construction, illustrates the mapping on the running example of Fig.~\ref{fig:et_ft_example}, and shows how classical PRA operations can be re-expressed as graph traversals or as queries over a propositional knowledge base.  This perspective not only clarifies the formal semantics of PRA models but also lays the groundwork for the data-parallel Monte-Carlo methods developed in later chapters.
 
 \begin{figure}[p]
     \centering

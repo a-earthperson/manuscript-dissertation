@@ -1,30 +1,79 @@
 
 \section*{An Informal Overview}
-Probabilistic risk assessment (PRA) for nuclear systems requires evaluating complex Boolean functions that represent failure scenarios across thousands of components in two main steps: identifying minimal cut sets (the smallest sets of conditional events leading to end states of interest) and estimating the likelihood of these end states given component reliabilities. Although additional steps exist, PRA quantification primarily revolves around these tasks, which are computationally burdensome because exact solutions involve exhaustive inclusion-exclusion calculations that grow exponentially with the number of components, making large-scale analyses intractable. In response, many approximations have emerged: restricting model logic to a limited set of gate-types, describing only the failure space, applying probability truncation schemes like the rare-event approximation, or employing bounding methods such as the min-cut upper bound. Yet, even with these strategies, PRA quantification remains unwieldy in practice, demanding careful model management and tempered expectations regarding both accuracy and runtime.
+
+\paragraph*{Why another PRA solver?}
+Probabilistic risk assessment for large nuclear systems asks a simple
+question: \emph{how likely is an accident, given thousands of component
+failures, recoveries, and human actions?} The textbook solution (build a decision diagram, or enumerate every failure combination) scales exponentially and quickly becomes impractical. Over the years analysts have tamed that
+combinatorial surge with gate restrictions, bounding tricks, and
+rare-event approximations; the price has been either coarse error
+margins or hours‐long runtimes.
+
+
+\paragraph*{A different stance: sample first, ask questions later.}
+Instead of traversing every Boolean state, we draw random global
+scenarios and evaluate the entire logic graph in one pass.
+The key enabler is hardware parallelism: by packing \(64\)
+Bernoulli trials into a 64-bit word we turn Boolean gates into
+bitwise instructions and let modern GPUs churn through billions of
+scenarios per second. The solver, \textsc{mcScram}, views the complete
+PRA model (nested event trees, fault trees, and their cross-links) as
+one unified probabilistic directed acyclic graph (PDAG) that is sampled
+and tallied en bloc.
+
+\paragraph*{What falls out of that design?}
+\begin{itemize}
+  \item \textbf{Flexibility.}  Any gate expressible in Boolean logic
+        (NOT, \(k\)-out-of-\(n\) voting, XOR, Cardinality, \dots) is handled
+        without extra coding.
+  \item \textbf{Speed.}  On a mid-range laptop GPU the method converges
+        to sub-percent error for graphs with a few thousand events in
+        \(\lesssim 5\) seconds.
+  \item \textbf{Extensibility.}  Because sampling is the only primitive,
+        common-cause failures, importance measures, and importance
+        sampling plug in naturally.
+\end{itemize}
+
+\paragraph*{What it is \emph{not}.}
+The approach is still Monte-Carlo: for events rarer than
+\(10^{-8}\) additional variance-reduction techniques are required, and
+maximum throughput depends on access to a GPU or other SIMD hardware.
+
+
+\paragraph*{Road map.}
+\begin{itemize}
+  \item \textbf{Chapter 4 (Part I).} Formalizes PRA models as probabilistic DAGs. 
+  \item \textbf{Chapters 7–11 (Part III).} Present the data-parallel Monte-Carlo engine—sampling, gate kernels, tallying, and backend scalability. 
+  \item \textbf{Chapters 13–18 (Part IV).} Detail refinements: randomness guarantees, composite convergence policy, common-cause failure handling, importance measures, importance sampling, and hardware-native voting gates. 
+  \item \textbf{Chapters 12 and 19.} Benchmark accuracy, runtime, and structural compression on the Aralia suite. 
+  \item \textbf{Part V.} Outlines future “inverse-problem’’ directions such as parameter fitting.
+\end{itemize}
+
+
 % \vspace{-4mm}
-\subsection*{Core Rationale - Building a Probability Estimator}
-We propose a data-parallel Monte Carlo (MC) scheme that samples directly from input component-reliability distributions. Rather than generating every possible failure combination, we focus on random draws of the system’s global state, then tally how often particular sequences lead to an end state of interest. This sampling-based approach trades the intrinsic explosion of inclusion-exclusion terms with an exponential number of sample draws. This approach can accommodate a wider range of logic gates and event dependencies while putting the analyst in control of convergence. To unify these ideas, we use the concept of probabilistic circuits. Here, probability flow is represented as a structured computation graph over Boolean logic, but crucially, each gate’s input distributions come from random samplers rather than a symbolic enumeration of all possible states. This allows the circuit to model both failures and successes while keeping the model size manageable. However, MC approaches for PRA model quantification are not new. The key design principle rests on a massively parallel, hardware accelerated sampling scheme. By encoding component states in compact bit vectors, we exploit hardware-level parallelism. Boolean logic gates, including primitives and complex logic such as K/N translate into efficient bitwise operations. These operations are performed as a computation graph defined by the logic structure of the PRA model itself. We implemented the framework in an open-source tool named Canopy, which is built with SYCL to promote code portability across consumer GPUs, multi-core CPUs, or specialized accelerators like FPGAs.
+% \subsection*{Core Rationale - Building a Probability Estimator}
+% We propose a data-parallel Monte Carlo (MC) scheme that samples directly from input component-reliability distributions. Rather than generating every possible failure combination, we focus on random draws of the system’s global state, then tally how often particular sequences lead to an end state of interest. This sampling-based approach trades the intrinsic explosion of inclusion-exclusion terms with an exponential number of sample draws. This approach can accommodate a wider range of logic gates and event dependencies while putting the analyst in control of convergence. To unify these ideas, we use the concept of probabilistic circuits. Here, probability flow is represented as a structured computation graph over Boolean logic, but crucially, each gate’s input distributions come from random samplers rather than a symbolic enumeration of all possible states. This allows the circuit to model both failures and successes while keeping the model size manageable. However, MC approaches for PRA model quantification are not new. The key design principle rests on a massively parallel, hardware accelerated sampling scheme. By encoding component states in compact bit vectors, we exploit hardware-level parallelism. Boolean logic gates, including primitives and complex logic such as K/N translate into efficient bitwise operations. These operations are performed as a computation graph defined by the logic structure of the PRA model itself. We implemented the framework in an open-source tool named Canopy, which is built with SYCL to promote code portability across consumer GPUs, multi-core CPUs, or specialized accelerators like FPGAs.
 
-\subsection*{The Role of Partial Derivatives}
-One notable benefit of modeling probability distributions over the entire Boolean space is the ability to compute partial derivatives using the Shannon decomposition. Conceptually, the Shannon decomposition defines the derivative of Boolean function f(x), with respect to a subset of inputs. It is efficiently evaluated as a combination of bitwise XOR operations. Our approach samples from computation graphs representing arbitrary Boolean functions, including partial derivatives or more complex operations. This has immediate use for computing not only the conventional Birnbaum importance measure (which indicates how sensitive a system’s failure probability is to a component’s reliability) but also expanding to multi-component subsets. Additionally, since derivatives allow for gradient-based optimizations, there is potential for future work bridging advanced PRA and emerging machine-learning techniques. By embedding an auto-differentiation layer in the MC pipeline, one can imagine learning gate probabilities or even partial system structures from operational data, with the same data-parallel routines driving updates to reliability estimates.
+% \subsection*{The Role of Partial Derivatives}
+% One notable benefit of modeling probability distributions over the entire Boolean space is the ability to compute partial derivatives using the Shannon decomposition. Conceptually, the Shannon decomposition defines the derivative of Boolean function f(x), with respect to a subset of inputs. It is efficiently evaluated as a combination of bitwise XOR operations. Our approach samples from computation graphs representing arbitrary Boolean functions, including partial derivatives or more complex operations. This has immediate use for computing not only the conventional Birnbaum importance measure (which indicates how sensitive a system’s failure probability is to a component’s reliability) but also expanding to multi-component subsets. Additionally, since derivatives allow for gradient-based optimizations, there is potential for future work bridging advanced PRA and emerging machine-learning techniques. By embedding an auto-differentiation layer in the MC pipeline, one can imagine learning gate probabilities or even partial system structures from operational data, with the same data-parallel routines driving updates to reliability estimates.
 
-\subsection*{Limitations}
-\subsubsection*{Sampling Rare Events}
-Ensuring accurate estimates for extremely low-probability events demands careful convergence criteria. In typical nuclear safety analyses, component failures can be vanishingly rare, so polling enough samples to capture these tail probabilities can prove challenging. Techniques such as importance sampling or other variance-reduction strategies may be needed to mitigate the slow convergence that arises when event likelihoods are measured in the range of 10\textsuperscript{-7} or lower. 
+% \subsection*{Limitations}
+% \subsubsection*{Sampling Rare Events}
+% Ensuring accurate estimates for extremely low-probability events demands careful convergence criteria. In typical nuclear safety analyses, component failures can be vanishingly rare, so polling enough samples to capture these tail probabilities can prove challenging. Techniques such as importance sampling or other variance-reduction strategies may be needed to mitigate the slow convergence that arises when event likelihoods are measured in the range of 10\textsuperscript{-7} or lower. 
 
-\subsubsection*{Sampling Correlated or Dependent Events}
-A related concern is the treatment of common-cause failures (CCFs) and component dependencies. Characterizing CCF related failures or performing dependency analysis are important PRA activities. Future extensions of this framework thus require sampling from joint distributions, where correlated events are generated as a block. Integrating such dependent draws into bitpacked logic operations is feasible in principle but will require additional data-processing layers to ensure that correlated assignments remain both realistic and efficient to evaluate in large batches.
+% \subsubsection*{Sampling Correlated or Dependent Events}
+% A related concern is the treatment of common-cause failures (CCFs) and component dependencies. Characterizing CCF related failures or performing dependency analysis are important PRA activities. Future extensions of this framework thus require sampling from joint distributions, where correlated events are generated as a block. Integrating such dependent draws into bitpacked logic operations is feasible in principle but will require additional data-processing layers to ensure that correlated assignments remain both realistic and efficient to evaluate in large batches.
 
-\subsection*{When to use this Approach}
-- You want to estimate the probabilites/frequencies of very complex systems without computing minimal cut sets or essential prime implicants.
-- You tried computing the exact probabilities/frequencies using BDDs or ZBDDs and failed.
-- You want an approximate method that converges to the exact solution.
-- You want a streamble solution - you can't wait for an inordinate amount of time to get an answer.
+% \subsection*{When to use this Approach}
+% - You want to estimate the probabilites/frequencies of very complex systems without computing minimal cut sets or essential prime implicants.
+% - You tried computing the exact probabilities/frequencies using BDDs or ZBDDs and failed.
+% - You want an approximate method that converges to the exact solution.
+% - You want a streamble solution - you can't wait for an inordinate amount of time to get an answer.
 
-\subsection*{When to *not* to use this Approach}
-- Your tolerance for the error on a approximate solution is lower than your tolerance for waiting for convergence.
+% \subsection*{When to *not* to use this Approach}
+% - Your tolerance for the error on a approximate solution is lower than your tolerance for waiting for convergence.
 
-We have conceptualized this work by taking an unabashedly stochastic-computing stance: every 64-bit unsigned word is treated as 64 independent Bernoulli samples evaluated in parallel. We make no attempt to interpret the word as a multi-bit integer, nor to exploit correlations across bits. This is a deliberate trade between information density for embarrassingly parallel throughput. Each physical bit therefore contributes one Shannon bit of information. Keep that constraint in mind when weighing the solver’s performance claims against its unavoidable precision limits.
+% We have conceptualized this work by taking an unabashedly stochastic-computing stance: every 64-bit unsigned word is treated as 64 independent Bernoulli samples evaluated in parallel. We make no attempt to interpret the word as a multi-bit integer, nor to exploit correlations across bits. This is a deliberate trade between information density for embarrassingly parallel throughput. Each physical bit therefore contributes one Shannon bit of information. Keep that constraint in mind when weighing the solver’s performance claims against its unavoidable precision limits.
 
 
 % \subsubsection*{Scaling Studies}

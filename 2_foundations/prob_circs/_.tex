@@ -121,3 +121,22 @@ p_r(\mathbf{x}) \;=\; \text{(\(r\) evaluated from the leaves up)}.
 \]
 
 Probabilistic circuits unify structural and probabilistic modeling in a single formalism. They are widely used in fields such as artificial intelligence, machine learning, and automated reasoning, offering a tractable way to represent complex, high-dimensional probability distributions while preserving interpretable, compositional structure.
+
+\section{Connection to Probabilistic Risk Assessment}
+\label{sec:pc_pra_connection}
+
+Chapters~\ref{sec:event_tree_definition}--\ref{sec:unified_pra_dag} introduce event–tree and fault–tree logic and show how their inter–connections form a unified probabilistic directed acyclic graph (PDAG).  That PDAG is, in fact, a  \emph{specialized probabilistic circuit}: 
+\begin{itemize}
+  \item The leaf distributions are the Bernoulli failure variables of basic events (and, later, common–cause variables).
+  \item Internal OR / AND / voting gates correspond to deterministic product– or sum–gates whose mixture weights are restricted to $\{0,1\}$.
+  \item Event–tree branching is expressed through sum–gates with non-trivial weights $\theta_{u\to v}$ that encode the conditional probabilities of functional events.
+\end{itemize}
+
+Framing PRA models as probabilistic circuits brings three advantages that motivate the developments in subsequent chapters:
+\begin{enumerate}[label=(\alph*)]
+  \item \textbf{Unified semantics.}  Both logical determinism and stochastic branching coexist in one mathematical object, enabling end–to–end inference without shuttling between separate ``logic'' and ``probability'' representations.
+  \item \textbf{Compiler compatibility.}  Decades of work on knowledge compilation for circuits (\S\ref{sec:kc_refinements}) becomes directly applicable, informing the eight-level transformation pipeline adopted in Chapter~18.
+  \item \textbf{Sampling tractability.}  The layered Monte-Carlo kernels of Part~III exploit the decomposability of product–gates to evaluate entire batches in parallel, while sum–gates inject controlled stochasticity that preserves unbiasedness (Chapter~14).
+\end{enumerate}
+
+With this perspective, the remainder of Part~I can be read as instantiating general circuit concepts with the domain-specific structure of nuclear PRA models.  Chapter~4 will leverage that instantiation to formalize quantitative risk assessment as a problem of \emph{knowledge compilation} over probabilistic circuits, setting the stage for the data-parallel algorithms analyzed in Parts~III and IV.
