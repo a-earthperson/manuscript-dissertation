@@ -562,7 +562,7 @@
     \pagenumbering{roman}
     \setcounter{page}{1}
      \thispagestyle{empty}
-     \clearpage
+     % \clearpage
      \singlespacing
       \begin{center}
             \vfill
@@ -621,6 +621,11 @@
 \newcommand{\acknowledgementstitle}{Acknowledgements}
 \newenvironment{acknowledgements}
 {\ncsu@dedbioack{\acknowledgementstitle}}
+{\clearpage}
+
+\newcommand{\authorshiptitle}{Authorship Statement}
+\newenvironment{authorship}
+{\ncsu@dedbioack{\authorshiptitle}}
 {\clearpage}
 
 %% -------------------------------------------------------------------------- %%
