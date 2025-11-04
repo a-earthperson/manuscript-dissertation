@@ -2,7 +2,7 @@
 The principal technical contributions are:
 
 \begin{enumerate}[label=\textbf{C\arabic*}.,leftmargin=2em]
-  \item \textbf{Unified, data-parallel Monte-Carlo framework.}  We design mcSCRAM, a hardware-accelerated sampler that evaluates the \emph{entire} probabilistic directed acyclic graph (PDAG)—all coupled event trees and fault trees—in a single, layered pass without minimal-cut enumeration.
+  \item \textbf{Unified, data-parallel Monte-Carlo framework.}  We design mcSCRAM, a hardware-accelerated sampler that evaluates the \emph{entire} \acrfull{pdag}—all coupled event trees and fault trees—in a single, layered pass without minimal-cut enumeration.
 
   \item \textbf{Hardware-native voting and cardinality gates.}  We introduce bit-parallel algorithms for $k$-of-$n$, at-most, exact, and cardinality predicates, prove estimator equivalence to classical AND/OR expansions, and show exponential savings in graph size and kernel-launch overhead.
 
@@ -12,5 +12,5 @@ The principal technical contributions are:
 
   \item \textbf{Domain-specific extensions.}  The framework incorporates: (i) common-cause failure groups through auxiliary/shadow nodes, (ii) first-order importance and sensitivity measures via in-tally covariance accumulation, and (iii) an importance-sampling module for ultra-rare events—all without modifying the core kernels.
 
-  \item \textbf{Open-source implementation and benchmarks.}  A SYCL-based reference implementation runs on GPUs, CPUs, and FPGAs; public benchmarks on the 43-model Aralia dataset demonstrate sub-percent relative error on graphs with a few thousand events in <5 s on entry-level GPUs, surpassing established PRA tools in throughput while matching their accuracy.
+  \item \textbf{Open-source implementation and benchmarks.}  A SYCL-based reference implementation runs on \acrshort{gpu}s, \acrshort{cpu}s, and \acrfull{fpga}s; public benchmarks on the 43-model Aralia dataset demonstrate sub-percent relative error on graphs with a few thousand events in <5 s on entry-level \acrshort{gpu}s, surpassing established \acrshort{pra} tools in throughput while matching their accuracy.
 \end{enumerate}
