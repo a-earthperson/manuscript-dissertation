@@ -1,10 +1,15 @@
 \subsection{Software}
-The following repositories are maintained under my personal GitHub, and the OpenPRA umbrella, an open–source effort that now comprises over a dozen active contributors from academia and industry.  Unless otherwise noted, my role has been to architect the core infrastructure and mentor fellow student developers; day-to-day development is a shared effort.
+The following repositories are maintained under my personal GitHub, and OpenPRA, open–source effort that now comprises over a dozen active contributors from academia and industry.  Unless otherwise noted, my role has been to architect the core infrastructure and mentor fellow student developers; day-to-day development is a shared effort.
 
 \begin{itemize}
 
-    \item {\textbf{\href{https://github.com/a-earthperson/mcSCRAM}{@a-earthperson/mcSCRAM}}: Data-Parallel Monte Carlo Probability Estimation Framework~\cite{earthperson_mcscram}}. The central focus of this dissertation.
-    
+    \item {\textbf{\href{https://github.com/a-earthperson/mcSCRAM}{@a-earthperson/mcSCRAM}}: A Data-Parallel Monte Carlo Probability Estimation Framework~\cite{earthperson_mcscram}}. The central focus of this dissertation, implements the methods described in Part \ref{part_brute_force} and most of the refinements from Part \ref{part_refinements}.    A fork of Olzhas Rakhimov’s SCRAM~\cite{scram}.
+
+    \item {\textbf{\href{https://github.com/a-earthperson/inverse-canopy}{@a-earthperson/inverse-canopy}}: Tensorflow-based package for guessing conditional event probability distributions in an event tree to match target end-state frequencies. Implements the inverse problem described in Part \ref{part_inverse_problems} of this dissertation~\cite{earthperson_inv_canopy}}.
+
+    \item {\textbf{\href{https://github.com/a-earthperson/canopy-benchmarks}{@a-earthperson/canopy-benchmarks}}: Accuracy \& performance benchmark results from \textsc{mcSCRAM} runs used in this dissertation~\cite{earthperson_canopy_2025}}.
+
+        
     \item {\textbf{\href{https://github.com/openpra-org/openpra-monorepo}{@openpra-org/openpra-monorepo}}: Mono repository for the OpenPRA web application~\cite{openpra_initiative_openpra_2024}}. Core code contributions for the distributed microservices supplementary to this dissertation are integrated here.
     
     \item {\textbf{\href{https://github.com/openpra-org/model-benchmarks}{@openpra-org/model-benchmarks}}: Benchmarking suite for SCRAM, XFTA, \acrshort{ftrex}, \acrshort{saphsolve} using benchexec in Docker~\cite{earthperson_pra_2025}}. \acrlong{ci} pipelines for automated runs \& report generation are available.
@@ -17,5 +22,4 @@ The following repositories are maintained under my personal GitHub, and the Open
     
     \item {\textbf{\href{https://github.com/openpra-org/multi-hazard-model-generator}{@openpra-org/multi-hazard-model-generator}}: Generates multi-hazard event trees \& fault trees in \acrshort{mar-d} from internal events \acrshort{pra} models~\cite{batikh_multi_2023}}.
     
-    \item {\textbf{\href{https://github.com/a-earthperson/canopy-benchmarks}{@a-earthperson/canopy-benchmarks}}: Accuracy \& performance benchmark scripts for canopy~\cite{earthperson_canopy_2025}}.
 \end{itemize}

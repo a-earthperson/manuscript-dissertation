@@ -3,14 +3,14 @@
 A \acrfull{ccf} is defined as the failure of multiple components due to a shared cause within a specified time interval. Unlike independent failures, \acrshort{ccf}s can defeat redundancy-based safety systems, potentially leading to severe consequences in critical applications. Several parametric models have been developed to quantify \acrshort{ccf} probabilities:
 
 \subsubsection{Basic Parameter Model (BPM)}
-\acrfull{cccg} are sets of components susceptible to the same \acrshort{ccf} mechanisms. Basic parameter model decomposes the failure probability of a component in a \acrshort{cccg} into terms involving independent failure of the component and combinations of \acrshort{ccf}s with the other components in the \acrshort{cccg} \cite{rasmuson_kelly_2008}. For a group of $m$ components, the parameter $Q_k$ represents the probability of a specific $k$-component failure combination. The total failure probability is then calculated as:
+\acrfull{cccg} are sets of components susceptible to the same \acrshort{ccf} mechanisms. The \acrfull{bpm} decomposes the failure probability of a component in a \acrshort{cccg} into terms involving independent failure of the component and combinations of \acrshort{ccf}s with the other components in the \acrshort{cccg} \cite{rasmuson_kelly_2008}. For a group of $m$ components, the parameter $Q_k$ represents the probability of a specific $k$-component failure combination. The total failure probability is then calculated as:
 \[
 Q_T = \sum_{k=1}^{m} \binom{m-1}{k-1} Q_k^m
 \]
 While conceptually straightforward, this model becomes impractical for large component groups due to the number of parameters required.
 
 \subsubsection{Alpha Factor Model (AFM)}
-The Alpha Factor Model develops \acrshort{ccf} probabilities from set of failure ratios and the total component failure probability \cite{rasmuson_kelly_2008}. For a system with $m$ components, the alpha factors are defined as:
+The \acrfull{af} develops \acrshort{ccf} probabilities from set of failure ratios and the total component failure probability \cite{rasmuson_kelly_2008}. For a system with $m$ components, the alpha factors are defined as:
 \[
 \alpha_k = \frac{n_k}{\sum_{i=1}^{m} i \cdot n_i}
 \]
@@ -18,10 +18,10 @@ where $n_k$ is the number of events with $k$ failed components. The probability 
 \[
 Q_k = \frac{\alpha_k}{\binom{m-1}{k-1}} \cdot Q_T
 \]
-The Alpha Factor Model is particularly useful because its parameters have direct statistical meaning and can be estimated from operational data.
+The \acrlong{af} is particularly useful because its parameters have direct statistical meaning and can be estimated from operational data.
 
 \subsubsection{Multiple-Greek Letter (MGL) Model}
-Multiple Greek Letter model is used for systems with higher level of redundancy or k-out of-n logic. The multiple Greek letter model includes parameters for the conditional probabilities that the N+1-th subsystem fails given that N identical subsystems have already failed \cite{jones_2012}. The key parameters are:
+\acrfull{mgl} is used for systems with higher level of redundancy or k-out of-n logic. The multiple Greek letter model includes parameters for the conditional probabilities that the N+1-th subsystem fails given that N identical subsystems have already failed \cite{jones_2012}. The key parameters are:
 \begin{itemize}
   \item $\beta$: Conditional probability that a component fails due to a common cause, given that another component has failed
   \item $\gamma$: Conditional probability that a third component fails, given that two components have failed due to a common cause
@@ -39,7 +39,7 @@ Q_3 &= Q_T\beta\gamma
 
 \subsubsection{Binomial Failure Rate (BFR) Model}
 
-The Binomial Failure Rate (BFR) model is based on the concept of two distinct types of shock events affecting components in a \acrshort{cccg}:
+The \acrfull{bfr} is based on the concept of two distinct types of shock events affecting components in a \acrshort{cccg}:
 
 \begin{enumerate}
   \item \textbf{Lethal shocks} occur at constant rate $\lambda^{(i)}$ and cause simultaneous failure of all components in the \acrshort{cccg}.
@@ -62,7 +62,7 @@ Therefore, the rate of \acrshort{ccf} events with exactly $k$ components failing
 \lambda_{G,k} = \nu\binom{n}{k}p^k(1-p)^{n-k}
 \end{equation}
 
-The BFR model has the advantage of using physically interpretable parameters ($\nu$ and $p$) while requiring fewer parameters than the Basic Parameter Model.
+The \acrshort{bfr} model has the advantage of using physically interpretable parameters ($\nu$ and $p$) while requiring fewer parameters than the Basic Parameter Model.
 
 \subsubsection{Beta Factor Model}
 A simplified single-parameter model where all common cause failures are assumed to fail all components in the group. The model uses a single parameter $\beta$, representing the fraction of total failure probability attributed to common causes:
@@ -75,7 +75,7 @@ Q_m &= Q_T\beta \quad \text{(complete common cause failure)} \\
 This model is useful for initial screening and when data is limited.
 
 \subsubsection{Mapping Between Models}
-Relationships exist between the parameters of different \acrshort{ccf} models, allowing conversion of parameters from one model to another. For example, the Alpha factors can be derived from MGL parameters as:
+Relationships exist between the parameters of different \acrshort{ccf} models, allowing conversion of parameters from one model to another. For example, the Alpha factors can be derived from \acrshort{mgl} parameters as:
 \[
 \begin{aligned}
 \alpha_1 &= \frac{1-\beta}{1+\beta(\gamma-1)} \\
@@ -84,4 +84,4 @@ Relationships exist between the parameters of different \acrshort{ccf} models, a
 \end{aligned}
 \]
 
-Industry databases such as the International Common Cause Failure Data Exchange (ICDE) \cite{ICDE} and the NRC's \acrshort{ccf} database \cite{ma_ccf_2022} provide valuable sources for parameter estimation.
+Industry databases such as the International Common Cause Failure Data Exchange (ICDE) \cite{ICDE} and the \acrshort{nrc}'s \acrshort{ccf} database \cite{ma_ccf_2022} provide valuable sources for parameter estimation.

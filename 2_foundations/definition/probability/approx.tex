@@ -63,30 +63,6 @@ For illustration, consider a fault tree with three minimal cut sets \cite{saphir
 \end{align}
 This value is a conservative estimate of the true top event probability.
 
-% \subsubsection{\color{green}{The Min-Max Method}}
-% The \emph{Min-Max method}, also known as the inclusion-exclusion principle, provides an exact calculation of the probability of the union of minimal cut sets. This approach systematically accounts for all overlaps among cut sets, thereby eliminating the double counting inherent in the min-cut upper bound.
-
-% For $m$ minimal cut sets $C_1, C_2, \ldots, C_m$, the probability that at least one cut set occurs is given by \cite{saphire_manual}:
-% \begin{equation}
-% \label{eq:inclusion_exclusion}
-% \Pr\left[X_t = 1\right] = \sum_{i=1}^{m} P(C_i) - \sum_{1 \leq i < j \leq m} P(C_i \cap C_j) + \sum_{1 \leq i < j < k \leq m} P(C_i \cap C_j \cap C_k) - \cdots + (-1)^{m+1} P\left(\bigcap_{i=1}^{m} C_i\right),
-% \end{equation}
-% where $P(C_i)$ is the probability that all basic events in $C_i$ occur, and $P(C_i \cap C_j)$ is the probability that all basic events in both $C_i$ and $C_j$ occur, and so on. The alternating sum continues for all possible intersections of the cut sets.
-
-% This method is exact, but its computational complexity grows exponentially with the number of cut sets, as it requires evaluating all $2^m - 1$ non-empty intersections. In practice, the number of terms can be reduced by exploiting the idempotent law of Boolean algebra ($A \cap A = A$) and by truncating the expansion after a fixed number of passes (i.e., limiting the order of intersections considered).
-
-% For illustration, consider again the fault tree with cut sets $C_1 = \{\text{A}, \text{B}\}$, $C_2 = \{\text{B}, \text{C}\}$, $C_3 = \{\text{D}\}$. The basic event probabilities $p(\text{A}) = p(\text{B}) = p(\text{C}) = 0.7$, $p(\text{D}) = 0.5$. The inclusion-exclusion expansion is as follows:
-
-% $P(C_1) = p(\text{A})p(\text{B}) = 0.49$, $P(C_2) = p(\text{B})p(\text{C}) = 0.49$, and $P(C_3) = p(\text{D}) = 0.5$.
-% The pairwise intersections are $P(C_1 \cap C_2) = p(\text{A})p(\text{B})p(\text{C}) = 0.343$, $P(C_1 \cap C_3) = p(\text{A})p(\text{B})p(\text{D}) = 0.245$, and $P(C_2 \cap C_3) = p(\text{B})p(\text{C})p(\text{D}) = 0.245$.
-% The triple intersection is $P(C_1 \cap C_2 \cap C_3) = p(\text{A})p(\text{B})p(\text{C})p(\text{D}) = 0.1715$.
-
-% Substituting these values, the probability is $0.49 + 0.49 + 0.5 - (0.343 + 0.245 + 0.245) + 0.1715 = 1.48 - 0.833 + 0.1715 = 0.8185$.
-
-% The Min-Max method yields the exact probability, as it fully accounts for all overlaps among cut sets. In the example above, the min-cut upper bound (Eq.~\ref{eq:mcub}) gives $0.87$, while the exact Min-Max result is $0.8185$. The difference arises from the double counting of shared basic events in the upper bound.
-
-% In practice, the Min-Max method is computationally feasible only for systems with a modest number of cut sets. For large systems, the number of terms in the inclusion-exclusion expansion explodes, and approximate or bounding methods (such as the min-cut upper bound) are preferred. Some tools allow the user to specify the number of passes (i.e., the maximum order of intersections considered), trading off accuracy for computational efficiency.
-
 \subsection{Probability Estimation using Monte Carlo Sampling}
 Monte Carlo methods provide a versatile framework for approximating expectations, probabilities, and other quantities of interest by simulating random observations from an underlying distribution. At its core, a Monte Carlo estimator uses repeated random draws to approximate quantities such as
 \begin{equation}
@@ -139,7 +115,7 @@ Monte Carlo estimators rely on the ability to generate random realizations from 
 
 A \acrshort{prng} is formally a deterministic function that, given an initial \emph{seed}, generates a long sequence of values in \((0,1)\). Popular choices include:
 \begin{itemize}
-\item \emph{Linear Congruential Generators (LCG)}, which use a recurrence of the form
+\item \emph{\acrfull{lcg}s}, which use a recurrence of the form
 \[
 X_{n+1}
 \;=\;
@@ -227,15 +203,3 @@ Continuous random variables typically arise when modeling the \emph{time dimensi
 F_Y(t),
 \]
 where \(F_Y\) is the \acrfull{cdf} of \(Y\). Evaluating this probability at each Monte Carlo trial and comparing against a uniform random variate yields a discrete failure indicator. Hence, continuous distributions can be mapped to discrete states at any chosen time horizon.
-
-
-
-
-% \subsubsection{Ensuring Reliable Sampling in High-Dimensional Boolean Spaces}
-% When dealing with large-scale \acrshort{pra} models or deeply nested Boolean structures (multiple fault trees and event trees), a careful approach to random variate generation is needed:
-% \begin{itemize}
-% \item \textbf{Reusable Streams:} Use a consistent seeding and PRNG strategy to ensure reproducibility of results, especially when comparing multiple system configurations.
-% \item \textbf{Parallel and Distributed Simulations:} Avoid overlapping random streams (i.e., ensure different parallel processes use uncorrelated seeds).
-% \item \textbf{Validation of Randomness:} Use standard test suites (e.g.\ TestU01, Diehard) if the model's accuracy depends on fine-scale statistical properties.
-% \end{itemize}
-% Once random variates for each basic event are generated, higher-level logical structures (e.g.\ gates in a fault tree or branches in an event tree) can be evaluated deterministically.  Subsequent sections will address how to form either a single \emph{global} sample of all events in the system or to \emph{factorize} the sampling process according to the structure of the DAG-based PRA model.
