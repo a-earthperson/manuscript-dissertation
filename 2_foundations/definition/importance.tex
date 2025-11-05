@@ -2,35 +2,35 @@
 \label{sec:foundations_importance}
 Importance measures quantify the contribution of basic events to system reliability or risk. They provide insights into which components or events are most critical to system performance, guiding resource allocation for maintenance, design improvements, and risk management. \acrshort{pra} tools typically calculate the following importance measures to support comprehensive reliability analysis.
 
-\subsection{Conditional Importance}
-The \emph{Conditional Importance} (CI) of a basic event $i$ measures the probability that event $i$ contributes to system failure, given that the system has failed. It represents the fraction of system failures that involve the basic event.
+\subsection{Conditional Importance Measure (CIM)}
+The \emph{\acrfull{cim}}  of a basic event $i$ measures the probability that event $i$ contributes to system failure, given that the system has failed. It represents the fraction of system failures that involve the basic event.
 
 \[
-\text{CI}_i = \frac{P(i \text{ contributes to system failure} \mid \text{system failure})}{P(\text{system failure})} = \frac{P(i \text{ critical})}{P(\text{system failure})}
+\text{CIM}_i = \frac{P(i \text{ contributes to system failure} \mid \text{system failure})}{P(\text{system failure})} = \frac{P(i \text{ critical})}{P(\text{system failure})}
 \]
 
 This is calculated by identifying minimal cut sets containing the basic event and determining the proportion of failure probability attributed to these cut sets.
 
-\subsection{Marginal Importance}
-The \emph{Marginal Importance} (MI), also known as Birnbaum importance, measures the rate of change in system reliability with respect to the reliability of component $i$. It quantifies how sensitive the system failure probability is to changes in the failure probability of the component.
+\subsection{Marginal/Birnbaum Importance Measure (MIM)}
+The \emph{\acrfull{mi}} measures the rate of change in system reliability with respect to the reliability of component $i$. It quantifies how sensitive the system failure probability is to changes in the failure probability of the component.
 
 \[
-\text{MI}_i = \frac{\partial P(\text{system failure})}{\partial P(i \text{ fails})} = P(\text{system fails} \mid i \text{ fails}) - P(\text{system fails} \mid i \text{ succeeds})
+\text{MIM}_i = \frac{\partial P(\text{system failure})}{\partial P(i \text{ fails})} = P(\text{system fails} \mid i \text{ fails}) - P(\text{system fails} \mid i \text{ succeeds})
 \]
 
 This is computed by evaluating the difference in system failure probability when the component is assumed failed versus successful.
 
-\subsection{Potential Importance}
-The \emph{Potential Importance} (PI) measures the maximum possible reduction in system failure probability that could be achieved by improving component $i$. It indicates the potential benefit of perfect reliability for a component.
+\subsection{Potential Importance Measure (PIM)}
+The \emph{\acrfull{pim}} the maximum possible reduction in system failure probability that could be achieved by improving component $i$. It indicates the potential benefit of perfect reliability for a component.
 
 \[
-\text{PI}_i = P(\text{system failure}) - P(\text{system failure} \mid i \text{ succeeds}) = P(\text{system failure}) \times (1 - \frac{1}{\text{RRW}_i})
+\text{PIM}_i = P(\text{system failure}) - P(\text{system failure} \mid i \text{ succeeds}) = P(\text{system failure}) \times (1 - \frac{1}{\text{RRW}_i})
 \]
 
 This is calculated using the system failure probability under current conditions compared to the system failure probability when the component is perfectly reliable.
 
-\subsection{Diagnostic Importance}
-The \emph{Diagnostic Importance} (DI) measures the probability that component $i$ has failed, given that the system has failed. It is useful for fault diagnosis and identifying likely causes of system failure.
+\subsection{Diagnostic Importance Measure (DIM)}
+The \emph{\acrfull{di}} measures the probability that component $i$ has failed, given that the system has failed. It is useful for fault diagnosis and identifying likely causes of system failure.
 
 \[
 \text{DI}_i = \frac{P(i \text{ fails} \mid \text{system fails})}{P(i \text{ fails})} = \frac{P(i \text{ fails} \cap \text{system fails})}{P(i \text{ fails}) \times P(\text{system fails})}
@@ -38,8 +38,8 @@ The \emph{Diagnostic Importance} (DI) measures the probability that component $i
 
 This is calculated by determining the conditional probability of component failure given system failure, normalized by the component's failure probability.
 
-\subsection{Criticality Importance}
-The \emph{Criticality Importance} (CRI) combines the Marginal Importance with the probability of component failure. It measures the contribution of component $i$ to the overall system failure probability.
+\subsection{Criticality Importance Measure (CRI)}
+The \emph{\acrfull{cri}} combines the Marginal Importance with the probability of component failure. It measures the contribution of component $i$ to the overall system failure probability.
 
 \[
 \text{CRI}_i = \text{MI}_i \times \frac{P(i \text{ fails})}{P(\text{system fails})} = \frac{P(i \text{ fails}) \times [P(\text{system fails} \mid i \text{ fails}) - P(\text{system fails} \mid i \text{ succeeds})]}{P(\text{system fails})}
@@ -47,8 +47,8 @@ The \emph{Criticality Importance} (CRI) combines the Marginal Importance with th
 
 This is computed by multiplying the Marginal Importance by the ratio of component failure probability to system failure probability.
 
-\subsection{Risk Achievement Worth}
-The \emph{Risk Achievement Worth} (RAW) measures the factor by which system failure probability increases when component $i$ is assumed to have failed. It indicates the importance of maintaining the current reliability of the component.
+\subsection{Risk Achievement Worth (RAW)}
+The \emph{\acrfull{raw}} measures the factor by which system failure probability increases when component $i$ is assumed to have failed. It indicates the importance of maintaining the current reliability of the component.
 
 \[
 \text{RAW}_i = \frac{P(\text{system fails} \mid i \text{ fails})}{P(\text{system fails})}
@@ -56,33 +56,11 @@ The \emph{Risk Achievement Worth} (RAW) measures the factor by which system fail
 
 RAW is computed by comparing the system failure probability when the component is assumed failed to the baseline system failure probability.
 
-\subsection{Risk Reduction Worth}
-The \emph{Risk Reduction Worth} (RRW) measures the factor by which system failure probability decreases when component $i$ is assumed perfectly reliable. It indicates the potential value of improving component reliability.
+\subsection{Risk Reduction Worth (RRW)}
+The \emph{\acrfull{rrw}} measures the factor by which system failure probability decreases when component $i$ is assumed perfectly reliable. It indicates the potential value of improving component reliability.
 
 \[
 \text{RRW}_i = \frac{P(\text{system fails})}{P(\text{system fails} \mid i \text{ succeeds})}
 \]
 
 RRW is calculated by comparing the baseline system failure probability to the system failure probability when the component is assumed perfectly reliable.
-
-% \paragraph{Calculation in PRA Software}
-% Importance measures are typically calculated from the system's fault tree structure and component failure probabilities. The general calculation process involves:
-
-% \begin{enumerate}
-%   \item Constructing the system's fault tree model.
-%   \item Determining minimal cut sets from the fault tree.
-%   \item Calculating basic event probabilities from reliability data.
-%   \item Computing system failure probability.
-%   \item Evaluating conditional probabilities needed for importance calculations.
-%   \item Applying the mathematical formulas for each importance measure.
-% \end{enumerate}
-
-% These metrics are used for:
-
-% \begin{itemize}
-%   \item Identifying critical components that most significantly affect system reliability.
-%   \item Prioritizing maintenance and inspection activities.
-%   \item Allocating resources for reliability improvement.
-%   \item Guiding design modifications and system upgrades.
-%   \item Supporting root cause analysis and fault diagnosis.
-% \end{itemize}

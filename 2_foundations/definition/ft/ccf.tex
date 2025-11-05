@@ -1,87 +1,169 @@
 \subsection{Common-Cause Failures}
+\label{subsec:ccf_models}
 
-A \acrfull{ccf} is defined as the failure of multiple components due to a shared cause within a specified time interval. Unlike independent failures, \acrshort{ccf}s can defeat redundancy-based safety systems, potentially leading to severe consequences in critical applications. Several parametric models have been developed to quantify \acrshort{ccf} probabilities:
+We consider a \emph{\acrfull{cccg}} of size $m$ composed of exchangeable components that share exposure, environment, and testing/maintenance policies.  Two modeling regimes are distinguished and a consistent notation is adopted:
 
-\subsubsection{Basic Parameter Model (BPM)}
-\acrfull{cccg} are sets of components susceptible to the same \acrshort{ccf} mechanisms. The \acrfull{bpm} decomposes the failure probability of a component in a \acrshort{cccg} into terms involving independent failure of the component and combinations of \acrshort{ccf}s with the other components in the \acrshort{cccg} \cite{rasmuson_kelly_2008}. For a group of $m$ components, the parameter $Q_k$ represents the probability of a specific $k$-component failure combination. The total failure probability is then calculated as:
-\[
-Q_T = \sum_{k=1}^{m} \binom{m-1}{k-1} Q_k^m
-\]
-While conceptually straightforward, this model becomes impractical for large component groups due to the number of parameters required.
-
-\subsubsection{Alpha Factor Model (AFM)}
-The \acrfull{af} develops \acrshort{ccf} probabilities from set of failure ratios and the total component failure probability \cite{rasmuson_kelly_2008}. For a system with $m$ components, the alpha factors are defined as:
-\[
-\alpha_k = \frac{n_k}{\sum_{i=1}^{m} i \cdot n_i}
-\]
-where $n_k$ is the number of events with $k$ failed components. The probability of a specific failure combination is then:
-\[
-Q_k = \frac{\alpha_k}{\binom{m-1}{k-1}} \cdot Q_T
-\]
-The \acrlong{af} is particularly useful because its parameters have direct statistical meaning and can be estimated from operational data.
-
-\subsubsection{Multiple-Greek Letter (MGL) Model}
-\acrfull{mgl} is used for systems with higher level of redundancy or k-out of-n logic. The multiple Greek letter model includes parameters for the conditional probabilities that the N+1-th subsystem fails given that N identical subsystems have already failed \cite{jones_2012}. The key parameters are:
 \begin{itemize}
-  \item $\beta$: Conditional probability that a component fails due to a common cause, given that another component has failed
-  \item $\gamma$: Conditional probability that a third component fails, given that two components have failed due to a common cause
-  \item $\delta, \epsilon, ... $: Additional parameters for larger component groups
+  \item \textbf{Demand‐based models} (on‐demand unavailability): probabilities are denoted $Q(\cdot)$.  
+  \item \textbf{Time‐based models} (Poisson failure processes over a mission time): rates are denoted $\lambda(\cdot)$, with the small‐time approximation $Q(\cdot)\approx \lambda(\cdot)\,\tau$ over mission time~$\tau$.
 \end{itemize}
 
-For a three-component system, the common cause failure probabilities are:
+Within a \acrshort{cccg} we use tuple‐specific common‐cause parameters.  For $k\in\{1,\dots,m\}$, let
+\begin{align*}
+  Q_{k}^{(m)} &:= \text{on‐demand probability that a \emph{specific} $k$‐subset fails due to a shared cause in a group of size $m$},\\
+  Q_{G,k} &:= \binom{m}{k} Q_{k}^{(m)}, \qquad k=1,\dots,m,
+\end{align*}
+where $Q_{G,k}$ is the on‐demand probability that \emph{some} (unspecified) $k$‐subset fails (group‐level multiplicity).  The status of independent failures must be stated explicitly.  Two conventions are common:
+\begin{enumerate}
+  \item $Q_{1}^{(m)}$ includes single‐component common‐cause failures \emph{and} independent failures; or
+  \item independent failures are modeled separately with a parameter $Q_I$ (or $\lambda_I$ in time‐based models) and $Q_{1}^{(m)}$ represents only single‐component \acrshort{ccf}s.
+\end{enumerate}
+We make this distinction clear below whenever it affects formulas.
+
+\subsubsection{Basic Parameter Model (BPM)}
+\label{subsubsec:bpm}
+
+The \acrfull{bpm} assigns a parameter $Q_{k}^{(m)}$ to each multiplicity $k$ in a group of size $m$.  The per‐component marginal on‐demand failure probability $Q_T$ (including whatever portion is placed in $Q_{1}^{(m)}$ under the chosen convention) satisfies
+\begin{equation}
+  \label{eq:bpm_component_marginal}
+  Q_T = \sum_{k=1}^{m} \binom{m-1}{k-1} Q_{k}^{(m)}.
+\end{equation}
+This identity follows because a given component belongs to $\binom{m-1}{k-1}$ distinct $k$‐subsets.  The group‐level multiplicity probabilities are
+\begin{equation}
+  \label{eq:bpm_group_level}
+  Q_{G,k} = \binom{m}{k} Q_{k}^{(m)}, \qquad k=1,\dots,m.
+\end{equation}
+\paragraph{Remarks.}  BPM is saturated (one parameter per multiplicity) and can represent arbitrary exchangeable multiplicity structures subject to feasibility constraints (non‐negativity and~\eqref{eq:bpm_component_marginal}).  If independent failures are modeled separately by $Q_I$, then replace $Q_T$ on the left of~\eqref{eq:bpm_component_marginal} by $Q_T^{(\text{dep})}=Q_T-Q_I$ and set $Q_{1}^{(m)}$ to represent \emph{dependent} single‐component CCFs only.
+
+\subsubsection{Alpha Factor Model (AFM)}
+\label{subsubsec:afm}
+
+Under the standard (event‐based) \acrfull{af}, $\alpha_k$ denotes the fraction of common‐cause \emph{events} in the CCCG that involve exactly $k$ components, so that
+\begin{equation}
+  \label{eq:alpha_normalization}
+  \alpha_k \ge 0, \qquad \sum_{k=1}^{m} \alpha_k = 1.
+\end{equation}
+Let $Q_T$ be the per‐component on‐demand failure probability (independent $+$ dependent, per the convention in use).  Under staggered testing, the canonical AFM$\to$BPM mapping is
+\begin{equation}
+  \label{eq:afm_to_bpm_staggered}
+  Q_{k}^{(m)} = \frac{\alpha_k}{\binom{m-1}{k-1}} Q_T, \qquad k=1,\dots,m.
+\end{equation}
+Under non‐staggered testing, the mapping includes a correction factor involving $\alpha_t := \sum_{i=1}^{m} i\,\alpha_i$ and becomes
+\begin{equation}
+  \label{eq:afm_to_bpm_nonstaggered}
+  Q_{k}^{(m)} = \frac{k\,\alpha_k}{\alpha_t\,\binom{m-1}{k-1}} Q_T, \qquad k=1,\dots,m.
+\end{equation}
+A useful consequence of~\eqref{eq:afm_to_bpm_staggered} is a “conservation by multiplicity” property: the per‐component contribution of multiplicity $k$ to $Q_T$ equals $\alpha_k Q_T$, because $\binom{m-1}{k-1} Q_{k}^{(m)} = \alpha_k Q_T$.  Thus the fraction of the per‐component failure probability attributable to multiplicities $\ge 2$ is $1-\alpha_1$.
+
+\paragraph{Estimation.}  With event counts $n_k$ for multiplicity $k$, the empirical estimator is $\widehat{\alpha}_k = n_k / \sum_i n_i$.  Bayesian estimation commonly adopts a Dirichlet prior $\alpha \sim \mathrm{Dir}(a_1,\dots,a_m)$, yielding $\alpha\mid n \sim \mathrm{Dir}(a_1+n_1,\dots,a_m+n_m)$.  When zeros occur at higher multiplicities, minimally informative or robust (imprecise) Dirichlet priors stabilize inference.
+
+
+\subsubsection{Multiple-Greek Letter (MGL) Model}
+\label{subsubsec:mgl}
+
+To avoid symbol overload with the $\beta$‐factor model, we parameterize the \acrfull{mgl} cascade with $\rho_2,\rho_3,\dots,\rho_m$, where
 \[
-\begin{aligned}
-Q_1 &= Q_T(1-\beta) \\
-Q_2 &= Q_T\beta(1-\gamma) \\
-Q_3 &= Q_T\beta\gamma
-\end{aligned}
+  \rho_k = \Pr\bigl(\text{one additional component fails from the same cause}\mid\text{already }k-1\text{ have failed}\bigr),\quad k=2,\dots,m.
+\]
+This generative cascade implies an event multiplicity distribution $\pi=(\pi_1,\dots,\pi_m)$:
+\begin{equation}
+  \label{eq:mgl_pi}
+  \pi_1 = 1-\rho_2,\qquad
+  \pi_k = \Bigl(\prod_{j=2}^{k}\rho_j\Bigr) (1-\rho_{k+1}) \ (2\le k\le m-1),\qquad
+  \pi_m = \prod_{j=2}^{m}\rho_j.
+\end{equation}
+Under the event‐based AFM convention we identify $\alpha_k = \pi_k$.  Consequently, MGL$\to$BPM follows from AFM$\to$BPM via~\eqref{eq:afm_to_bpm_staggered} (or~\eqref{eq:afm_to_bpm_nonstaggered} as applicable).
+
+\paragraph{Inverse mapping (AFM$\to$MGL).}  Let $S_k := \sum_{j=1}^{k} \alpha_j$.  From~\eqref{eq:mgl_pi} one obtains
+\begin{equation}
+  \label{eq:afm_to_mgl_inverse}
+  \rho_2 = 1-\alpha_1,\qquad
+  \rho_{k+1} = \frac{1-S_k}{1-S_{k-1}}, \quad 2\le k\le m-1,
+\end{equation}
+provided the denominators are non‐zero (apply shrinkage when $S_{k-1}$ is very close to~1).
+
+\paragraph{Three‐component example.}  For $m=3$,
+\[
+  \alpha_1 = 1-\rho_2,\quad \alpha_2 = \rho_2 (1-\rho_3),\quad \alpha_3 = \rho_2 \rho_3,
+\]
+and, under staggered testing,
+\[
+  Q_{1}^{(3)} = \alpha_1 Q_T,\qquad Q_{2}^{(3)} = \frac{\alpha_2}{2} Q_T,\qquad Q_{3}^{(3)} = \frac{\alpha_3}{3} Q_T.
 \]
 
 \subsubsection{Binomial Failure Rate (BFR) Model}
 
-The \acrfull{bfr} is based on the concept of two distinct types of shock events affecting components in a \acrshort{cccg}:
+\label{subsubsec:bfr}
 
-\begin{enumerate}
-  \item \textbf{Lethal shocks} occur at constant rate $\lambda^{(i)}$ and cause simultaneous failure of all components in the \acrshort{cccg}.
-  
-  \item \textbf{Non-lethal shocks} occur at constant rate $\nu$ and cause each component to fail independently with probability $p$.
-\end{enumerate}
-
-Each component in an \acrshort{cccg} has a total dependent failure rate of:
+The \acrfull{bfr} (Atwood) is time‐based and posits two Poisson shock processes:
+\begin{description}
+  \item[Lethal shocks] at rate $\omega_L$, which fail all $m$ components when they occur.
+  \item[Non‐lethal shocks] at rate $\omega_C$.  Conditional on such a shock, each component fails independently with probability $\rho\in[0,1]$ (conditionally independent “hits”).
+\end{description}
+Optionally include an independent per‐component failure rate $\lambda_I$.  Then:
+\begin{align}
+  \text{Group‐level multiplicity event rates (non‐lethal shocks):}\quad
+  \lambda_{G,k}^{(\text{nl})} &= \omega_C \binom{m}{k} \rho^{k} (1-\rho)^{m-k}, && k=0,1,\dots,m,\label{eq:bfr_mult_nonlethal}\\[4pt]
+  \text{Group‐level lethal contribution (all‐$m$‐of‐$m$):}\quad
+  \lambda_{G,m}^{(\text{lethal})} &= \omega_L.\label{eq:bfr_mult_lethal}
+\end{align}
+The per‐component total rate is
 \begin{equation}
-\lambda_c = \lambda^{(i)} + p\nu
+  \label{eq:bfr_component_rate}
+  \lambda_T = \lambda_I + \omega_L + \omega_C\,\rho.
 \end{equation}
 
-The model uses binomial probability distribution to calculate the rate of failures with different multiplicities. When a non-lethal shock occurs, the probability of exactly $k$ components failing follows the binomial distribution:
+\paragraph{Event‐based $\alpha$‐factors under BFR.}  Consider only events that produce at least one failure.  The total rate of such events is
+\[
+  \Lambda = \omega_L + \omega_C \bigl[1-(1-\rho)^m\bigr].
+\]
+Then the induced $\alpha$‐factors are
 \begin{equation}
-\text{P}(k) = \binom{n}{k}p^k(1-p)^{n-k}
+  \label{eq:bfr_alpha}
+  \alpha_k = \frac{\omega_C \binom{m}{k} \rho^{k} (1-\rho)^{m-k}}{\Lambda}, \quad 1\le k\le m-1,
+  \qquad
+  \alpha_m = \frac{\omega_L + \omega_C \rho^{m}}{\Lambda}.
 \end{equation}
+For demand‐based analyses over a short mission $\tau$, use $Q_T \approx \lambda_T\,\tau$ together with~\eqref{eq:bfr_alpha} and the AFM$\to$BPM mapping.
 
-Therefore, the rate of \acrshort{ccf} events with exactly $k$ components failing is:
-\begin{equation}
-\lambda_{G,k} = \nu\binom{n}{k}p^k(1-p)^{n-k}
-\end{equation}
-
-The \acrshort{bfr} model has the advantage of using physically interpretable parameters ($\nu$ and $p$) while requiring fewer parameters than the Basic Parameter Model.
 
 \subsubsection{Beta Factor Model}
-A simplified single-parameter model where all common cause failures are assumed to fail all components in the group. The model uses a single parameter $\beta$, representing the fraction of total failure probability attributed to common causes:
-\[
-\begin{aligned}
-Q_I &= Q_T(1-\beta) \quad \text{(independent failures)} \\
-Q_m &= Q_T\beta \quad \text{(complete common cause failure)} \\
-\end{aligned}
-\]
-This model is useful for initial screening and when data is limited.
+\label{subsubsec:beta_factor}
+
+The $\beta$‐factor \acrfull{bfm} collapses all dependent mass into an $m$‐of‐$m$ CCF.  Let $Q_T$ be the per‐component on‐demand failure probability.  Then
+\begin{equation}
+  \label{eq:beta_model_1}
+  \text{dependent all‐$m$ failure:}\quad Q_{m}^{(m)} = \beta Q_T,
+\end{equation}
+\begin{equation}
+  \label{eq:beta_model_2}
+  \text{independent remainder:}\quad (1-\beta) Q_T \ \text{per component}
+\end{equation}
+Accordingly, $\alpha_k = 0$ for $2\le k\le m-1$, $\alpha_m = 1-\alpha_1$, and the model is primarily useful for screening.  It tends to be conservative for $k$‐out‐of‐$n$ structures with small $k$ where mid‐multiplicity failures dominate.
+
 
 \subsubsection{Mapping Between Models}
-Relationships exist between the parameters of different \acrshort{ccf} models, allowing conversion of parameters from one model to another. For example, the Alpha factors can be derived from \acrshort{mgl} parameters as:
+\label{subsubsec:ccf_mappings}
+
+Assume a fixed testing policy (staggered or non‐staggered) and a declared convention for $Q_{1}^{(m)}$ vs.~$Q_I$.
+\paragraph{AFM $\to$ BPM.}
+\begin{align}
+  \text{staggered:}\quad & Q_{k}^{(m)} = \frac{\alpha_k}{\binom{m-1}{k-1}} Q_T, && \label{eq:map_afm_bpm_stag}\\[4pt]
+  \text{non‐staggered:}\quad & Q_{k}^{(m)} = \frac{k\,\alpha_k}{\alpha_t\,\binom{m-1}{k-1}} Q_T, & \alpha_t = \sum_{i=1}^{m} i\,\alpha_i.\label{eq:map_afm_bpm_nonstag}
+\end{align}
+\paragraph{MGL $\leftrightarrow$ AFM.}
+\begin{align}
+  \text{MGL}\to\text{AFM:}\quad & \alpha_k = \pi_k \ \text{from~\eqref{eq:mgl_pi}},\\
+  \text{AFM}\to\text{MGL:}\quad & \rho_2 = 1-\alpha_1,\quad \rho_{k+1} = \frac{1-\sum_{j=1}^{k} \alpha_j}{1-\sum_{j=1}^{k-1} \alpha_j}, \ 2\le k\le m-1.
+\end{align}
+\paragraph{BFR $\to$ AFM.}  Compute $\alpha_k$ via~\eqref{eq:bfr_alpha}.  Then AFM$\to$BPM by~\eqref{eq:map_afm_bpm_stag} or~\eqref{eq:map_afm_bpm_nonstag}.
+\paragraph{AFM $\to$ $\beta$.}  The fraction of the per‐component probability due to dependent failures is
 \[
-\begin{aligned}
-\alpha_1 &= \frac{1-\beta}{1+\beta(\gamma-1)} \\
-\alpha_2 &= \frac{2\beta(1-\gamma)}{1+\beta(\gamma-1)} \\
-\alpha_3 &= \frac{3\beta\gamma}{1+\beta(\gamma-1)}
-\end{aligned}
+  \beta \approx \sum_{k=2}^{m} \alpha_k = 1-\alpha_1,
 \]
+if one collapses all dependent mass into an $m$‐of‐$m$ event as in~\eqref{eq:beta_model}.
+
+\paragraph{Well‐posedness checks.}  Any proposed parameter set should satisfy non‐negativity, normalization (for $\alpha$ or the induced multiplicity distribution), and feasibility in~\eqref{eq:bpm_component_marginal}.  When converting between parameterizations, apply shrinkage for zero counts and verify that induced $Q_{k}^{(m)}$ are non‐negative and that the implied $Q_T$ (or $\lambda_T$) matches the target within numerical tolerance.
+
 
 Industry databases such as the International Common Cause Failure Data Exchange (ICDE) \cite{ICDE} and the \acrshort{nrc}'s \acrshort{ccf} database \cite{ma_ccf_2022} provide valuable sources for parameter estimation.

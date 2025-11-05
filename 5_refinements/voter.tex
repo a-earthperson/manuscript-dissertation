@@ -1,7 +1,7 @@
 \chapter{Knowledge Compilation for Monte Carlo Operations}
 \label{chap:kc}
 
-Monte–Carlo evaluation relies on compiling the system model into intermediate data structures amenable to bit-parallel traversal. This chapter presents additional algorithmic and data-structure refinements to the PDAG that underpins \textsc{McScram}'s solver and shows how these advances enable specialized kernels for composite gates.
+Monte–Carlo evaluation relies on compiling the system model into intermediate data structures amenable to bit-parallel traversal. This chapter presents additional algorithmic and data-structure refinements to the \acrshort{pdag} that underpins \textsc{McScram}'s solver and shows how these advances enable specialized kernels for composite gates.
 
 % ---------------------------------------------------------------------------
 \section{Hardware--Native Voting without AND/OR Expansion}
@@ -188,7 +188,7 @@ bits.  For practical fan-ins $(n\le 255)$ an 8-bit counter suffices, preserving
 high occupancy on GPUs.
 
 \subsubsection{Graph-size savings.}  Let one $\mathrm{VOT}(k/n)$ gate be
-replaced by its DNF of Eq.~(\ref{eq:k_of_n_or_of_ands}).  The expansion
+replaced by its \acrshort{dnf} of Eq.~(\ref{eq:k_of_n_or_of_ands}).  The expansion
 introduces
 \[
   M(n,k) \;=\; \sum_{j=k}^{n} \binom{n}{j}
@@ -217,7 +217,7 @@ $(2^{15}-1)/2 \approx 16\,383$:1.
 \label{sec:card_graph_savings}
 
 Replacing a single $\mathrm{CARD}(\ell,h/n)$ gate by its
-DNF introduces
+\acrshort{dnf} introduces
 \[
   M_{\mathrm{card}}(n,\ell,h) \;=\;
   \sum_{j=\ell}^{h} \binom{n}{j}
@@ -297,7 +297,7 @@ knowledge-compilation benchmark the wall-clock time fell from
 Let $G_0$ denote the input graph and let $G_{\ell}$ be the graph after compilation level $\ell$ with $0\le \ell\le8$.  Each level applies a well-defined transformation $T_{\ell}$ so that
 \[
   G_{\ell} \;=\; T_{\ell}\bigl(G_{\ell-1}\bigr),
-  \qquad G_{0}=\text{PDAG}(\mathcal{M}),
+  \qquad G_{0}=\text{\acrshort{pdag}}(\mathcal{M}),
 \]
 where $\mathcal{M}$ is the original unified PRA model.  Table~\ref{tab:compilation_levels} summarizes the objectives of every stage and contrasts the classical five-phase recipe of Rakhimov with the streamlined variant adopted in this work.
 
@@ -317,7 +317,7 @@ where $\mathcal{M}$ is the original unified PRA model.  Table~\ref{tab:compilati
     5 & Phase~II (Rakhimov) & Re-run coalescing and module detection & \checkmark & — \\
     6 & Phase~III & Full normalization (Part A): expand $k$-of-$n$, XOR; re-run Phase~II & \checkmark & \checkmark (iterative) \\
     7 & Phase~IV & Push negations downward; re-run Phase~II & \checkmark & \checkmark (on-demand) \\
-    8 & Phase~V & Final coalescing pass; fixed-point NNF is reached & \checkmark & \checkmark \\
+    8 & Phase~V & Final coalescing pass; fixed-point \acrshort{nnf} is reached & \checkmark & \checkmark \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -349,7 +349,7 @@ incorporates two key departures:
 
 Let $|G|$ be the number of gates and $m$ the maximal gate fan-in.
 Under Rakhimov’s regimen the worst-case complexity of reaching negation
-normal form (NNF) is
+normal form (\acrshort{nnf}) is
 \[
   \mathcal{O}\bigl(|G|\,m^{2}\bigr),
 \]
@@ -399,7 +399,7 @@ the \emph{compression factor}
   \gamma(\ell)\;=\;
   \frac{|G_0|}{|G_\ell|},
 \]
-where $|G|$ counts all gates in the PDAG.\footnote{%
+where $|G|$ counts all gates in the \acrshort{pdag}.\footnote{%
   A value $\gamma>1$ indicates net compression;
   $\gamma<1$ means expansion.}
 The statistics in Table~\ref{tab:micro_compilation_flags}
@@ -442,7 +442,7 @@ filters described in Section~\ref{sec:kc_empirical}.
         that early coalescing and Boolean simplification shrink most
         models without full normalization.
   \item Level~$C8$ maintains the compression despite additional passes
-        to reach NNF, indicating that late-phase expansions (e.g.,
+        to reach \acrshort{nnf}, indicating that late-phase expansions (e.g.,
         DeMorgan pushes) are offset by more aggressive gate
         sharing.
 \end{itemize}
@@ -454,7 +454,7 @@ filters described in Section~\ref{sec:kc_empirical}.
 \begin{figure}[hb]
     \centering
     \includegraphics[width=1.15\textwidth]{figs/compiler/compiler_fanin_vs_compression.png}
-    \caption{Relationship between average gate fan-in $f$ in the compiled PDAG and structural compression factor $\gamma$.  Points are colored by compilation flag; dashed lines show ordinary least–squares fits on log--log axes with slopes indicated in the legend.}
+    \caption{Relationship between average gate fan-in $f$ in the compiled \acrshort{pdag} and structural compression factor $\gamma$.  Points are colored by compilation flag; dashed lines show ordinary least–squares fits on log--log axes with slopes indicated in the legend.}
     \label{fig:compiler_fanin_compression}
 \end{figure}
 \end{landscape}
