@@ -1,66 +1,159 @@
-\section{Computing Importance Measures}
+\section{Importance Measures for Basic Events}
 \label{sec:foundations_importance}
-Importance measures quantify the contribution of basic events to system reliability or risk. They provide insights into which components or events are most critical to system performance, guiding resource allocation for maintenance, design improvements, and risk management. \acrshort{pra} tools typically calculate the following importance measures to support comprehensive reliability analysis.
+Reliability and \acrshort{pra} studies rely on 
+\emph{importance measures} to quantify how individual basic events 
+contribute to an overall risk metric~$R$ (such as a top‐event probability
+in a mission time window or a frequency measure like \acrshort{cdf} or
+\acrfull{lerf}).
+These measures support ranking, screening, design improvement, and
+configuration‐risk management.  This section formalizes the measures
+most widely used in \acrshort{pra}/\acrshort{qra}, adopting notation and
+sign conventions consistent with the \acrshort{nasa} \acrshort{pra} Practitioners' Guide ~\cite{smith_probabilistic_2012} and
+\acrshort{us} \acrshort{nrc} risk‐informed guidance.
 
-\subsection{Conditional Importance Measure (CIM)}
-The \emph{\acrfull{cim}}  of a basic event $i$ measures the probability that event $i$ contributes to system failure, given that the system has failed. It represents the fraction of system failures that involve the basic event.
+\subsection*{Notation}
 
-\[
-\text{CIM}_i = \frac{P(i \text{ contributes to system failure} \mid \text{system failure})}{P(\text{system failure})} = \frac{P(i \text{ critical})}{P(\text{system failure})}
-\]
+\begin{itemize}
+  \item $q_i$ – failure/unavailability probability of basic event~$i$.
+  \item $x_i$ – binary state indicator of event~$i$ ($x_i=1$: failed, $x_i=0$: succeeded).
+  \item $R$ – baseline risk metric (probability or frequency).
+  \item $R\mid x_i=1$ – risk when event~$i$ is forced failed.
+  \item $R\mid x_i=0$ – risk when event~$i$ is forced successful.
+  \item $\mathcal{MCS}$ – union of all minimal cut sets (failure space).
+  \item $\mathcal{MCS}_i$ – union of minimal cut sets that contain event~$i$.
+\end{itemize}
 
-This is calculated by identifying minimal cut sets containing the basic event and determining the proportion of failure probability attributed to these cut sets.
+Throughout, forcing a basic event applies the Boolean absorption
+$x_i=1\!\rightarrow\!\text{true}$ or $x_i=0\!\rightarrow\!\text{false}$ in
+the fault‐tree logic before re‐quantification.
 
-\subsection{Marginal/Birnbaum Importance Measure (MIM)}
-The \emph{\acrfull{mi}} measures the rate of change in system reliability with respect to the reliability of component $i$. It quantifies how sensitive the system failure probability is to changes in the failure probability of the component.
+% --------------------------------------------------------------------
+\subsection{Fussell–Vesely Importance (FV)}
+% --------------------------------------------------------------------
 
-\[
-\text{MIM}_i = \frac{\partial P(\text{system failure})}{\partial P(i \text{ fails})} = P(\text{system fails} \mid i \text{ fails}) - P(\text{system fails} \mid i \text{ succeeds})
-\]
+\begin{equation}
+  \label{eq:fv}
+  \mathrm{FV}_i 
+  = \frac{\Pr(\cup\,\mathcal{MCS}_i)}{\Pr(\cup\,\mathcal{MCS})}
+  = \frac{R - R\mid x_i=0}{R}.
+\end{equation}
 
-This is computed by evaluating the difference in system failure probability when the component is assumed failed versus successful.
+Equation~\eqref{eq:fv} expresses the fractional contribution of basic
+event~$i$ to the current risk.  High \acrshort{fv} values indicate that a
+large proportion of current risk flows through cut sets containing~$i$;
+it is therefore the workhorse metric for contributor ranking and
+screening.
 
-\subsection{Potential Importance Measure (PIM)}
-The \emph{\acrfull{pim}} the maximum possible reduction in system failure probability that could be achieved by improving component $i$. It indicates the potential benefit of perfect reliability for a component.
-
-\[
-\text{PIM}_i = P(\text{system failure}) - P(\text{system failure} \mid i \text{ succeeds}) = P(\text{system failure}) \times (1 - \frac{1}{\text{RRW}_i})
-\]
-
-This is calculated using the system failure probability under current conditions compared to the system failure probability when the component is perfectly reliable.
-
-\subsection{Diagnostic Importance Measure (DIM)}
-The \emph{\acrfull{di}} measures the probability that component $i$ has failed, given that the system has failed. It is useful for fault diagnosis and identifying likely causes of system failure.
-
-\[
-\text{DI}_i = \frac{P(i \text{ fails} \mid \text{system fails})}{P(i \text{ fails})} = \frac{P(i \text{ fails} \cap \text{system fails})}{P(i \text{ fails}) \times P(\text{system fails})}
-\]
-
-This is calculated by determining the conditional probability of component failure given system failure, normalized by the component's failure probability.
-
-\subsection{Criticality Importance Measure (CRI)}
-The \emph{\acrfull{cri}} combines the Marginal Importance with the probability of component failure. It measures the contribution of component $i$ to the overall system failure probability.
-
-\[
-\text{CRI}_i = \text{MI}_i \times \frac{P(i \text{ fails})}{P(\text{system fails})} = \frac{P(i \text{ fails}) \times [P(\text{system fails} \mid i \text{ fails}) - P(\text{system fails} \mid i \text{ succeeds})]}{P(\text{system fails})}
-\]
-
-This is computed by multiplying the Marginal Importance by the ratio of component failure probability to system failure probability.
-
-\subsection{Risk Achievement Worth (RAW)}
-The \emph{\acrfull{raw}} measures the factor by which system failure probability increases when component $i$ is assumed to have failed. It indicates the importance of maintaining the current reliability of the component.
-
-\[
-\text{RAW}_i = \frac{P(\text{system fails} \mid i \text{ fails})}{P(\text{system fails})}
-\]
-
-RAW is computed by comparing the system failure probability when the component is assumed failed to the baseline system failure probability.
-
+% --------------------------------------------------------------------
 \subsection{Risk Reduction Worth (RRW)}
-The \emph{\acrfull{rrw}} measures the factor by which system failure probability decreases when component $i$ is assumed perfectly reliable. It indicates the potential value of improving component reliability.
+% --------------------------------------------------------------------
 
-\[
-\text{RRW}_i = \frac{P(\text{system fails})}{P(\text{system fails} \mid i \text{ succeeds})}
-\]
+\begin{equation}
+  \label{eq:rrw}
+  \mathrm{RRW}_i = \frac{R}{R\mid x_i=0}, \qquad
+  \Delta R^{-}_i = R - R\mid x_i=0.
+\end{equation}
 
-RRW is calculated by comparing the baseline system failure probability to the system failure probability when the component is assumed perfectly reliable.
+A large \acrshort{rrw} signals substantial potential benefit from
+reliability or availability upgrades of component~$i$.  The interval
+form~$\Delta R^{-}_i$ is useful when an absolute (rather than relative)
+risk decrement is required.
+
+% --------------------------------------------------------------------
+\subsection{Risk Achievement Worth (RAW)}
+% --------------------------------------------------------------------
+
+\begin{equation}
+  \label{eq:raw}
+  \mathrm{RAW}_i = \frac{R\mid x_i=1}{R}, \qquad
+  \Delta R^{+}_i = R\mid x_i=1 - R.
+\end{equation}
+
+\acrshort{raw} asks how much risk would be \emph{achieved} (increased) if
+component~$i$ were failed.  It is central to configuration‐risk
+management; industry practice often screens for $\mathrm{RAW}_i>2$ when
+identifying safety‐significant items.
+
+% --------------------------------------------------------------------
+\subsection{Birnbaum (Marginal) Importance (MIM)}
+% --------------------------------------------------------------------
+
+\begin{equation}
+  \label{eq:birnbaum}
+  I_{\mathrm{B}}(i) = \frac{\partial R}{\partial q_i}
+  \approx R\mid x_i=1 - R\mid x_i=0,\quad \text{(linear‐risk models)}
+\end{equation}
+
+Birnbaum importance is a local sensitivity: it measures the structural
+leverage of~$i$ on~$R$.  Because it is not scaled by~$q_i$, a very
+reliable yet pivotal component can have a high $I_{\mathrm{B}}$.
+
+% --------------------------------------------------------------------
+\subsection{Differential Importance Measure (DIM)}
+% --------------------------------------------------------------------
+For a contemplated small change vector $\{\mathrm{d}q_j\}$,
+\begin{equation}
+  \label{eq:dim}
+  \mathrm{DIM}_i = \frac{\displaystyle \frac{\partial R}{\partial q_i}\,\mathrm{d}q_i}
+                        {\displaystyle \sum_j \frac{\partial R}{\partial q_j}\,\mathrm{d}q_j}.
+\end{equation}
+The \acrshort{dim}s sum to~1 and allocate the total risk change across
+parameters, which can be useful when many small improvements are pursued
+simultaneously.
+
+% --------------------------------------------------------------------
+\subsection{Criticality Importance (\acrshort{cri})}
+% --------------------------------------------------------------------
+\begin{equation}
+  \label{eq:criticality}
+  \mathrm{CRI}_i = I_{\mathrm{B}}(i)\,\frac{q_i}{R}
+  = \frac{q_i\,[R\mid x_i=1 - R\mid x_i=0]}{R}.
+\end{equation}
+\acrshort{cri} gives the posterior probability that event~$i$ has both
+failed and is \emph{critical} when the top event occurs, supporting
+post‐event diagnostics and maintenance prioritization.
+
+% --------------------------------------------------------------------
+\subsection{Diagnostic Importance Factor (\acrshort{di})}
+% --------------------------------------------------------------------
+\begin{equation}
+  \label{eq:diagnostic}
+  \mathrm{DI}_i = \Pr(x_i=1 \mid \text{Top}) = \frac{q_i\,R\mid x_i=1}{R}.
+\end{equation}
+Unlike \acrshort{cri}, \acrshort{di} does not require that~$i$ be
+pivotal, only that it has failed.  It thus quantifies the probability
+that~$i$ is the culprit in need of inspection once the system has
+failed.
+
+% --------------------------------------------------------------------
+\subsection{Improvement Potential (IP)}
+% --------------------------------------------------------------------
+\begin{equation}
+  \label{eq:ip}
+  \mathrm{IP}_i = R - R\mid x_i=0 = R\,\mathrm{FV}_i.
+\end{equation}
+\acrshort{pim} expresses the absolute risk points removable by perfecting
+component~$i$.  When paired with a cost metric, it guides benefit‐per‐dollar prioritization in maintenance optimization.
+
+% --------------------------------------------------------------------
+\subsection{Prevention Worth (\acrshort{pw})}
+% --------------------------------------------------------------------
+In the success domain (path‐set analysis), \acrshort{pw} formalizes how much the overall \emph{mission success} probability improves when basic event~$i$ is guaranteed to succeed.  Let
+\begin{equation}
+  \label{eq:success_prob}
+  S \;=\; 1 - R \;=\; \Pr\!\bigl(\cap\,\mathcal{MPS}\bigr),
+\end{equation}
+where $S$ is the baseline probability of reaching the top success state and $\mathcal{MPS}$ denotes the union of all minimal path sets.
+
+Forcing $x_i=0$ in the logic (i.e., assuring component~$i$ succeeds) yields an updated success probability $S\mid x_i=0 = 1 - R\mid x_i=0$.  The \emph{Prevention Worth} of~$i$ is then
+\begin{equation}
+  \label{eq:pw}
+  \mathrm{PW}_i 
+  \;=\;
+  \frac{S\mid x_i=0}{S}
+  \;=\;
+  \frac{1 - R\mid x_i=0}{1 - R},
+  \qquad
+  \Delta S^{+}_i = S\mid x_i=0 - S.
+\end{equation}
+A value $\mathrm{PW}_i>1$ signals that assuring the success of component~$i$ produces a proportional uplift in overall mission success, while the interval form~$\Delta S^{+}_i$ gives the absolute success points gained.  These metrics support availability optimization and design‐for‐success studies in contexts where objectives are framed in terms of maximizing~$S$ rather than minimizing~$R$.
